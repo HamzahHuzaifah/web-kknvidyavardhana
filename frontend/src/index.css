@@ -1,18 +1,40 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.cdnfonts.com/css/garet');
 @import "tailwindcss";
 
 @theme {
   /* === KKN Vidya Vardhana Brand Colors === */
   --color-primary: #1E3A8A;    /* Navy Blue */
+  --color-primary-dark: #172554;
+  --color-primary-light: #3B82F6;
+
   --color-secondary: #EAB308;  /* Mustard Yellow */
+  --color-secondary-dark: #CA8A04;
+  --color-secondary-light: #FDE047;
+
   --color-accent: #047857;     /* Forest Green */
+  --color-accent-dark: #064E3B;
 
   /* === Typography === */
   --font-sans: 'Poppins', 'Montserrat', sans-serif;
+  --font-heading: 'Garet', 'Poppins', sans-serif;
 
   /* === Hard-shadow (Anti AI-Slop Flat Design) === */
   --shadow-hard: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+  --shadow-overlay: 8px 8px 0px 0px rgba(30, 58, 138, 1);
+}
+
+@utility bg-gradient-yellow {
+  background-image: linear-gradient(to bottom right, #b7904a, #ffd54f);
+}
+
+@utility bg-gradient-blue {
+  background-image: linear-gradient(to bottom right, #1b3f5d, #466e8f);
+}
+
+@utility bg-gradient-green {
+  background-image: linear-gradient(to bottom right, #2d6c4a, #b3f5d0);
 }
 
 @layer base {
@@ -20,5 +42,9 @@
     font-family: var(--font-sans);
     background-color: #f9fafb;
     color: #111827;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
   }
 }
