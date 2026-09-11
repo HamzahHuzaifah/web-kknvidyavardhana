@@ -38,9 +38,6 @@ export default function Navbar() {
             <Link to="/berita" className="flex items-center gap-2 hover:text-secondary-light hover:-translate-y-0.5 transition-transform font-medium text-sm">
               <BookOpen size={17} /> Berita
             </Link>
-            <Link to="/upload" className="flex items-center gap-1.5 bg-gradient-yellow text-primary-dark px-3 py-1.5 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:brightness-110 hover:translate-y-0.5 hover:shadow-none transition-all font-black uppercase text-xs">
-              <UploadCloud size={16} /> Upload
-            </Link>
             <Link to={token ? "/dashboard" : "/login"} className="flex items-center gap-2 hover:text-secondary-light hover:-translate-y-0.5 transition-transform font-medium text-sm">
               <UserCircle size={17} /> Akun
             </Link>

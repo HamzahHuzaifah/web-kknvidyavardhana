@@ -93,12 +93,14 @@ export default function ArticlesPage() {
             </h1>
           </div>
 
-          <Link
-            to="/upload"
-            className="inline-flex items-center gap-2 bg-gradient-yellow text-primary-dark font-black text-xs uppercase px-5 py-3 border-2 border-primary-dark shadow-hard hover:translate-y-0.5 hover:shadow-none transition-all self-start md:self-auto"
-          >
-            <UploadCloud size={18} /> Upload Berita / Modul
-          </Link>
+          {token && (
+            <Link
+              to="/upload"
+              className="inline-flex items-center gap-2 bg-gradient-yellow text-primary-dark font-black text-xs uppercase px-5 py-3 border-2 border-primary-dark shadow-hard hover:translate-y-0.5 hover:shadow-none transition-all self-start md:self-auto"
+            >
+              <UploadCloud size={18} /> Upload Berita / Modul
+            </Link>
+          )}
         </div>
 
         {/* Filter Tabs & Search Bar */}

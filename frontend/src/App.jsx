@@ -39,7 +39,14 @@ function AnimatedRoutes() {
             </ProtectedRoute>
           } 
         />
-        <Route path="/upload" element={<AnimatedPage><UploadForm /></AnimatedPage>} />
+        <Route 
+          path="/upload" 
+          element={
+            <ProtectedRoute>
+              <AnimatedPage><UploadForm /></AnimatedPage>
+            </ProtectedRoute>
+          } 
+        />
       </Routes>
     </AnimatePresence>
   );
