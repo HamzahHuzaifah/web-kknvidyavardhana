@@ -26,8 +26,8 @@ export default function Home() {
       <Hero 
         location="Desa Ciasihan, Pamijahan"
         titleLine1="Selamat Datang di"
-        titleLine2="Portal KKN"
-        titleLine3="Vidya Vardhana"
+        titleLine2="Website"
+        titleLine3="KKN Vidya Vardhana"
         description="Pusat informasi dan publikasi program kerja Kuliah Kerja Nyata. Bersama membangun desa, mewujudkan kemajuan berkelanjutan."
         ctaText="Jelajahi Program"
       />

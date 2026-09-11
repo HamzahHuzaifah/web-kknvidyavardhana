@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.3",
@@ -26,6 +28,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "autoprefixer": "^10.5.6",
     "axios": "^1.20.0",
+    "gh-pages": "^6.3.0",
     "lucide-react": "^1.45.0",
     "oxlint": "^1.81.0",
     "postcss": "^8.5.28",
