@@ -558,6 +558,142 @@ app.patch('/api/admin/users/:id/status', verifyToken, isAdmin, async (req, res) 
   }
 });
 
+// API: Update user role (Promote to Admin / Demote to User) (Admin only)
+app.patch('/api/admin/users/:id/role', verifyToken, isAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    if (!['admin', 'user'].includes(role)) {
+      return res.status(400).json({ error: 'Role tidak valid. Harus admin atau user.' });
+    }
+
+    if (parseInt(id) === req.userId) {
+      return res.status(400).json({ error: 'Anda tidak dapat mengubah role akun Anda sendiri.' });
+    }
+
+    const [target] = await pool.query('SELECT username FROM users WHERE id = ?', [id]);
+    if (target.length === 0) {
+      return res.status(404).json({ error: 'Pengguna tidak ditemukan.' });
+    }
+
+    if (target[0].username === 'admin') {
+      return res.status(400).json({ error: 'Role Admin utama tidak dapat diubah.' });
+    }
+
+    await pool.query('UPDATE users SET role = ? WHERE id = ?', [role, id]);
+    res.json({ 
+      message: `Role akun '${target[0].username}' berhasil diubah menjadi ${role === 'admin' ? 'ADMIN (Administrator)' : 'USER (Anggota)'}.` 
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Gagal mengubah role pengguna.' });
+  }
+});
+
+// API: Reset user password (Admin only)
+app.patch('/api/admin/users/:id/reset-password', verifyToken, isAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: 'Password baru minimal 6 karakter.' });
+    }
+
+    const [target] = await pool.query('SELECT username FROM users WHERE id = ?', [id]);
+    if (target.length === 0) {
+      return res.status(404).json({ error: 'Pengguna tidak ditemukan.' });
+    }
+
+    if (target[0].username === 'admin' && req.username !== 'admin') {
+      return res.status(403).json({ error: 'Hanya Admin utama yang dapat mereset password akun admin utama.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await pool.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, id]);
+
+    res.json({ message: `Password akun '${target[0].username}' berhasil diperbarui!` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Gagal mereset password pengguna.' });
+  }
+});
+
+// API: Delete user (Admin only)
+app.delete('/api/admin/users/:id', verifyToken, isAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (parseInt(id) === req.userId) {
+      return res.status(400).json({ error: 'Anda tidak dapat menghapus akun Anda sendiri.' });
+    }
+
+    const [target] = await pool.query('SELECT username FROM users WHERE id = ?', [id]);
+    if (target.length === 0) {
+      return res.status(404).json({ error: 'Pengguna tidak ditemukan.' });
+    }
+
+    if (target[0].username === 'admin') {
+      return res.status(400).json({ error: 'Akun Admin utama tidak dapat dihapus.' });
+    }
+
+    // Set author_id null in articles
+    await pool.query('UPDATE articles SET author_id = NULL WHERE author_id = ?', [id]);
+    
+    // Delete user
+    await pool.query('DELETE FROM users WHERE id = ?', [id]);
+
+    res.json({ message: `Akun '${target[0].username}' berhasil dihapus permanen.` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Gagal menghapus pengguna.' });
+  }
+});
+
+// API: Add user directly by Admin (Admin only)
+app.post('/api/admin/users', verifyToken, isAdmin, async (req, res) => {
+  try {
+    const { username, password, role } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username dan password wajib diisi.' });
+    }
+
+    if (username.trim().length < 3) {
+      return res.status(400).json({ error: 'Username minimal 3 karakter.' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password minimal 6 karakter.' });
+    }
+
+    const targetRole = ['admin', 'user'].includes(role) ? role : 'user';
+
+    const [existing] = await pool.query('SELECT id FROM users WHERE username = ?', [username.trim()]);
+    if (existing.length > 0) {
+      return res.status(400).json({ error: 'Username sudah digunakan. Silakan gunakan username lain.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const [result] = await pool.query(
+      'INSERT INTO users (username, password, role, status) VALUES (?, ?, ?, ?)',
+      [username.trim(), hashedPassword, targetRole, 'approved']
+    );
+
+    res.status(201).json({
+      id: result.insertId,
+      username: username.trim(),
+      role: targetRole,
+      status: 'approved',
+      message: `Akun '${username.trim()}' (${targetRole.toUpperCase()}) berhasil dibuat langsung dengan status Disetujui (ACC)!`
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Gagal menambahkan akun pengguna.' });
+  }
+});
+
 // API: Submit Attendance (Protected)
 app.post('/api/attendance', verifyToken, async (req, res) => {
   try {

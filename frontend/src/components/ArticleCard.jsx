@@ -1,4 +1,5 @@
 import { ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import DOMPurify from 'dompurify'; // To safely render the rich text preview if needed
 
 export default function ArticleCard({ article, baseUrl = 'http://localhost:5000' }) {
@@ -43,10 +44,10 @@ export default function ArticleCard({ article, baseUrl = 'http://localhost:5000'
         <p className="text-gray-600 mb-6 line-clamp-3 font-medium text-xs leading-relaxed flex-grow">
           {previewText}
         </p>
-        <a href="/berita" className="inline-flex items-center font-bold text-primary-dark hover:text-secondary-dark transition-colors mt-auto text-xs uppercase tracking-wider group">
+        <Link to="/berita" className="inline-flex items-center font-bold text-primary-dark hover:text-secondary-dark transition-colors mt-auto text-xs uppercase tracking-wider group">
           Baca Selengkapnya 
           <ArrowRight size={14} className="ml-1 group-hover:translate-x-1 transition-transform" />
-        </a>
+        </Link>
       </div>
     </article>
   );

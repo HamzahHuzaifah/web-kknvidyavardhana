@@ -1,18 +1,25 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Home, User, BookOpen, LayoutDashboard, Image as ImageIcon, LogIn, LogOut, UserCircle, Menu, X } from 'lucide-react';
+import ConfirmModal from './ConfirmModal';
 
 export default function Navbar() {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const handleLogout = () => {
+  const confirmLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('username');
     localStorage.removeItem('role');
+    setShowLogoutModal(false);
     navigate('/login');
     setIsMobileMenuOpen(false);
+  };
+
+  const handleLogout = () => {
+    setShowLogoutModal(true);
   };
 
   const closeMenu = () => setIsMobileMenuOpen(false);
@@ -115,6 +122,18 @@ export default function Navbar() {
           </div>
         </div>
       )}
+
+      {/* CONFIRM LOGOUT MODAL */}
+      <ConfirmModal
+        isOpen={showLogoutModal}
+        title="Konfirmasi Keluar Akun"
+        message="Apakah Anda yakin ingin keluar dari sesi akun Anda saat ini?"
+        confirmText="Ya, Keluar"
+        cancelText="Batal"
+        type="warning"
+        onConfirm={confirmLogout}
+        onCancel={() => setShowLogoutModal(false)}
+      />
     </nav>
   );
 }

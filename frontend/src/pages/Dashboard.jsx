@@ -7,9 +7,15 @@ import {
   CheckCircle, 
   AlertCircle, 
   ShieldCheck, 
+  Shield,
   UserCheck, 
   UserX, 
   Users, 
+  UserPlus,
+  UserMinus,
+  Key,
+  Lock,
+  Search,
   UploadCloud, 
   RefreshCw,
   Compass,
@@ -28,10 +34,42 @@ import {
 } from 'lucide-react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
+import ConfirmModal from '../components/ConfirmModal';
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('attendance'); // 'attendance' | 'users' | 'profile' | 'media' | 'articles'
   
+  // Custom Pop-up / Confirm Dialog State
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: 'Konfirmasi Tindakan',
+    message: '',
+    confirmText: 'Ya, Lanjutkan',
+    cancelText: 'Batal',
+    showCancel: true,
+    type: 'danger',
+    onConfirm: null,
+    isLoading: false
+  });
+
+  const closeConfirmModal = () => {
+    setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+  };
+
+  const showAlert = (message, title = 'Perhatian') => {
+    setConfirmModal({
+      isOpen: true,
+      title,
+      message,
+      confirmText: 'Mengerti',
+      cancelText: 'Tutup',
+      showCancel: false,
+      type: 'warning',
+      onConfirm: () => closeConfirmModal(),
+      isLoading: false
+    });
+  };
+
   // Attendance state
   const [attendanceList, setAttendanceList] = useState([]);
   const [loadingAttendance, setLoadingAttendance] = useState(true);
@@ -42,6 +80,19 @@ export default function Dashboard() {
   const [userList, setUserList] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [adminActionMsg, setAdminActionMsg] = useState({ type: '', message: '' });
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const [userRoleFilter, setUserRoleFilter] = useState('all');
+  const [userStatusFilter, setUserStatusFilter] = useState('all');
+
+  // Add User Modal state
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [newUserForm, setNewUserForm] = useState({ username: '', password: '', role: 'user' });
+  const [savingNewUser, setSavingNewUser] = useState(false);
+
+  // Reset Password Modal state
+  const [resetPasswordModalUser, setResetPasswordModalUser] = useState(null);
+  const [newPasswordInput, setNewPasswordInput] = useState('');
+  const [savingResetPassword, setSavingResetPassword] = useState(false);
 
   // Profile & Team state
   const [profileForm, setProfileForm] = useState({
@@ -246,6 +297,139 @@ export default function Dashboard() {
     }
   };
 
+  // Update User Role (Promote to Admin / Demote to User)
+  const handleUpdateUserRole = (userId, targetRole, targetUsername) => {
+    const isPromote = targetRole === 'admin';
+    setConfirmModal({
+      isOpen: true,
+      title: isPromote ? 'Jadikan Administrator' : 'Turunkan ke User',
+      message: isPromote 
+        ? `Apakah Anda yakin ingin MEMBERIKAN HAK AKSES ADMIN kepada akun '${targetUsername}'? Pengguna ini akan memiliki wewenang penuh mengelola konten dan pengguna website.`
+        : `Apakah Anda yakin ingin MENURUNKAN role akun '${targetUsername}' menjadi User (Anggota biasa)?`,
+      confirmText: isPromote ? 'Ya, Berikan Akses Admin' : 'Ya, Turunkan Role',
+      cancelText: 'Batal',
+      showCancel: true,
+      type: isPromote ? 'warning' : 'info',
+      onConfirm: async () => {
+        closeConfirmModal();
+        setAdminActionMsg({ type: '', message: '' });
+        try {
+          const token = localStorage.getItem('token');
+          const response = await axios.patch(
+            `http://localhost:5000/api/admin/users/${userId}/role`,
+            { role: targetRole },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          setAdminActionMsg({ type: 'success', message: response.data.message });
+          fetchUsers();
+        } catch (error) {
+          setAdminActionMsg({
+            type: 'error',
+            message: error.response?.data?.error || 'Gagal mengubah role pengguna.'
+          });
+        }
+      }
+    });
+  };
+
+  // Delete User
+  const handleDeleteUser = (userId, targetUsername) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Hapus Akun Pengguna',
+      message: `PERINGATAN: Apakah Anda yakin ingin MENGHAPUS akun '${targetUsername}' secara permanen?\n\nSeluruh riwayat presensi yang terkait akun ini juga akan terhapus. Tindakan ini tidak dapat dibatalkan.`,
+      confirmText: 'Ya, Hapus Akun',
+      cancelText: 'Batal',
+      showCancel: true,
+      type: 'danger',
+      onConfirm: async () => {
+        closeConfirmModal();
+        setAdminActionMsg({ type: '', message: '' });
+        try {
+          const token = localStorage.getItem('token');
+          const response = await axios.delete(
+            `http://localhost:5000/api/admin/users/${userId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          setAdminActionMsg({ type: 'success', message: response.data.message });
+          fetchUsers();
+        } catch (error) {
+          setAdminActionMsg({
+            type: 'error',
+            message: error.response?.data?.error || 'Gagal menghapus akun pengguna.'
+          });
+        }
+      }
+    });
+  };
+
+  // Submit Reset Password
+  const handleResetPasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (!resetPasswordModalUser) return;
+    if (newPasswordInput.length < 6) {
+      showAlert('Password baru minimal 6 karakter!', 'Validasi Password');
+      return;
+    }
+
+    setSavingResetPassword(true);
+    setAdminActionMsg({ type: '', message: '' });
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.patch(
+        `http://localhost:5000/api/admin/users/${resetPasswordModalUser.id}/reset-password`,
+        { newPassword: newPasswordInput },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setAdminActionMsg({ type: 'success', message: response.data.message });
+      setResetPasswordModalUser(null);
+      setNewPasswordInput('');
+      fetchUsers();
+    } catch (error) {
+      setAdminActionMsg({
+        type: 'error',
+        message: error.response?.data?.error || 'Gagal mereset password pengguna.'
+      });
+    } finally {
+      setSavingResetPassword(false);
+    }
+  };
+
+  // Submit Create User directly by Admin
+  const handleCreateUserSubmit = async (e) => {
+    e.preventDefault();
+    if (newUserForm.username.trim().length < 3) {
+      showAlert('Username minimal 3 karakter!', 'Validasi Formulir');
+      return;
+    }
+    if (newUserForm.password.length < 6) {
+      showAlert('Password minimal 6 karakter!', 'Validasi Formulir');
+      return;
+    }
+
+    setSavingNewUser(true);
+    setAdminActionMsg({ type: '', message: '' });
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        'http://localhost:5000/api/admin/users',
+        newUserForm,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setAdminActionMsg({ type: 'success', message: response.data.message });
+      setShowAddUserModal(false);
+      setNewUserForm({ username: '', password: '', role: 'user' });
+      fetchUsers();
+    } catch (error) {
+      setAdminActionMsg({
+        type: 'error',
+        message: error.response?.data?.error || 'Gagal menambahkan akun baru.'
+      });
+    } finally {
+      setSavingNewUser(false);
+    }
+  };
+
   // Clock In
   const handleClockIn = () => {
     setIsClockingIn(true);
@@ -382,21 +566,32 @@ export default function Dashboard() {
     }
   };
 
-  const handleDeleteMember = async (id) => {
-    if (!window.confirm('Yakin ingin menghapus anggota tim ini?')) return;
-    try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/team/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setTeamActionMsg({ type: 'success', message: 'Anggota tim berhasil dihapus.' });
-      fetchProfileAndTeam();
-    } catch (error) {
-      setTeamActionMsg({
-        type: 'error',
-        message: error.response?.data?.error || 'Gagal menghapus anggota tim.'
-      });
-    }
+  const handleDeleteMember = (id) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Hapus Anggota Tim',
+      message: 'Apakah Anda yakin ingin menghapus data anggota ini dari daftar susunan pengurus?',
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal',
+      showCancel: true,
+      type: 'danger',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          const token = localStorage.getItem('token');
+          await axios.delete(`http://localhost:5000/api/team/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setTeamActionMsg({ type: 'success', message: 'Anggota tim berhasil dihapus.' });
+          fetchProfileAndTeam();
+        } catch (error) {
+          setTeamActionMsg({
+            type: 'error',
+            message: error.response?.data?.error || 'Gagal menghapus anggota tim.'
+          });
+        }
+      }
+    });
   };
 
   // Media Handlers
@@ -465,21 +660,32 @@ export default function Dashboard() {
     }
   };
 
-  const handleDeleteMedia = async (id) => {
-    if (!window.confirm('Yakin ingin menghapus media ini?')) return;
-    try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/media/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setMediaActionMsg({ type: 'success', message: 'Media berhasil dihapus.' });
-      fetchMediaAndSocial();
-    } catch (error) {
-      setMediaActionMsg({
-        type: 'error',
-        message: error.response?.data?.error || 'Gagal menghapus media.'
-      });
-    }
+  const handleDeleteMedia = (id) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Hapus Konten Media',
+      message: 'Apakah Anda yakin ingin menghapus video/media ini?',
+      confirmText: 'Ya, Hapus Media',
+      cancelText: 'Batal',
+      showCancel: true,
+      type: 'danger',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          const token = localStorage.getItem('token');
+          await axios.delete(`http://localhost:5000/api/media/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setMediaActionMsg({ type: 'success', message: 'Media berhasil dihapus.' });
+          fetchMediaAndSocial();
+        } catch (error) {
+          setMediaActionMsg({
+            type: 'error',
+            message: error.response?.data?.error || 'Gagal menghapus media.'
+          });
+        }
+      }
+    });
   };
 
   const handleSaveSocialLink = async (e) => {
@@ -502,21 +708,32 @@ export default function Dashboard() {
     }
   };
 
-  const handleDeleteSocialLink = async (id) => {
-    if (!window.confirm('Yakin ingin menghapus akun medsos ini?')) return;
-    try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/social-links/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setSocialActionMsg({ type: 'success', message: 'Akun medsos berhasil dihapus.' });
-      fetchMediaAndSocial();
-    } catch (error) {
-      setSocialActionMsg({
-        type: 'error',
-        message: error.response?.data?.error || 'Gagal menghapus akun medsos.'
-      });
-    }
+  const handleDeleteSocialLink = (id) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Hapus Akun Medsos',
+      message: 'Apakah Anda yakin ingin menghapus akun media sosial ini dari daftar profil?',
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal',
+      showCancel: true,
+      type: 'danger',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          const token = localStorage.getItem('token');
+          await axios.delete(`http://localhost:5000/api/social-links/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setSocialActionMsg({ type: 'success', message: 'Akun medsos berhasil dihapus.' });
+          fetchMediaAndSocial();
+        } catch (error) {
+          setSocialActionMsg({
+            type: 'error',
+            message: error.response?.data?.error || 'Gagal menghapus akun medsos.'
+          });
+        }
+      }
+    });
   };
 
   // Article Edit & Delete Handlers (Hanya Admin)
@@ -579,24 +796,45 @@ export default function Dashboard() {
     }
   };
 
-  const handleDeleteArticle = async (id) => {
-    if (!window.confirm('Apakah Anda yakin ingin menghapus konten ini? Tindakan ini permanen.')) return;
-    try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/articles/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setArticleActionMsg({ type: 'success', message: 'Konten berhasil dihapus oleh Admin.' });
-      fetchArticlesAdmin();
-    } catch (error) {
-      setArticleActionMsg({
-        type: 'error',
-        message: error.response?.data?.error || 'Gagal menghapus konten.'
-      });
-    }
+  const handleDeleteArticle = (id) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Hapus Konten Publikasi',
+      message: 'Apakah Anda yakin ingin menghapus postingan/konten ini secara permanen? Data yang telah dihapus tidak dapat dipulihkan.',
+      confirmText: 'Ya, Hapus Permanen',
+      cancelText: 'Batal',
+      showCancel: true,
+      type: 'danger',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          const token = localStorage.getItem('token');
+          await axios.delete(`http://localhost:5000/api/articles/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setArticleActionMsg({ type: 'success', message: 'Konten berhasil dihapus oleh Admin.' });
+          fetchArticlesAdmin();
+        } catch (error) {
+          setArticleActionMsg({
+            type: 'error',
+            message: error.response?.data?.error || 'Gagal menghapus konten.'
+          });
+        }
+      }
+    });
   };
 
+  const totalUsersCount = userList.length;
+  const adminUsersCount = userList.filter(u => u.role === 'admin').length;
+  const standardUsersCount = userList.filter(u => u.role === 'user').length;
   const pendingUsersCount = userList.filter(u => u.status === 'pending').length;
+
+  const filteredUsers = userList.filter((usr) => {
+    const matchesSearch = usr.username.toLowerCase().includes(userSearchTerm.toLowerCase());
+    const matchesRole = userRoleFilter === 'all' || usr.role === userRoleFilter;
+    const matchesStatus = userStatusFilter === 'all' || usr.status === userStatusFilter;
+    return matchesSearch && matchesRole && matchesStatus;
+  });
 
   return (
     <div className="bg-gray-50 min-h-screen py-10 px-4">
@@ -658,7 +896,7 @@ export default function Dashboard() {
                   : 'bg-white text-primary-dark hover:bg-gray-100'
               }`}
             >
-              <ShieldCheck size={15} /> ACC User
+              <ShieldCheck size={15} /> ACC & Kelola User
               {pendingUsersCount > 0 && (
                 <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-black animate-pulse ml-0.5">
                   {pendingUsersCount}
@@ -772,116 +1010,476 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* TAB 2: PERSETUJUAN AKUN (ADMIN ONLY) */}
+        {/* TAB 2: PERSETUJUAN & PENGELOLAAN AKUN (ADMIN ONLY) */}
         {isAdmin && activeTab === 'users' && (
-          <div className="bg-white border-2 border-primary-dark shadow-hard p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 border-b-2 border-primary-dark pb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-blue text-white border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                  <ShieldCheck size={24} />
+          <div className="space-y-6">
+            <div className="bg-white border-2 border-primary-dark shadow-hard p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 border-b-2 border-primary-dark pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-gradient-blue text-white border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                    <ShieldCheck size={26} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-black text-primary-dark uppercase">
+                      Pengelolaan Akun & Persetujuan (ACC User)
+                    </h2>
+                    <p className="text-xs text-gray-600 font-medium">
+                      Verifikasi pendaftaran anggota, kelola hak akses Administrator / Anggota, reset password, dan kelola akun pengguna.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-xl font-black text-primary-dark uppercase">
-                    Persetujuan Akun (ACC User)
-                  </h2>
-                  <p className="text-xs text-gray-600 font-medium">
-                    Kelola pendaftaran anggota baru yang menunggu verifikasi untuk akses upload.
-                  </p>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowAddUserModal(true)}
+                    className="p-2 border-2 border-primary-dark bg-gradient-yellow text-primary-dark font-black text-xs flex items-center gap-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase"
+                  >
+                    <UserPlus size={15} /> + Tambah Akun
+                  </button>
+                  <button
+                    onClick={fetchUsers}
+                    disabled={loadingUsers}
+                    className="p-2 border-2 border-primary-dark bg-gray-100 hover:bg-gray-200 text-primary-dark font-bold text-xs flex items-center gap-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                  >
+                    <RefreshCw size={14} className={loadingUsers ? 'animate-spin' : ''} /> Segarkan
+                  </button>
                 </div>
               </div>
 
-              <button
-                onClick={fetchUsers}
-                disabled={loadingUsers}
-                className="p-2 border-2 border-primary-dark bg-gray-100 hover:bg-gray-200 text-primary-dark font-bold text-xs flex items-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-              >
-                <RefreshCw size={14} className={loadingUsers ? 'animate-spin' : ''} /> Segarkan
-              </button>
+              {/* STATS CARDS */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                <div className="bg-gray-50 border-2 border-primary-dark p-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 text-primary-dark border border-primary-dark rounded">
+                    <Users size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-500 uppercase block">Total Akun</span>
+                    <span className="text-lg font-black text-primary-dark">{totalUsersCount}</span>
+                  </div>
+                </div>
+
+                <div className="bg-yellow-50 border-2 border-primary-dark p-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-3">
+                  <div className="p-2 bg-yellow-200 text-yellow-900 border border-primary-dark rounded">
+                    <Shield size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-yellow-900 uppercase block">Admin</span>
+                    <span className="text-lg font-black text-yellow-900">{adminUsersCount}</span>
+                  </div>
+                </div>
+
+                <div className="bg-green-50 border-2 border-primary-dark p-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-3">
+                  <div className="p-2 bg-green-200 text-green-900 border border-primary-dark rounded">
+                    <UserCheck size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-green-900 uppercase block">User (Anggota)</span>
+                    <span className="text-lg font-black text-green-900">{standardUsersCount}</span>
+                  </div>
+                </div>
+
+                <div className={`border-2 border-primary-dark p-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-3 ${
+                  pendingUsersCount > 0 ? 'bg-red-50 border-red-600' : 'bg-gray-50'
+                }`}>
+                  <div className={`p-2 border border-primary-dark rounded ${
+                    pendingUsersCount > 0 ? 'bg-red-500 text-white animate-bounce' : 'bg-gray-200 text-gray-600'
+                  }`}>
+                    <Clock size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-600 uppercase block">Menunggu ACC</span>
+                    <span className={`text-lg font-black ${pendingUsersCount > 0 ? 'text-red-600' : 'text-primary-dark'}`}>
+                      {pendingUsersCount}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* SEARCH & FILTERS */}
+              <div className="bg-gray-50 border-2 border-primary-dark p-3 mb-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div className="relative flex-1">
+                  <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={userSearchTerm}
+                    onChange={(e) => setUserSearchTerm(e.target.value)}
+                    placeholder="Cari username..."
+                    className="w-full pl-9 pr-3 py-1.5 border-2 border-primary-dark text-xs font-medium bg-white outline-none"
+                  />
+                  {userSearchTerm && (
+                    <button
+                      onClick={() => setUserSearchTerm('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+                    >
+                      <X size={13} />
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] font-black uppercase text-primary-dark">Role:</span>
+                    <select
+                      value={userRoleFilter}
+                      onChange={(e) => setUserRoleFilter(e.target.value)}
+                      className="border-2 border-primary-dark px-2 py-1.5 text-xs font-bold bg-white outline-none"
+                    >
+                      <option value="all">Semua Role</option>
+                      <option value="admin">Administrator</option>
+                      <option value="user">User (Anggota)</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] font-black uppercase text-primary-dark">Status:</span>
+                    <select
+                      value={userStatusFilter}
+                      onChange={(e) => setUserStatusFilter(e.target.value)}
+                      className="border-2 border-primary-dark px-2 py-1.5 text-xs font-bold bg-white outline-none"
+                    >
+                      <option value="all">Semua Status</option>
+                      <option value="approved">Disetujui (ACC)</option>
+                      <option value="pending">Menunggu ACC</option>
+                      <option value="rejected">Ditolak</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {adminActionMsg.message && (
+                <div className={`mb-4 p-3 border-2 text-xs font-bold shadow-hard flex items-center justify-between gap-2 ${
+                  adminActionMsg.type === 'success' 
+                    ? 'bg-green-50 border-accent-dark text-accent-dark' 
+                    : 'bg-red-50 border-red-600 text-red-600'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    {adminActionMsg.type === 'success' ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
+                    <span>{adminActionMsg.message}</span>
+                  </div>
+                  <button 
+                    onClick={() => setAdminActionMsg({ type: '', message: '' })}
+                    className="text-gray-400 hover:text-gray-700"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
+
+              {/* TABLE */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-gradient-blue text-white text-xs uppercase">
+                      <th className="p-3 border-2 border-primary-dark">Pengguna</th>
+                      <th className="p-3 border-2 border-primary-dark">Hak Akses (Role)</th>
+                      <th className="p-3 border-2 border-primary-dark">Waktu Daftar</th>
+                      <th className="p-3 border-2 border-primary-dark">Status Akun</th>
+                      <th className="p-3 border-2 border-primary-dark text-center">Tindakan Admin</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-xs">
+                    {filteredUsers.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="p-6 text-center text-gray-500 font-medium italic border-2 border-primary-dark bg-gray-50">
+                          Tidak ada data akun yang cocok dengan pencarian atau filter.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredUsers.map((usr) => {
+                        const isMainAdmin = usr.username === 'admin';
+                        const isSelf = usr.username === username;
+
+                        return (
+                          <tr key={usr.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="p-3 border-2 border-primary-dark">
+                              <div className="flex items-center gap-2.5">
+                                <div className={`w-8 h-8 rounded flex items-center justify-center font-black text-xs border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] ${
+                                  usr.role === 'admin' ? 'bg-yellow-300 text-primary-dark' : 'bg-blue-100 text-blue-900'
+                                }`}>
+                                  {usr.username.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                  <div className="font-bold text-primary-dark flex items-center gap-1.5">
+                                    <span>{usr.username}</span>
+                                    {isSelf && (
+                                      <span className="text-[10px] bg-gray-200 px-1.5 py-0.2 border border-gray-400 font-bold">
+                                        Anda
+                                      </span>
+                                    )}
+                                    {isMainAdmin && (
+                                      <span className="text-[10px] bg-yellow-200 text-yellow-900 px-1.5 py-0.2 border border-yellow-700 font-black">
+                                        Utama
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+
+                            <td className="p-3 border-2 border-primary-dark">
+                              {usr.role === 'admin' ? (
+                                <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-900 font-black px-2 py-0.5 border border-yellow-800 uppercase text-[10px]">
+                                  <Shield size={11} /> Admin
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-800 font-black px-2 py-0.5 border border-blue-600 uppercase text-[10px]">
+                                  <Users size={11} /> User (Anggota)
+                                </span>
+                              )}
+                            </td>
+
+                            <td className="p-3 border-2 border-primary-dark text-gray-600 font-medium">
+                              {usr.created_at ? new Date(usr.created_at).toLocaleString('id-ID') : '-'}
+                            </td>
+
+                            <td className="p-3 border-2 border-primary-dark">
+                              {usr.status === 'approved' && (
+                                <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 font-black px-2 py-0.5 border border-green-800 uppercase text-[10px]">
+                                  <CheckCircle size={10} /> Disetujui (ACC)
+                                </span>
+                              )}
+                              {usr.status === 'pending' && (
+                                <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-900 font-black px-2 py-0.5 border border-yellow-800 uppercase text-[10px] animate-pulse">
+                                  <Clock size={10} /> Menunggu ACC
+                                </span>
+                              )}
+                              {usr.status === 'rejected' && (
+                                <span className="inline-flex items-center gap-1 bg-red-100 text-red-800 font-black px-2 py-0.5 border border-red-800 uppercase text-[10px]">
+                                  <AlertCircle size={10} /> Ditolak
+                                </span>
+                              )}
+                            </td>
+
+                            <td className="p-3 border-2 border-primary-dark">
+                              <div className="flex flex-wrap items-center justify-center gap-1.5">
+                                {/* ACC / TOLAK BUTTONS */}
+                                {!isMainAdmin && usr.status !== 'approved' && (
+                                  <button
+                                    onClick={() => handleUpdateUserStatus(usr.id, 'approved')}
+                                    className="inline-flex items-center gap-1 bg-gradient-green text-white font-bold px-2 py-1 border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase text-[10px]"
+                                    title="Setujui pendaftaran akun"
+                                  >
+                                    <UserCheck size={12} /> ACC
+                                  </button>
+                                )}
+
+                                {!isMainAdmin && !isSelf && usr.status !== 'rejected' && (
+                                  <button
+                                    onClick={() => handleUpdateUserStatus(usr.id, 'rejected')}
+                                    className="inline-flex items-center gap-1 bg-red-600 text-white font-bold px-2 py-1 border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase text-[10px]"
+                                    title="Tolak akun ini"
+                                  >
+                                    <UserX size={12} /> Tolak
+                                  </button>
+                                )}
+
+                                {/* ROLE TOGGLE BUTTONS */}
+                                {!isMainAdmin && !isSelf && (
+                                  <>
+                                    {usr.role === 'user' ? (
+                                      <button
+                                        onClick={() => handleUpdateUserRole(usr.id, 'admin', usr.username)}
+                                        className="inline-flex items-center gap-1 bg-gradient-yellow text-primary-dark font-black px-2 py-1 border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase text-[10px]"
+                                        title="Beri hak akses Administrator ke akun ini"
+                                      >
+                                        <Shield size={11} /> + Jadikan Admin
+                                      </button>
+                                    ) : (
+                                      <button
+                                        onClick={() => handleUpdateUserRole(usr.id, 'user', usr.username)}
+                                        className="inline-flex items-center gap-1 bg-gray-200 text-primary-dark font-bold px-2 py-1 border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase text-[10px]"
+                                        title="Turunkan hak akses ke User (Anggota)"
+                                      >
+                                        <UserMinus size={11} /> Jadikan User
+                                      </button>
+                                    )}
+                                  </>
+                                )}
+
+                                {/* RESET PASSWORD BUTTON */}
+                                {(!isMainAdmin || username === 'admin') && (
+                                  <button
+                                    onClick={() => {
+                                      setResetPasswordModalUser(usr);
+                                      setNewPasswordInput('');
+                                    }}
+                                    className="inline-flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-primary-dark font-bold px-2 py-1 border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase text-[10px]"
+                                    title="Reset password pengguna"
+                                  >
+                                    <Key size={11} /> Sandi
+                                  </button>
+                                )}
+
+                                {/* DELETE USER BUTTON */}
+                                {!isMainAdmin && !isSelf && (
+                                  <button
+                                    onClick={() => handleDeleteUser(usr.id, usr.username)}
+                                    className="inline-flex items-center p-1 bg-red-100 hover:bg-red-200 text-red-700 border border-red-700 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all"
+                                    title="Hapus akun permanen"
+                                  >
+                                    <Trash2 size={12} />
+                                  </button>
+                                )}
+
+                                {isMainAdmin && !isSelf && (
+                                  <span className="text-[11px] text-gray-400 italic">Akun Sistem</span>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            {adminActionMsg.message && (
-              <div className={`mb-4 p-3 border-2 text-xs font-bold shadow-hard flex items-center gap-2 ${
-                adminActionMsg.type === 'success' 
-                  ? 'bg-green-50 border-accent-dark text-accent-dark' 
-                  : 'bg-red-50 border-red-600 text-red-600'
-              }`}>
-                {adminActionMsg.type === 'success' ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
-                <span>{adminActionMsg.message}</span>
+            {/* MODAL: TAMBAH PENGGUNA BARU */}
+            {showAddUserModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                <div className="bg-white border-4 border-primary-dark shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="flex items-center justify-between border-b-2 border-primary-dark pb-3">
+                    <h3 className="text-lg font-black text-primary-dark uppercase flex items-center gap-2">
+                      <UserPlus size={20} /> Tambah Akun Baru
+                    </h3>
+                    <button
+                      onClick={() => setShowAddUserModal(false)}
+                      className="p-1 text-gray-400 hover:text-primary-dark"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-gray-600 font-medium bg-yellow-50 border border-yellow-300 p-2.5">
+                    💡 Akun yang dibuat langsung oleh Admin otomatis berstatus <strong>Disetujui (ACC)</strong> dan bisa langsung digunakan untuk login.
+                  </p>
+
+                  <form onSubmit={handleCreateUserSubmit} className="space-y-3.5">
+                    <div>
+                      <label className="block text-primary-dark font-black text-xs uppercase mb-1">
+                        Username *
+                      </label>
+                      <input
+                        type="text"
+                        value={newUserForm.username}
+                        onChange={(e) => setNewUserForm({ ...newUserForm, username: e.target.value })}
+                        required
+                        minLength={3}
+                        placeholder="cth: nama.anggota"
+                        className="w-full border-2 border-primary-dark px-3 py-2 text-xs font-bold outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-primary-dark font-black text-xs uppercase mb-1">
+                        Password Awal *
+                      </label>
+                      <input
+                        type="password"
+                        value={newUserForm.password}
+                        onChange={(e) => setNewUserForm({ ...newUserForm, password: e.target.value })}
+                        required
+                        minLength={6}
+                        placeholder="Minimal 6 karakter"
+                        className="w-full border-2 border-primary-dark px-3 py-2 text-xs font-bold outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-primary-dark font-black text-xs uppercase mb-1">
+                        Tingkat Akses (Role) *
+                      </label>
+                      <select
+                        value={newUserForm.role}
+                        onChange={(e) => setNewUserForm({ ...newUserForm, role: e.target.value })}
+                        className="w-full border-2 border-primary-dark px-3 py-2 text-xs font-bold outline-none bg-white"
+                      >
+                        <option value="user">User (Anggota KKN - Akses Upload & Presensi)</option>
+                        <option value="admin">Administrator (Akses Penuh Kelola Website & User)</option>
+                      </select>
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-2 border-t border-gray-200">
+                      <button
+                        type="button"
+                        onClick={() => setShowAddUserModal(false)}
+                        className="px-4 py-2 border-2 border-primary-dark text-xs font-bold text-gray-700 hover:bg-gray-100 uppercase"
+                      >
+                        Batal
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={savingNewUser}
+                        className="px-4 py-2 border-2 border-primary-dark bg-gradient-green text-white text-xs font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all flex items-center gap-1.5"
+                      >
+                        <Save size={14} /> {savingNewUser ? 'Menyimpan...' : 'Buat Akun'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
             )}
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-gradient-blue text-white text-xs uppercase">
-                    <th className="p-3 border-2 border-primary-dark">Username</th>
-                    <th className="p-3 border-2 border-primary-dark">Role</th>
-                    <th className="p-3 border-2 border-primary-dark">Waktu Daftar</th>
-                    <th className="p-3 border-2 border-primary-dark">Status Akun</th>
-                    <th className="p-3 border-2 border-primary-dark text-center">Tindakan Admin</th>
-                  </tr>
-                </thead>
-                <tbody className="text-xs">
-                  {userList.map((usr) => (
-                    <tr key={usr.id} className="hover:bg-gray-50">
-                      <td className="p-3 border-2 border-primary-dark font-bold text-primary-dark">
-                        {usr.username}
-                        {usr.username === username && (
-                          <span className="ml-2 text-[10px] bg-gray-200 px-1.5 py-0.5 border border-gray-400">Anda</span>
-                        )}
-                      </td>
-                      <td className="p-3 border-2 border-primary-dark uppercase font-medium">
-                        {usr.role}
-                      </td>
-                      <td className="p-3 border-2 border-primary-dark text-gray-600 font-medium">
-                        {usr.created_at ? new Date(usr.created_at).toLocaleString('id-ID') : '-'}
-                      </td>
-                      <td className="p-3 border-2 border-primary-dark">
-                        {usr.status === 'approved' && (
-                          <span className="bg-green-100 text-green-800 font-black px-2 py-0.5 border border-green-800 uppercase text-[10px]">
-                            Disetujui (ACC)
-                          </span>
-                        )}
-                        {usr.status === 'pending' && (
-                          <span className="bg-yellow-100 text-yellow-900 font-black px-2 py-0.5 border border-yellow-800 uppercase text-[10px]">
-                            Menunggu ACC
-                          </span>
-                        )}
-                        {usr.status === 'rejected' && (
-                          <span className="bg-red-100 text-red-800 font-black px-2 py-0.5 border border-red-800 uppercase text-[10px]">
-                            Ditolak
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-3 border-2 border-primary-dark text-center">
-                        {usr.username === 'admin' ? (
-                          <span className="text-gray-400 italic text-[11px]">Akun Utama</span>
-                        ) : (
-                          <div className="flex items-center justify-center gap-2">
-                            {usr.status !== 'approved' && (
-                              <button
-                                onClick={() => handleUpdateUserStatus(usr.id, 'approved')}
-                                className="inline-flex items-center gap-1 bg-gradient-green text-white font-bold px-2.5 py-1.5 border border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase text-[10px]"
-                              >
-                                <UserCheck size={12} /> ACC / Setujui
-                              </button>
-                            )}
-                            {usr.status !== 'rejected' && (
-                              <button
-                                onClick={() => handleUpdateUserStatus(usr.id, 'rejected')}
-                                className="inline-flex items-center gap-1 bg-red-600 text-white font-bold px-2.5 py-1.5 border border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase text-[10px]"
-                              >
-                                <UserX size={12} /> Tolak
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            {/* MODAL: RESET PASSWORD */}
+            {resetPasswordModalUser && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                <div className="bg-white border-4 border-primary-dark shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-w-sm w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="flex items-center justify-between border-b-2 border-primary-dark pb-3">
+                    <h3 className="text-lg font-black text-primary-dark uppercase flex items-center gap-2">
+                      <Key size={20} /> Reset Password
+                    </h3>
+                    <button
+                      onClick={() => setResetPasswordModalUser(null)}
+                      className="p-1 text-gray-400 hover:text-primary-dark"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  <div>
+                    <span className="text-xs text-gray-500 font-medium">Mereset sandi untuk akun:</span>
+                    <p className="text-sm font-black text-primary-dark mt-0.5 uppercase bg-gray-100 p-2 border border-primary-dark">
+                      {resetPasswordModalUser.username}
+                    </p>
+                  </div>
+
+                  <form onSubmit={handleResetPasswordSubmit} className="space-y-3.5">
+                    <div>
+                      <label className="block text-primary-dark font-black text-xs uppercase mb-1">
+                        Password Baru *
+                      </label>
+                      <input
+                        type="password"
+                        value={newPasswordInput}
+                        onChange={(e) => setNewPasswordInput(e.target.value)}
+                        required
+                        minLength={6}
+                        placeholder="Minimal 6 karakter"
+                        className="w-full border-2 border-primary-dark px-3 py-2 text-xs font-bold outline-none"
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-2 border-t border-gray-200">
+                      <button
+                        type="button"
+                        onClick={() => setResetPasswordModalUser(null)}
+                        className="px-4 py-2 border-2 border-primary-dark text-xs font-bold text-gray-700 hover:bg-gray-100 uppercase"
+                      >
+                        Batal
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={savingResetPassword}
+                        className="px-4 py-2 border-2 border-primary-dark bg-gradient-blue text-white text-xs font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all flex items-center gap-1.5"
+                      >
+                        <Lock size={14} /> {savingResetPassword ? 'Menyimpan...' : 'Perbarui Sandi'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -1711,6 +2309,20 @@ export default function Dashboard() {
             </div>
           </div>
         )}
+
+        {/* CUSTOM BRANDED CONFIRMATION / ALERT MODAL */}
+        <ConfirmModal
+          isOpen={confirmModal.isOpen}
+          title={confirmModal.title}
+          message={confirmModal.message}
+          confirmText={confirmModal.confirmText}
+          cancelText={confirmModal.cancelText}
+          showCancel={confirmModal.showCancel}
+          type={confirmModal.type}
+          onConfirm={confirmModal.onConfirm}
+          onCancel={closeConfirmModal}
+          isLoading={confirmModal.isLoading}
+        />
 
       </div>
     </div>
