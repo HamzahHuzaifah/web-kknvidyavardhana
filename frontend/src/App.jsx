@@ -9,6 +9,7 @@ import Profile from './pages/Profile';
 import Dashboard from './pages/Dashboard';
 import Media from './pages/Media';
 import ArticlesPage from './pages/ArticlesPage';
+import ArticleDetailPage from './pages/ArticleDetailPage';
 import AnimatedPage from './components/AnimatedPage';
 
 const ProtectedRoute = ({ children }) => {
@@ -29,6 +30,7 @@ function AnimatedRoutes() {
         <Route path="/profile" element={<AnimatedPage><Profile /></AnimatedPage>} />
         <Route path="/media" element={<AnimatedPage><Media /></AnimatedPage>} />
         <Route path="/berita" element={<AnimatedPage><ArticlesPage /></AnimatedPage>} />
+        <Route path="/berita/:slug" element={<AnimatedPage><ArticleDetailPage /></AnimatedPage>} />
         <Route path="/login" element={<AnimatedPage><Login /></AnimatedPage>} />
         <Route path="/register" element={<AnimatedPage><Register /></AnimatedPage>} />
         <Route 

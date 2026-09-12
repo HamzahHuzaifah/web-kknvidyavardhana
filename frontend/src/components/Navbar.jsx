@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { Home, User, BookOpen, LayoutDashboard, Image as ImageIcon, LogIn, LogOut, UserCircle, Menu, X } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 
@@ -8,6 +9,29 @@ export default function Navbar() {
   const token = localStorage.getItem('token');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [logoUrl, setLogoUrl] = useState('');
+
+  useEffect(() => {
+    const fetchLogo = async () => {
+      try {
+        const res = await axios.get('http://localhost:5000/api/profile-info');
+        if (res.data && res.data.logo_url) {
+          setLogoUrl(res.data.logo_url);
+        }
+      } catch (e) {
+        // fallback to default
+      }
+    };
+    fetchLogo();
+
+    const handleLogoUpdate = (e) => {
+      if (e.detail && e.detail.logo_url) {
+        setLogoUrl(e.detail.logo_url);
+      }
+    };
+    window.addEventListener('logoUpdated', handleLogoUpdate);
+    return () => window.removeEventListener('logoUpdated', handleLogoUpdate);
+  }, []);
 
   const confirmLogout = () => {
     localStorage.removeItem('token');
@@ -30,9 +54,17 @@ export default function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" onClick={closeMenu} className="flex-shrink-0 flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-yellow text-primary-dark font-bold flex items-center justify-center border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
-                K
-              </div>
+              {logoUrl ? (
+                <img
+                  src={`http://localhost:5000${logoUrl}`}
+                  alt="Logo"
+                  className="w-8 h-8 object-contain bg-white border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] p-0.5"
+                />
+              ) : (
+                <div className="w-8 h-8 bg-gradient-yellow text-primary-dark font-bold flex items-center justify-center border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+                  K
+                </div>
+              )}
               <span className="font-bold text-lg sm:text-xl tracking-tight uppercase">KKN Vidya Vardhana</span>
             </Link>
           </div>

@@ -1,0 +1,150 @@
+const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
+const { pool } = require('../config/db');
+
+// Ensure uploads folder exists
+const uploadDir = path.join(__dirname, '..', 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Multer Storage Configuration
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage: storage });
+
+const uploadFields = upload.fields([
+  { name: 'image', maxCount: 1 },
+  { name: 'document', maxCount: 1 }
+]);
+
+// Helper to detect file type category
+const detectFileType = (file) => {
+  const mime = (file.mimetype || '').toLowerCase();
+  const ext = path.extname(file.originalname || file.filename || '').toLowerCase();
+
+  if (
+    mime.startsWith('image/') ||
+    ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.ico', '.avif'].includes(ext)
+  ) {
+    return 'image';
+  }
+  if (
+    mime.startsWith('video/') ||
+    ['.mp4', '.webm', '.mkv', '.mov', '.avi', '.flv', '.wmv', '.m4v'].includes(ext)
+  ) {
+    return 'video';
+  }
+  if (
+    mime.startsWith('audio/') ||
+    ['.mp3', '.wav', '.ogg', '.m4a', '.aac', '.flac'].includes(ext)
+  ) {
+    return 'audio';
+  }
+  if (
+    mime.includes('pdf') ||
+    mime.includes('document') ||
+    mime.includes('word') ||
+    mime.includes('sheet') ||
+    mime.includes('excel') ||
+    mime.includes('presentation') ||
+    mime.includes('powerpoint') ||
+    mime.includes('text') ||
+    mime.includes('zip') ||
+    mime.includes('rar') ||
+    ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.csv', '.zip', '.rar', '.7z'].includes(ext)
+  ) {
+    return 'document';
+  }
+  return 'other';
+};
+
+// Helper to register file to media_files table
+const registerMediaFile = async (file, uploadedBy = 'Admin', source = 'direct_upload') => {
+  if (!file) return null;
+  try {
+    const fileType = detectFileType(file);
+    const fileUrl = `/uploads/${file.filename}`;
+    const originalName = file.originalname || file.filename;
+    const mimeType = file.mimetype || 'application/octet-stream';
+    const fileSize = file.size || 0;
+
+    const [result] = await pool.query(
+      `INSERT INTO media_files 
+       (filename, original_name, file_url, file_type, mime_type, file_size, uploaded_by, source) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [file.filename, originalName, fileUrl, fileType, mimeType, fileSize, uploadedBy || 'Admin', source]
+    );
+
+    return {
+      id: result.insertId,
+      filename: file.filename,
+      original_name: originalName,
+      file_url: fileUrl,
+      file_type: fileType,
+      mime_type: mimeType,
+      file_size: fileSize,
+      uploaded_by: uploadedBy || 'Admin',
+      source
+    };
+  } catch (err) {
+    console.error('Error registering media file in database:', err);
+    return null;
+  }
+};
+
+// Sync existing files in uploads folder into media_files if missing
+const syncExistingUploads = async () => {
+  try {
+    if (!fs.existsSync(uploadDir)) return;
+    const uploadFiles = fs.readdirSync(uploadDir);
+    for (const fname of uploadFiles) {
+      const filePath = path.join(uploadDir, fname);
+      const stat = fs.statSync(filePath);
+      if (stat.isFile()) {
+        const [existing] = await pool.query('SELECT id FROM media_files WHERE filename = ?', [fname]);
+        if (existing.length === 0) {
+          const fakeFile = {
+            filename: fname,
+            originalname: fname,
+            size: stat.size,
+            mimetype: ''
+          };
+          const fileType = detectFileType(fakeFile);
+          await pool.query(
+            `INSERT INTO media_files 
+             (filename, original_name, file_url, file_type, mime_type, file_size, uploaded_by, source) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [fname, fname, `/uploads/${fname}`, fileType, 'application/octet-stream', stat.size, 'System', 'existing']
+          );
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Sync uploads warning:', err.message);
+  }
+};
+
+// Helper to generate slug
+const generateSlug = (title) => {
+  return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+};
+
+module.exports = {
+  uploadDir,
+  upload,
+  uploadFields,
+  detectFileType,
+  registerMediaFile,
+  syncExistingUploads,
+  generateSlug
+};

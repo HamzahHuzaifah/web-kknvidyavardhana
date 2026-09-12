@@ -3,18 +3,24 @@ import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   Upload, 
+  UploadCloud,
   FileText, 
   Image as ImageIcon, 
   CheckCircle, 
   AlertCircle, 
   Paperclip, 
   Layers, 
-  ShieldAlert,
-  ArrowLeft,
-  BookOpen,
-  LogIn,
-  UserPlus,
-  UserCheck
+  ShieldAlert, 
+  ArrowLeft, 
+  BookOpen, 
+  LogIn, 
+  UserPlus, 
+  UserCheck, 
+  FolderOpen, 
+  GraduationCap, 
+  Tag, 
+  Hash, 
+  Sparkles 
 } from 'lucide-react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
@@ -24,6 +30,10 @@ export default function UploadForm() {
     title: '',
     category: 'berita', // 'berita' | 'publikasi' | 'modul'
     content: '',
+    abstract: '',
+    keywords: '',
+    authors_meta: '',
+    doi_or_reg: '',
     image: null,
     document: null
   });
@@ -94,6 +104,11 @@ export default function UploadForm() {
     data.append('title', formData.title);
     data.append('category', formData.category);
     data.append('content', formData.content);
+    data.append('abstract', formData.abstract);
+    data.append('keywords', formData.keywords);
+    data.append('authors_meta', formData.authors_meta);
+    data.append('doi_or_reg', formData.doi_or_reg);
+
     if (formData.image) {
       data.append('image', formData.image);
     }
@@ -113,7 +128,17 @@ export default function UploadForm() {
         type: 'success', 
         message: response.data.message || `Konten ${formData.category.toUpperCase()} berhasil dipublikasikan!` 
       });
-      setFormData({ title: '', category: formData.category, content: '', image: null, document: null });
+      setFormData({ 
+        title: '', 
+        category: formData.category, 
+        content: '', 
+        abstract: '',
+        keywords: '',
+        authors_meta: '',
+        doi_or_reg: '',
+        image: null, 
+        document: null 
+      });
       setPreview(null);
       setDocumentName('');
       if (document.getElementById('image-upload')) {
@@ -143,31 +168,8 @@ export default function UploadForm() {
     ]
   };
 
-  const categoryConfigs = {
-    berita: {
-      titleLabel: 'Judul Berita Kegiatan *',
-      titlePlaceholder: 'Contoh: Pelatihan Digital Marketing untuk Pengrajin Bambu Desa Ciasihan...',
-      contentPlaceholder: 'Tuliskan rangkaian acara kegiatan, sambutan aparat desa, dan hasil pelaksanaan...',
-      docRequired: false,
-      badge: '📰 Berita KKN'
-    },
-    publikasi: {
-      titleLabel: 'Judul Laporan / Riset Publikasi *',
-      titlePlaceholder: 'Contoh: Laporan Pengabdian: Analisis Kelayakan Program Bank Sampah Desa...',
-      contentPlaceholder: 'Tuliskan abstrak, metodologi pengabdian, temuan lapangan, dan rekomendasi...',
-      docRequired: false,
-      badge: '📑 Publikasi Ilmiah'
-    },
-    modul: {
-      titleLabel: 'Judul Modul & Buku Saku *',
-      titlePlaceholder: 'Contoh: Buku Saku Panduan Pengolahan Kompos & Pupuk Organik Cair...',
-      contentPlaceholder: 'Tuliskan deskripsi modul, sasaran pembaca (warga/pemuda), dan cara penggunaan modul...',
-      docRequired: true,
-      badge: '📚 Modul Pelatihan'
-    }
-  };
-
-  const currentConfig = categoryConfigs[formData.category] || categoryConfigs.berita;
+  const isAcademic = formData.category === 'publikasi';
+  const isModule = formData.category === 'modul';
 
   return (
     <div className="bg-gray-50 min-h-screen py-12 px-4 space-y-8">
@@ -177,240 +179,349 @@ export default function UploadForm() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-4 border-primary-dark pb-4">
           <div>
             <span className="bg-gradient-yellow text-primary-dark text-xs font-black px-3 py-1 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] uppercase tracking-wider mb-2 inline-block">
-              Ruang Publikasi Anggota
+              Panel Publikasi Resmi
             </span>
-            <h1 className="text-3xl md:text-4xl font-black text-primary-dark uppercase flex items-center gap-3">
-              <Upload className="text-secondary-dark shrink-0" size={36} /> 
-              Upload Berita, Publikasi & Modul
+            <h1 className="text-3xl sm:text-4xl font-black text-primary-dark uppercase tracking-tight flex items-center gap-3">
+              <Upload className="text-secondary-dark shrink-0" size={32} /> 
+              Publikasikan Karya & Berita
             </h1>
           </div>
 
           <Link
             to="/berita"
-            className="text-xs font-bold text-primary-dark hover:underline flex items-center gap-1 self-start sm:self-auto"
+            className="inline-flex items-center gap-1.5 text-xs font-black uppercase text-primary-dark border-2 border-primary-dark bg-white px-3.5 py-2 shadow-hard hover:translate-y-0.5 hover:shadow-none transition-all self-start sm:self-auto"
           >
-            <ArrowLeft size={14} /> Lihat Berita & Modul
+            <ArrowLeft size={14} /> Lihat Semua Publikasi
           </Link>
         </div>
 
-        {/* User Session Banner or Guest Notice */}
-        {token ? (
-          <div className="p-4 bg-white border-2 border-primary-dark shadow-hard flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <UserCheck className="text-accent-dark shrink-0" size={20} />
-              <div>
-                <span className="text-xs text-gray-500 font-medium">Masuk Sebagai:</span>
-                <p className="text-xs font-black text-primary-dark uppercase">
-                  {username} <span className="text-gray-400 font-normal">({role?.toUpperCase()})</span>
-                </p>
-              </div>
+        {/* Info Box Akun Login */}
+        <div className="bg-white border-2 border-primary-dark shadow-hard p-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-gradient-blue text-white border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]">
+              <UserCheck size={18} />
             </div>
-            <span className="bg-green-100 text-green-900 border border-green-800 text-[10px] font-black uppercase px-2 py-0.5">
-              Siap Mempublikasikan
-            </span>
-          </div>
-        ) : (
-          <div className="p-5 bg-amber-50 border-2 border-primary-dark shadow-hard flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <h4 className="text-xs sm:text-sm font-black text-amber-950 uppercase flex items-center gap-1.5">
-                <ShieldAlert size={18} className="text-amber-700 shrink-0" /> Anda Belum Masuk Akun
-              </h4>
-              <p className="text-xs text-amber-900 font-medium">
-                Untuk dapat mengirim publikasi atau modul baru, Anda perlu masuk ke akun terlebih dahulu.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
-              <Link
-                to="/login"
-                className="flex-1 sm:flex-none text-center bg-gradient-blue text-white text-xs font-black uppercase px-4 py-2 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all flex items-center justify-center gap-1"
-              >
-                <LogIn size={13} /> Masuk
-              </Link>
-              <Link
-                to="/register"
-                className="flex-1 sm:flex-none text-center bg-gradient-yellow text-primary-dark text-xs font-black uppercase px-4 py-2 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all flex items-center justify-center gap-1"
-              >
-                <UserPlus size={13} /> Daftar
-              </Link>
+            <div>
+              <span className="text-[10px] font-bold text-gray-500 uppercase block">Mengunggah Sebagai:</span>
+              <span className="text-sm font-black text-primary-dark uppercase">
+                {username || 'Pengguna'} ({role === 'admin' ? 'ADMINISTRATOR' : 'ANGGOTA KKN'})
+              </span>
             </div>
           </div>
-        )}
+          <span className="text-xs bg-yellow-100 text-yellow-900 border border-yellow-800 font-bold px-2.5 py-1">
+            Status: Terverifikasi
+          </span>
+        </div>
 
-        {/* Status Message */}
+        {/* Feedback Alert */}
         {status.message && (
-          <div className={`p-4 border-2 shadow-hard flex items-start gap-3 ${
-            status.type === 'success' 
-              ? 'bg-green-50 border-accent-dark text-accent-dark' 
-              : 'bg-red-50 border-red-600 text-red-600'
-          }`}>
-            {status.type === 'success' ? <CheckCircle className="shrink-0 mt-0.5" /> : <AlertCircle className="shrink-0 mt-0.5" />}
-            <span className="font-bold text-xs sm:text-sm leading-relaxed">{status.message}</span>
+          <div
+            className={`p-4 border-2 text-xs font-bold shadow-hard flex items-start gap-3 ${
+              status.type === 'success'
+                ? 'bg-green-50 border-accent-dark text-accent-dark'
+                : 'bg-red-50 border-red-600 text-red-600'
+            }`}
+          >
+            {status.type === 'success' ? (
+              <CheckCircle size={18} className="shrink-0 mt-0.5" />
+            ) : (
+              <AlertCircle size={18} className="shrink-0 mt-0.5" />
+            )}
+            <div className="flex-1">
+              <span>{status.message}</span>
+              {status.type === 'success' && (
+                <div className="mt-2">
+                  <Link
+                    to="/berita"
+                    className="underline font-black uppercase tracking-wider text-[11px] hover:text-black"
+                  >
+                    Buka Halaman Publikasi & Baca Sekarang →
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
-        {/* FORM CONTAINER */}
+        {/* MAIN FORM */}
         <form onSubmit={handleSubmit} className="bg-white border-2 border-primary-dark shadow-hard p-6 md:p-8 space-y-6">
           
-          {/* CATEGORY TABS SELECTOR */}
+          {/* CATEGORY SELECTOR PILLS */}
           <div>
-            <label className="block text-primary-dark font-black mb-2 uppercase text-xs tracking-wider flex items-center gap-1.5">
-              <Layers size={16} className="text-secondary-dark" /> Pilih Jenis Konten yang Ingin Dibuat *
+            <label className="block text-primary-dark font-black text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <Layers size={16} /> Pilih Format Konten *
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
                 { 
                   id: 'berita', 
-                  label: '📰 Buat Berita', 
-                  desc: 'Dokumentasi & warta kegiatan acara KKN' 
+                  label: '📰 Berita & Kabar', 
+                  desc: 'Dokumentasi kegiatan harian, kabar desa, dan liputan program kerja.' 
                 },
                 { 
                   id: 'publikasi', 
-                  label: '📑 Unggah Publikasi', 
-                  desc: 'Riset, artikel ilmiah & laporan pengabdian' 
+                  label: '📑 Jurnal & Publikasi Ilmiah', 
+                  desc: 'Laporan pengabdian ilmiah, paper riset KKN, artikel berstandar OJS & SINTA.' 
                 },
                 { 
                   id: 'modul', 
-                  label: '📚 Unggah Modul', 
-                  desc: 'Buku saku, modul & panduan warga (PDF)' 
+                  label: '📚 Modul & Buku Saku', 
+                  desc: 'Panduan teknis, modul edukasi masyarakat, dan buku saku pelatihan.' 
                 }
-              ].map((cat) => (
+              ].map((c) => (
                 <button
-                  key={cat.id}
                   type="button"
-                  onClick={() => setFormData({ ...formData, category: cat.id })}
-                  className={`p-3.5 border-2 border-primary-dark text-left transition-all ${
-                    formData.category === cat.id
-                      ? 'bg-gradient-yellow text-primary-dark shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5'
-                      : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                  key={c.id}
+                  onClick={() => setFormData({ ...formData, category: c.id })}
+                  className={`p-3 text-left border-2 border-primary-dark transition-all flex flex-col justify-between ${
+                    formData.category === c.id
+                      ? 'bg-gradient-yellow text-primary-dark shadow-hard translate-y-0.5'
+                      : 'bg-white hover:bg-gray-50 text-gray-700 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
                   }`}
                 >
-                  <div className="font-black text-xs uppercase">{cat.label}</div>
-                  <div className="text-[10px] text-gray-600 font-medium mt-1 leading-snug">{cat.desc}</div>
+                  <span className="font-black text-xs uppercase mb-1">{c.label}</span>
+                  <span className="text-[10px] text-gray-600 font-medium leading-tight">{c.desc}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Title Input */}
+          {/* ACADEMIC / OJS NOTICE BANNER */}
+          {isAcademic && (
+            <div className="p-3.5 bg-blue-50 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-start gap-2.5">
+              <GraduationCap size={20} className="text-secondary-dark shrink-0 mt-0.5" />
+              <div className="text-xs space-y-0.5">
+                <span className="font-black uppercase text-primary-dark block">Standar Publikasi Ilmiah (OJS & Google Scholar)</span>
+                <p className="text-gray-600 font-medium text-[11px]">
+                  Format ini menyertakan metadata akademik resmi (Abstrak, Kata Kunci, Penulis & Afiliasi, serta No. Registrasi) agar otomatis terindeks dan mendukung fitur sitasi (APA/IEEE).
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* JUDUL KONTEN */}
           <div>
-            <label htmlFor="title" className="block text-primary-dark font-black mb-1.5 uppercase text-xs tracking-wider flex items-center gap-1.5">
-              <FileText size={16} /> {currentConfig.titleLabel}
+            <label className="block text-primary-dark font-black text-xs uppercase tracking-wider mb-2">
+              {isAcademic ? 'Judul Artikel / Naskah Publikasi Ilmiah *' : isModule ? 'Judul Modul & Buku Saku *' : 'Judul Berita Kegiatan *'}
             </label>
             <input
               type="text"
-              id="title"
               name="title"
               value={formData.title}
               onChange={handleInputChange}
               required
-              className="w-full border-2 border-primary-dark px-4 py-2.5 text-xs font-medium focus:outline-none focus:border-secondary-dark transition-colors bg-gray-50"
-              placeholder={currentConfig.titlePlaceholder}
+              placeholder={
+                isAcademic 
+                  ? 'Contoh: Pemberdayaan UMKM Pengrajin Bambu Melalui Digital Marketing di Desa Ciasihan...' 
+                  : isModule 
+                  ? 'Contoh: Buku Saku Panduan Pembuatan Pupuk Kompos Organik Skala Rumah Tangga...' 
+                  : 'Contoh: Mahasiswa KKN Vidya Vardhana Gelar Sosialisasi Pola Hidup Bersih...'
+              }
+              className="w-full border-2 border-primary-dark p-3 text-xs sm:text-sm font-bold bg-gray-50 focus:bg-white outline-none transition-colors"
             />
           </div>
 
-          {/* Cover Image Upload */}
-          <div>
-            <label className="block text-primary-dark font-black mb-1.5 uppercase text-xs tracking-wider flex items-center gap-1.5">
-              <ImageIcon size={16} /> Foto Sampul / Poster Dokumentasi (Opsional)
-            </label>
-            <div className="border-2 border-dashed border-primary-dark bg-gray-50 p-5 flex flex-col items-center justify-center relative hover:bg-gray-100 transition-colors cursor-pointer group">
-              <input
-                type="file"
-                id="image-upload"
-                name="image"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-              />
-              {preview ? (
-                <div className="w-full relative z-0 text-center">
-                  <img src={preview} alt="Preview" className="max-h-56 mx-auto object-contain border-2 border-primary-dark" />
-                  <div className="mt-2 text-xs font-bold text-secondary-dark">Klik untuk mengganti gambar</div>
-                </div>
-              ) : (
-                <div className="text-center relative z-0">
-                  <div className="bg-primary-dark text-white p-2.5 inline-flex rounded-full mb-2 group-hover:scale-110 transition-transform">
-                    <Upload size={20} />
-                  </div>
-                  <p className="text-primary-dark font-bold text-xs">Pilih Foto Sampul / Poster</p>
-                  <p className="text-gray-500 text-[11px] mt-0.5">JPG, PNG, WebP</p>
-                </div>
-              )}
+          {/* ACADEMIC FIELDS: AUTHORS & AFFILIATION, DOI/REG */}
+          {(isAcademic || isModule) && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-yellow-50/60 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+              <div>
+                <label className="block text-primary-dark font-black text-[11px] uppercase tracking-wider mb-1 flex items-center gap-1">
+                  <GraduationCap size={14} /> Penulis & Afiliasi Kampus
+                </label>
+                <input
+                  type="text"
+                  name="authors_meta"
+                  value={formData.authors_meta}
+                  onChange={handleInputChange}
+                  placeholder="Contoh: Hamzah Huzaifah (UPN Veteran Jakarta), Tim KKN"
+                  className="w-full border-2 border-primary-dark p-2 text-xs bg-white outline-none font-medium"
+                />
+                <span className="text-[9px] text-gray-500 mt-0.5 block">Format: Nama Penulis (Universitas/Jurusan)</span>
+              </div>
+
+              <div>
+                <label className="block text-primary-dark font-black text-[11px] uppercase tracking-wider mb-1 flex items-center gap-1">
+                  <Hash size={14} /> No. Registrasi LPPM / DOI / ISBN
+                </label>
+                <input
+                  type="text"
+                  name="doi_or_reg"
+                  value={formData.doi_or_reg}
+                  onChange={handleInputChange}
+                  placeholder="Contoh: LPPM-KKN/2026/08/VV-01 atau DOI: 10.xxxx/..."
+                  className="w-full border-2 border-primary-dark p-2 text-xs bg-white outline-none font-medium"
+                />
+                <span className="text-[9px] text-gray-500 mt-0.5 block">Identitas registrasi ilmiah atau nomor modul</span>
+              </div>
+
+              {/* KEYWORDS */}
+              <div className="sm:col-span-2">
+                <label className="block text-primary-dark font-black text-[11px] uppercase tracking-wider mb-1 flex items-center gap-1">
+                  <Tag size={14} /> Kata Kunci (Keywords)
+                </label>
+                <input
+                  type="text"
+                  name="keywords"
+                  value={formData.keywords}
+                  onChange={handleInputChange}
+                  placeholder="Contoh: KKN; UMKM; Digital Marketing; Ciasihan; Pemberdayaan"
+                  className="w-full border-2 border-primary-dark p-2 text-xs bg-white outline-none font-medium"
+                />
+                <span className="text-[9px] text-gray-500 mt-0.5 block">Pisahkan kata kunci dengan tanda titik koma (;) atau koma</span>
+              </div>
+
+              {/* ABSTRACT */}
+              <div className="sm:col-span-2">
+                <label className="block text-primary-dark font-black text-[11px] uppercase tracking-wider mb-1">
+                  {isAcademic ? 'Abstrak (Abstract) Publikasi *' : 'Sinopsis / Ringkasan Modul *'}
+                </label>
+                <textarea
+                  name="abstract"
+                  rows={3}
+                  value={formData.abstract}
+                  onChange={handleInputChange}
+                  placeholder="Tuliskan intisari latar belakang, metode pengabdian, hasil program, dan kesimpulan (150-250 kata)..."
+                  className="w-full border-2 border-primary-dark p-2.5 text-xs bg-white outline-none font-medium"
+                />
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Document / PDF Attachment (Highlighted for Modul and Publikasi) */}
-          <div className={`p-4 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${
-            formData.category === 'modul' || formData.category === 'publikasi' ? 'bg-yellow-50' : 'bg-gray-50'
-          }`}>
-            <label className="block text-primary-dark font-black mb-1 uppercase text-xs tracking-wider flex items-center gap-1.5">
-              <Paperclip size={16} className="text-accent-dark" /> 
-              Lampiran Berkas Dokumen (PDF / Word / Zip) {formData.category === 'modul' && <span className="text-red-600 font-bold">*Sangat Dianjurkan untuk Modul</span>}
-            </label>
-            <p className="text-[11px] text-gray-600 font-medium mb-3">
-              {formData.category === 'modul'
-                ? 'Lampirkan file PDF buku saku / modul pelatihan agar warga dapat mengunduhnya langsung.'
-                : 'Lampirkan berkas naskah lengkap atau laporan pengabdian jika ada.'}
-            </p>
-            <input
-              type="file"
-              id="document-upload"
-              name="document"
-              accept=".pdf,.doc,.docx,.ppt,.pptx,.zip"
-              onChange={handleDocumentChange}
-              className="w-full border-2 border-primary-dark p-2 text-xs bg-white"
-            />
-            {documentName && (
-              <p className="mt-2 text-xs font-bold text-accent-dark flex items-center gap-1">
-                ✓ Berkas siap diunggah: {documentName}
-              </p>
-            )}
-          </div>
-
-          {/* Content Input (ReactQuill Rich Text) */}
+          {/* ISI KONTEN LENGKAP (QUILL) */}
           <div>
-            <label htmlFor="content" className="block text-primary-dark font-black mb-1.5 uppercase text-xs tracking-wider flex items-center gap-1.5">
-              <FileText size={16} /> Isi Artikel & Rincian Pembahasan *
+            <label className="block text-primary-dark font-black text-xs uppercase tracking-wider mb-2 flex items-center justify-between">
+              <span>{isAcademic ? 'Isi Naskah / Pembahasan Ilmiah Lengkap *' : 'Uraian Konten & Pembahasan *'}</span>
+              <span className="text-[10px] text-gray-500 font-bold">Mendukung format Rich Text Editor</span>
             </label>
-            <div className="border-2 border-primary-dark">
-              <ReactQuill 
-                theme="snow" 
-                value={formData.content} 
+            <div className="border-2 border-primary-dark bg-white">
+              <ReactQuill
+                theme="snow"
+                value={formData.content}
                 onChange={handleQuillChange}
                 modules={modules}
-                className="bg-white min-h-[220px]"
-                placeholder={currentConfig.contentPlaceholder}
+                placeholder="Tuliskan naskah lengkap, dokumentasi terperinci, atau panduan modul di sini..."
+                className="min-h-[220px]"
               />
             </div>
           </div>
 
-          {/* Notice about Roles */}
-          <div className="p-3 bg-gray-100 border-2 border-primary-dark text-[11px] text-gray-700 font-medium flex items-start gap-2">
-            <ShieldAlert size={18} className="shrink-0 text-primary-dark mt-0.5" />
-            <span>
-              <strong>Aturan Pengelolaan:</strong> Seluruh anggota (User) dapat mengunggah postingan baru. Pengubahan teks (edit) dan penghapusan konten hanya dapat dilakukan oleh <strong>Admin</strong> melalui panel Dashboard KKN.
-            </span>
+          {/* FILE UPLOAD SECTION */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+            
+            {/* COVER IMAGE */}
+            <div className="p-4 border-2 border-primary-dark bg-gray-50 space-y-3">
+              <div className="flex items-center gap-2">
+                <ImageIcon size={18} className="text-primary-dark" />
+                <label className="font-black text-xs uppercase text-primary-dark">
+                  Foto Sampul (Cover Image)
+                </label>
+              </div>
+
+              {preview ? (
+                <div className="relative border-2 border-primary-dark h-36 bg-black overflow-hidden flex items-center justify-center">
+                  <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPreview(null);
+                      setFormData({ ...formData, image: null });
+                      if (document.getElementById('image-upload')) {
+                        document.getElementById('image-upload').value = '';
+                      }
+                    }}
+                    className="absolute top-2 right-2 bg-red-600 text-white text-[10px] font-black uppercase px-2 py-0.5 border border-primary-dark"
+                  >
+                    Ganti
+                  </button>
+                </div>
+              ) : (
+                <label className="border-2 border-dashed border-primary-dark p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-yellow-50/50 transition-colors text-center">
+                  <UploadCloud size={28} className="text-gray-400 mb-1" />
+                  <span className="text-xs font-black text-primary-dark uppercase">Pilih Gambar Sampul</span>
+                  <span className="text-[10px] text-gray-500 mt-0.5">JPG, PNG, WebP (Maks 10MB)</span>
+                  <input
+                    id="image-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </label>
+              )}
+            </div>
+
+            {/* DOCUMENT / PDF FILE */}
+            <div className="p-4 border-2 border-primary-dark bg-gray-50 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileText size={18} className="text-primary-dark" />
+                  <label className="font-black text-xs uppercase text-primary-dark">
+                    Naskah Lengkap (PDF / Modul)
+                  </label>
+                </div>
+                {isAcademic && (
+                  <span className="text-[10px] font-black uppercase bg-gradient-yellow px-1.5 py-0.5 border border-primary-dark">
+                    Sangat Dianjurkan
+                  </span>
+                )}
+              </div>
+
+              {documentName ? (
+                <div className="p-4 bg-white border-2 border-primary-dark flex items-center justify-between gap-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                  <div className="flex items-center gap-2 truncate">
+                    <Paperclip size={16} className="text-secondary-dark shrink-0" />
+                    <span className="text-xs font-bold text-primary-dark truncate">{documentName}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDocumentName('');
+                      setFormData({ ...formData, document: null });
+                      if (document.getElementById('document-upload')) {
+                        document.getElementById('document-upload').value = '';
+                      }
+                    }}
+                    className="text-red-600 font-bold text-xs hover:underline shrink-0"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              ) : (
+                <label className="border-2 border-dashed border-primary-dark p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-yellow-50/50 transition-colors text-center">
+                  <FileText size={28} className="text-gray-400 mb-1" />
+                  <span className="text-xs font-black text-primary-dark uppercase">
+                    Pilih File PDF Naskah / Modul
+                  </span>
+                  <span className="text-[10px] text-gray-500 mt-0.5">PDF, DOCX, ZIP (Untuk Dibaca di Web)</span>
+                  <input
+                    id="document-upload"
+                    type="file"
+                    accept=".pdf,.doc,.docx,.zip"
+                    onChange={handleDocumentChange}
+                    className="hidden"
+                  />
+                </label>
+              )}
+            </div>
+
           </div>
 
-          {/* Submit Button */}
+          {/* SUBMIT BUTTON */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-gradient-yellow text-primary-dark font-black text-sm uppercase tracking-wider py-4 border-2 border-primary-dark shadow-hard hover:translate-y-0.5 hover:shadow-none transition-all disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+            className="w-full bg-gradient-green text-white font-black py-3.5 border-2 border-primary-dark shadow-hard hover:translate-y-1 hover:shadow-none transition-all disabled:opacity-70 flex items-center justify-center gap-2 text-sm uppercase tracking-wider"
           >
             {isSubmitting ? (
-              <>
-                <div className="animate-spin w-4 h-4 border-2 border-primary-dark border-t-transparent rounded-full"></div>
-                Memproses Unggahan...
-              </>
+              'Sedang Mempublikasikan...'
             ) : (
               <>
-                <Upload size={18} /> Publikasikan {formData.category.toUpperCase()} Sekarang
+                <UploadCloud size={18} /> Publikasikan {formData.category.toUpperCase()} Sekarang
               </>
             )}
           </button>
         </form>
+
       </div>
     </div>
   );

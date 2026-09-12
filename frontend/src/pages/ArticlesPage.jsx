@@ -13,7 +13,8 @@ import {
   X, 
   ChevronRight,
   Sparkles,
-  Layers
+  Layers,
+  Eye
 } from 'lucide-react';
 
 export default function ArticlesPage() {
@@ -196,16 +197,26 @@ export default function ArticlesPage() {
                       </div>
                     )}
 
-                    <div className="absolute top-2 left-2">
+                    <div className="absolute top-2 left-2 flex flex-col gap-1 items-start">
                       <span className={`text-[10px] font-black uppercase px-2.5 py-1 border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] ${getCategoryBadge(item.category)}`}>
                         {getCategoryLabel(item.category)}
                       </span>
+                      {item.doi_or_reg && (
+                        <span className="text-[9px] font-bold bg-white text-primary-dark px-1.5 py-0.5 border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] font-mono">
+                          {item.doi_or_reg}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* View Counter Badge */}
+                    <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/75 text-white text-[10px] font-bold px-2 py-0.5 border border-white/40">
+                      <Eye size={11} /> {item.views_count || 0}
                     </div>
                   </div>
 
                   {/* Metadata & Title */}
                   <div className="p-5 space-y-3">
-                    <div className="flex items-center gap-4 text-[11px] text-gray-500 font-medium">
+                    <div className="flex items-center gap-3 text-[11px] text-gray-500 font-medium">
                       <span className="flex items-center gap-1">
                         <Calendar size={13} className="text-secondary-dark" />
                         {new Date(item.created_at).toLocaleDateString('id-ID', {
@@ -214,40 +225,53 @@ export default function ArticlesPage() {
                           year: 'numeric'
                         })}
                       </span>
-                      <span className="flex items-center gap-1">
-                        <User size={13} className="text-secondary-dark" />
-                        {item.author_name || 'Tim KKN'}
+                      <span className="flex items-center gap-1 truncate">
+                        <User size={13} className="text-secondary-dark shrink-0" />
+                        <span className="truncate">{item.authors_meta || item.author_name || 'Tim KKN'}</span>
                       </span>
                     </div>
 
-                    <h3 className="text-lg font-black text-primary-dark uppercase tracking-tight line-clamp-2">
-                      {item.title}
+                    <h3 className="text-lg font-black text-primary-dark uppercase tracking-tight line-clamp-2 hover:text-secondary-dark transition-colors">
+                      <Link to={`/berita/${item.slug}`}>{item.title}</Link>
                     </h3>
 
-                    {/* Excerpt */}
+                    {/* Keywords if available */}
+                    {item.keywords && (
+                      <div className="flex flex-wrap gap-1">
+                        {item.keywords.split(/[,;]+/).slice(0, 3).map((k, i) => (
+                          <span key={i} className="text-[9px] font-bold bg-yellow-100 text-yellow-900 border border-yellow-800 px-1.5 py-0.2">
+                            #{k.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Excerpt or Abstract */}
                     <div 
                       className="text-xs text-gray-600 font-medium line-clamp-3 leading-relaxed"
-                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.content) }}
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.abstract || item.content) }}
                     />
                   </div>
                 </div>
 
                 {/* Actions */}
                 <div className="p-5 pt-0 border-t border-gray-100 mt-4 flex items-center justify-between gap-2">
-                  <button
-                    onClick={() => setSelectedArticle(item)}
+                  <Link
+                    to={`/berita/${item.slug}`}
                     className="inline-flex items-center gap-1 bg-gradient-yellow text-primary-dark font-black text-xs uppercase px-3 py-2 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all"
                   >
-                    Baca Detail <ChevronRight size={14} />
-                  </button>
+                    {item.category === 'publikasi' ? 'Buka Jurnal' : item.category === 'modul' ? 'Buka Modul' : 'Baca Berita'} <ChevronRight size={14} />
+                  </Link>
 
                   {item.file_url && (
                     <a
                       href={`http://localhost:5000${item.file_url}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      download
+                      onClick={() => {
+                        axios.post(`http://localhost:5000/api/articles/${item.id}/download`).catch(() => {});
+                      }}
                       className="inline-flex items-center gap-1 bg-gradient-green text-white font-black text-xs uppercase px-3 py-2 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all"
-                      title="Unduh Dokumen / Modul"
+                      title="Unduh Naskah / Modul"
                     >
                       <Download size={14} /> Unduh
                     </a>
