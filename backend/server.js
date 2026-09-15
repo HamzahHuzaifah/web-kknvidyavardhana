@@ -4,9 +4,7 @@ const path = require('path');
 const { initDB } = require('./config/db');
 const { uploadDir, syncExistingUploads } = require('./utils/fileHelper');
 
-// Modular Route Handlers
 const authRoutes = require('./routes/authRoutes');
-const attendanceRoutes = require('./routes/attendanceRoutes');
 const articleRoutes = require('./routes/articleRoutes');
 const fileRoutes = require('./routes/fileRoutes');
 const profileRoutes = require('./routes/profileRoutes');
@@ -27,7 +25,6 @@ initDB(syncExistingUploads);
 
 // Register API Routes
 app.use('/api', authRoutes);
-app.use('/api', attendanceRoutes);
 app.use('/api', articleRoutes);
 app.use('/api', fileRoutes);
 app.use('/api', profileRoutes);
