@@ -1153,27 +1153,22 @@ export default function Dashboard() {
         {/* TAB 2: ACC & KELOLA USER */}
         {isAdmin && activeTab === 'users' && (
           <UsersTab
-            setShowAddUserModal={setShowAddUserModal}
-            fetchUsers={fetchUsers}
+            userList={userList}
             loadingUsers={loadingUsers}
-            totalUsersCount={totalUsersCount}
-            adminUsersCount={adminUsersCount}
-            standardUsersCount={standardUsersCount}
-            pendingUsersCount={pendingUsersCount}
             adminActionMsg={adminActionMsg}
+            setAdminActionMsg={setAdminActionMsg}
             userSearchTerm={userSearchTerm}
             setUserSearchTerm={setUserSearchTerm}
             userRoleFilter={userRoleFilter}
             setUserRoleFilter={setUserRoleFilter}
             userStatusFilter={userStatusFilter}
             setUserStatusFilter={setUserStatusFilter}
-            filteredUsers={filteredUsers}
-            username={username}
-            handleUpdateUserStatus={handleUpdateUserStatus}
-            handleUpdateUserRole={handleUpdateUserRole}
-            setResetPasswordModalUser={setResetPasswordModalUser}
-            setNewPasswordInput={setNewPasswordInput}
-            handleDeleteUser={handleDeleteUser}
+            onUpdateUserStatus={handleUpdateUserStatus}
+            onUpdateUserRole={handleUpdateUserRole}
+            onDeleteUser={handleDeleteUser}
+            onOpenAddUserModal={() => setShowAddUserModal(true)}
+            onOpenResetPasswordModal={(usr) => setResetPasswordModalUser(usr)}
+            currentUsername={username}
           />
         )}
 
