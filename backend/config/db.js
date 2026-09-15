@@ -1,12 +1,15 @@
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
 
+// Load .env jika ada (lokal pakai .env, cPanel pakai env dari Setup Node.js App)
+try { require('dotenv').config(); } catch(e) {}
+
 // Database Connection Pool
 const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'root', // adjust based on user's phpMyAdmin setup
-  password: '', // adjust based on user's phpMyAdmin setup
-  database: 'db_kkn',
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'db_kkn',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
