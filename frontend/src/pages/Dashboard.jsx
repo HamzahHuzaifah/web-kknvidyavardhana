@@ -405,14 +405,13 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    fetchAttendance();
     if (isAdmin) {
       fetchUsers();
       fetchProfileAndTeam();
       fetchMediaAndSocial();
-      fetchArticlesAdmin();
       fetchMediaFiles();
     }
+    fetchArticlesAdmin();
   }, [isAdmin, articleCategoryFilter, fileTypeFilter, fileSourceFilter]);
 
   // Update User Status
