@@ -16,7 +16,7 @@ router.get('/sitemap.xml', async (req, res) => {
     ];
 
     // Fetch dynamic article routes
-    const [articles] = await pool.query('SELECT slug, updated_at FROM articles WHERE status = "published" ORDER BY created_at DESC');
+    const [articles] = await pool.query('SELECT slug, created_at FROM articles ORDER BY created_at DESC');
 
     // Start XML string
     let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
@@ -34,7 +34,7 @@ router.get('/sitemap.xml', async (req, res) => {
 
     // Add dynamic article routes
     articles.forEach((article) => {
-      const lastModDate = article.updated_at ? new Date(article.updated_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+      const lastModDate = article.created_at ? new Date(article.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
       sitemap += `
   <url>
     <loc>${baseUrl}/berita/${article.slug}</loc>
