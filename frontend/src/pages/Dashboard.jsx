@@ -11,8 +11,8 @@ import {
   FolderOpen 
 } from 'lucide-react';
 
+import { motion, AnimatePresence } from 'framer-motion';
 import ConfirmModal from '../components/ConfirmModal';
-import AttendanceTab from '../components/dashboard/AttendanceTab';
 import UsersTab from '../components/dashboard/UsersTab';
 import ArticlesTab from '../components/dashboard/ArticlesTab';
 import FileManagerTab from '../components/dashboard/FileManagerTab';
@@ -25,7 +25,11 @@ import PreviewMediaModal from '../components/dashboard/modals/PreviewMediaModal'
 import MediaPickerModal from '../components/dashboard/modals/MediaPickerModal';
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState('attendance'); // 'attendance' | 'users' | 'articles' | 'files' | 'profile' | 'media'
+  const username = localStorage.getItem('username') || 'Pengguna';
+  const role = localStorage.getItem('role') || 'user';
+  const isAdmin = role === 'admin';
+
+  const [activeTab, setActiveTab] = useState(isAdmin ? 'users' : 'welcome');
   
   // Custom Pop-up / Confirm Dialog State
   const [confirmModal, setConfirmModal] = useState({
@@ -58,11 +62,6 @@ export default function Dashboard() {
     });
   };
 
-  // Attendance state
-  const [attendanceList, setAttendanceList] = useState([]);
-  const [loadingAttendance, setLoadingAttendance] = useState(true);
-  const [clockInStatus, setClockInStatus] = useState({ type: '', message: '' });
-  const [isClockingIn, setIsClockingIn] = useState(false);
 
   // User management state
   const [userList, setUserList] = useState([]);
@@ -168,9 +167,7 @@ export default function Dashboard() {
   const [mediaPickerTarget, setMediaPickerTarget] = useState('image');
   const [selectedMediaForArticle, setSelectedMediaForArticle] = useState({ image: null, document: null });
 
-  const username = localStorage.getItem('username') || 'Pengguna';
-  const role = localStorage.getItem('role') || 'user';
-  const isAdmin = role === 'admin';
+
 
   // Helper format file size
   const formatFileSize = (bytes) => {
@@ -181,20 +178,7 @@ export default function Dashboard() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
-  // Fetch Attendance
-  const fetchAttendance = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get('/api/attendance', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setAttendanceList(response.data);
-    } catch (error) {
-      console.error('Error fetching attendance:', error);
-    } finally {
-      setLoadingAttendance(false);
-    }
-  };
+
 
   // Fetch Users
   const fetchUsers = async () => {
@@ -1019,6 +1003,18 @@ export default function Dashboard() {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
+  const TabTransition = ({ children, tabKey }) => (
+    <motion.div
+      key={tabKey}
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -15 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+    >
+      {children}
+    </motion.div>
+  );
+
   return (
     <div className="bg-gray-50 min-h-screen py-10 px-4">
       <div className="max-w-5xl mx-auto space-y-8">
@@ -1042,8 +1038,8 @@ export default function Dashboard() {
             </div>
             <p className="text-xs sm:text-sm text-gray-600 font-medium">
               {isAdmin 
-                ? 'Panel Pengelolaan: Presensi, ACC Akun, Profil, Medsos, serta Kelola Berita, Publikasi & Modul.' 
-                : 'Hak Akses: Mempublikasikan Berita, Publikasi & Modul KKN serta presensi harian.'}
+                ? 'Panel Pengelolaan: ACC Akun, Profil, Medsos, serta Kelola Berita, Publikasi & Modul.' 
+                : 'Hak Akses: Mempublikasikan Berita, Publikasi & Modul KKN.'}
             </p>
           </div>
 
@@ -1060,16 +1056,7 @@ export default function Dashboard() {
         {/* NAVIGATION TABS FOR ADMIN */}
         {isAdmin && (
           <div className="flex flex-wrap gap-2 border-b-2 border-primary-dark pb-2">
-            <button
-              onClick={() => setActiveTab('attendance')}
-              className={`px-3.5 py-2 font-black text-xs uppercase border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-1.5 ${
-                activeTab === 'attendance'
-                  ? 'bg-gradient-blue text-white translate-y-0.5 shadow-none'
-                  : 'bg-white text-primary-dark hover:bg-gray-100'
-              }`}
-            >
-              <Clock size={15} /> Presensi & Riwayat
-            </button>
+
 
             <button
               onClick={() => setActiveTab('users')}
@@ -1150,9 +1137,30 @@ export default function Dashboard() {
           />
         )}
 
-        {/* TAB 2: ACC & KELOLA USER */}
-        {isAdmin && activeTab === 'users' && (
-          <UsersTab
+        {/* TABS RENDER */}
+        <AnimatePresence mode="wait">
+          {!isAdmin && activeTab === 'welcome' && (
+            <TabTransition tabKey="welcome">
+              <div className="bg-white border-2 border-primary-dark shadow-hard p-10 text-center space-y-6">
+                <Compass className="w-16 h-16 mx-auto text-primary-dark opacity-20" />
+                <h2 className="text-2xl font-black text-primary-dark uppercase">Selamat Datang di Portal KKN</h2>
+                <p className="text-gray-600 max-w-lg mx-auto font-medium">
+                  Sebagai User (Anggota), Anda memiliki akses untuk mempublikasikan dan membagikan aktivitas KKN melalui Berita, Publikasi & Modul.
+                </p>
+                <Link
+                  to="/upload"
+                  className="inline-flex items-center gap-2 bg-gradient-yellow text-primary-dark font-black px-6 py-3 border-2 border-primary-dark shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all uppercase"
+                >
+                  <UploadCloud size={20} /> Mulai Upload Konten
+                </Link>
+              </div>
+            </TabTransition>
+          )}
+
+          {/* TAB 2: ACC & KELOLA USER */}
+          {isAdmin && activeTab === 'users' && (
+            <TabTransition tabKey="users">
+              <UsersTab
             userList={userList}
             loadingUsers={loadingUsers}
             adminActionMsg={adminActionMsg}
@@ -1169,12 +1177,14 @@ export default function Dashboard() {
             onOpenAddUserModal={() => setShowAddUserModal(true)}
             onOpenResetPasswordModal={(usr) => setResetPasswordModalUser(usr)}
             currentUsername={username}
-          />
-        )}
+              />
+            </TabTransition>
+          )}
 
-        {/* TAB 3: KELOLA BERITA, PUBLIKASI & MODUL */}
-        {isAdmin && activeTab === 'articles' && (
-          <ArticlesTab
+          {/* TAB 3: KELOLA BERITA, PUBLIKASI & MODUL */}
+          {isAdmin && activeTab === 'articles' && (
+            <TabTransition tabKey="articles">
+              <ArticlesTab
             articlesList={articlesList}
             loadingArticles={loadingArticles}
             articleCategoryFilter={articleCategoryFilter}
@@ -1194,12 +1204,14 @@ export default function Dashboard() {
             handleDeleteArticle={handleDeleteArticle}
             setMediaPickerTarget={setMediaPickerTarget}
             setShowMediaPickerModal={setShowMediaPickerModal}
-          />
-        )}
+              />
+            </TabTransition>
+          )}
 
-        {/* TAB 4: MANAJER BERKAS */}
-        {isAdmin && activeTab === 'files' && (
-          <FileManagerTab
+          {/* TAB 4: MANAJER BERKAS */}
+          {isAdmin && activeTab === 'files' && (
+            <TabTransition tabKey="files">
+              <FileManagerTab
             fileList={fileList}
             fileCounts={fileCounts}
             loadingFiles={loadingFiles}
@@ -1222,12 +1234,14 @@ export default function Dashboard() {
             handleDeleteMediaFile={handleDeleteMediaFile}
             setPreviewMediaModal={setPreviewMediaModal}
             formatFileSize={formatFileSize}
-          />
-        )}
+              />
+            </TabTransition>
+          )}
 
-        {/* TAB 5: KELOLA PROFIL & TIM */}
-        {isAdmin && activeTab === 'profile' && (
-          <ProfileTab
+          {/* TAB 5: PROFIL & TIM */}
+          {isAdmin && activeTab === 'profile' && (
+            <TabTransition tabKey="profile">
+              <ProfileTab
             profileForm={profileForm}
             handleProfileChange={handleProfileChange}
             handleSaveProfile={handleSaveProfile}
@@ -1242,29 +1256,33 @@ export default function Dashboard() {
             editingMemberId={editingMemberId}
             savingMember={savingMember}
             handleDeleteMember={handleDeleteMember}
-          />
-        )}
+              />
+            </TabTransition>
+          )}
 
-        {/* TAB 6: KELOLA MEDIA & MEDSOS */}
-        {isAdmin && activeTab === 'media' && (
-          <SocialMediaTab
-            socialLinksList={socialLinksList}
-            socialForm={socialForm}
-            setSocialForm={setSocialForm}
-            handleSaveSocialLink={handleSaveSocialLink}
-            handleDeleteSocialLink={handleDeleteSocialLink}
-            socialActionMsg={socialActionMsg}
-            mediaList={mediaList}
-            mediaForm={mediaForm}
-            handleMediaFormChange={handleMediaFormChange}
-            handleSaveMedia={handleSaveMedia}
-            handleStartEditMedia={handleStartEditMedia}
-            editingMediaId={editingMediaId}
-            savingMedia={savingMedia}
-            handleDeleteMedia={handleDeleteMedia}
-            mediaActionMsg={mediaActionMsg}
-          />
-        )}
+          {/* TAB 6: MEDIA & MEDSOS */}
+          {isAdmin && activeTab === 'media' && (
+            <TabTransition tabKey="media">
+              <SocialMediaTab
+                socialLinksList={socialLinksList}
+                socialForm={socialForm}
+                setSocialForm={setSocialForm}
+                handleSaveSocialLink={handleSaveSocialLink}
+                handleDeleteSocialLink={handleDeleteSocialLink}
+                socialActionMsg={socialActionMsg}
+                mediaList={mediaList}
+                mediaForm={mediaForm}
+                handleMediaFormChange={handleMediaFormChange}
+                handleSaveMedia={handleSaveMedia}
+                handleStartEditMedia={handleStartEditMedia}
+                editingMediaId={editingMediaId}
+                savingMedia={savingMedia}
+                handleDeleteMedia={handleDeleteMedia}
+                mediaActionMsg={mediaActionMsg}
+              />
+            </TabTransition>
+          )}
+        </AnimatePresence>
 
         {/* MODALS */}
         <AddUserModal
