@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
@@ -23,6 +24,21 @@ const ProtectedRoute = ({ children }) => {
 function AnimatedRoutes() {
   const location = useLocation();
   
+  useEffect(() => {
+    const path = location.pathname;
+    let title = 'KKN Vidya Vardhana';
+    
+    if (path === '/') title = 'Beranda | KKN Vidya Vardhana';
+    else if (path.startsWith('/profile')) title = 'Profil Desa | KKN Vidya Vardhana';
+    else if (path.startsWith('/media')) title = 'Media & Galeri | KKN Vidya Vardhana';
+    else if (path.startsWith('/berita')) title = 'Berita KKN | KKN Vidya Vardhana';
+    else if (path.startsWith('/login')) title = 'Login | KKN Vidya Vardhana';
+    else if (path.startsWith('/register')) title = 'Daftar | KKN Vidya Vardhana';
+    else if (path.startsWith('/dashboard')) title = 'Dashboard Admin | KKN Vidya Vardhana';
+    
+    document.title = title;
+  }, [location]);
+
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
