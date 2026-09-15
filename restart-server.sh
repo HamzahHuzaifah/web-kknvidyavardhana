@@ -23,9 +23,12 @@ cd ..
 # 3. Update & Build Frontend (React)
 echo "[3/4] Menginstall & Mem-build Frontend..."
 cd frontend
-# Kita menggunakan --include=dev karena cPanel mem-blokir vite secara default (NODE_ENV=production)
-npm install --include=dev
+# Memaksa environment menjadi development agar vite terinstall
+export NODE_ENV=development
+npm install
 npm run build
+# Kembalikan ke production
+export NODE_ENV=production
 cd ..
 
 # 4. Restart Server (Passenger cPanel)
