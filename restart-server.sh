@@ -23,10 +23,11 @@ cd ..
 # 3. Update & Build Frontend (React)
 echo "[3/4] Menginstall & Mem-build Frontend..."
 cd frontend
-# Install semua dependencies termasuk devDependencies
-npm install --include=dev
-# Panggil vite langsung dari node_modules agar tidak bergantung pada NODE_ENV
-./node_modules/.bin/vite build
+# Hapus node_modules lama agar reinstall dari awal (paksa cPanel menginstall fresh)
+rm -rf node_modules
+npm install
+# Gunakan npx agar otomatis mencari vite dari lokasi manapun
+npx vite build
 cd ..
 
 # 4. Restart Server (Passenger cPanel)
