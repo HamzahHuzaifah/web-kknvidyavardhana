@@ -21,14 +21,19 @@ cd backend
 npm install
 cd ..
 
-# Restart Server (Passenger cPanel)
-echo "Merestart Server di cPanel..."
-if [ -d "backend/tmp" ]; then
-    touch backend/tmp/restart.txt
-else
-    mkdir -p backend/tmp
-    touch backend/tmp/restart.txt
-fi
+# Restart Server (Nohup Background Process)
+echo "Merestart Server Node.js di latar belakang..."
+cd backend
+
+# Matikan proses node lama yang berjalan dari direktori ini (jangan gunakan killall agar tidak mengganggu web lain)
+pkill -f "node server.js" || true
+
+# Tunggu sebentar agar port 5000 benar-benar tertutup
+sleep 2
+
+# Jalankan proses baru
+nohup node server.js > server.log 2>&1 &
+cd ..
 
 echo "========================================================"
 echo "✅ SUKSES! Web berhasil di-update dan server di-restart!"
