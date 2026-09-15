@@ -17,6 +17,8 @@ export default function Navbar() {
         const res = await axios.get('/api/profile-info');
         if (res.data && res.data.logo_url) {
           setLogoUrl(res.data.logo_url);
+          const link = document.querySelector("link[rel~='icon']");
+          if (link) link.href = res.data.logo_url;
         }
       } catch (e) {
         // fallback to default
@@ -27,6 +29,8 @@ export default function Navbar() {
     const handleLogoUpdate = (e) => {
       if (e.detail && e.detail.logo_url) {
         setLogoUrl(e.detail.logo_url);
+        const link = document.querySelector("link[rel~='icon']");
+        if (link) link.href = e.detail.logo_url;
       }
     };
     window.addEventListener('logoUpdated', handleLogoUpdate);
