@@ -37,8 +37,8 @@ app.use('/api', mediaRoutes);
 const frontendDistPath = path.join(__dirname, '../frontend/dist');
 app.use(express.static(frontendDistPath));
 
-// Catch-all route for React client-side routing
-app.get('*', (req, res) => {
+// Catch-all: semua route selain /api dan /uploads diarahkan ke React
+app.use((req, res) => {
   res.sendFile(path.join(frontendDistPath, 'index.html'));
 });
 
