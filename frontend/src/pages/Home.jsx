@@ -190,11 +190,11 @@ export default function Home() {
     const fetchData = async () => {
       try {
         const [artRes, profRes, teamRes, mediaRes, socialRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/articles'),
-          axios.get('http://localhost:5000/api/profile-info'),
-          axios.get('http://localhost:5000/api/team'),
-          axios.get('http://localhost:5000/api/media'),
-          axios.get('http://localhost:5000/api/social-links')
+          axios.get('/api/articles'),
+          axios.get('/api/profile-info'),
+          axios.get('/api/team'),
+          axios.get('/api/media'),
+          axios.get('/api/social-links')
         ]);
 
         setArticles(artRes.data || []);
@@ -409,7 +409,7 @@ export default function Home() {
                         <div className="w-24 h-24 my-3 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] bg-gray-100 overflow-hidden">
                           {member.image_url ? (
                             <img 
-                              src={`http://localhost:5000${member.image_url}`} 
+                              src={`${member.image_url}`} 
                               alt={member.name}
                               className="w-full h-full object-cover"
                             />

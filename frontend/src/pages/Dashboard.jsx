@@ -185,7 +185,7 @@ export default function Dashboard() {
   const fetchAttendance = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/attendance', {
+      const response = await axios.get('/api/attendance', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setAttendanceList(response.data);
@@ -202,7 +202,7 @@ export default function Dashboard() {
     setLoadingUsers(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/admin/users', {
+      const response = await axios.get('/api/admin/users', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUserList(response.data);
@@ -219,8 +219,8 @@ export default function Dashboard() {
     setLoadingProfile(true);
     try {
       const [profileRes, teamRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/profile-info'),
-        axios.get('http://localhost:5000/api/team')
+        axios.get('/api/profile-info'),
+        axios.get('/api/team')
       ]);
 
       if (profileRes.data) {
@@ -256,7 +256,7 @@ export default function Dashboard() {
     setLoadingFiles(true);
     try {
       const token = localStorage.getItem('token');
-      let url = `http://localhost:5000/api/files?type=${fileTypeFilter}&source=${fileSourceFilter}`;
+      let url = `/api/files?type=${fileTypeFilter}&source=${fileSourceFilter}`;
       if (fileSearchTerm.trim()) {
         url += `&q=${encodeURIComponent(fileSearchTerm.trim())}`;
       }
@@ -288,7 +288,7 @@ export default function Dashboard() {
 
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.post('http://localhost:5000/api/files/upload', formData, {
+      const res = await axios.post('/api/files/upload', formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -322,7 +322,7 @@ export default function Dashboard() {
         try {
           const token = localStorage.getItem('token');
           const res = await axios.put(
-            'http://localhost:5000/api/settings/logo',
+            '/api/settings/logo',
             { logo_url: fileUrl },
             { headers: { Authorization: `Bearer ${token}` } }
           );
@@ -354,7 +354,7 @@ export default function Dashboard() {
         closeConfirmModal();
         try {
           const token = localStorage.getItem('token');
-          const res = await axios.delete(`http://localhost:5000/api/files/${file.id}`, {
+          const res = await axios.delete(`/api/files/${file.id}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           setFileActionMsg({ type: 'success', message: res.data.message });
@@ -376,7 +376,7 @@ export default function Dashboard() {
 
   // Copy File URL
   const handleCopyFileUrl = (url) => {
-    const fullUrl = url.startsWith('http') ? url : `http://localhost:5000${url}`;
+    const fullUrl = url.startsWith('http') ? url : `${url}`;
     navigator.clipboard.writeText(fullUrl).then(() => {
       setCopiedUrl(url);
       setTimeout(() => setCopiedUrl(''), 2500);
@@ -391,8 +391,8 @@ export default function Dashboard() {
     setLoadingMedia(true);
     try {
       const [mediaRes, socialRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/media'),
-        axios.get('http://localhost:5000/api/social-links')
+        axios.get('/api/media'),
+        axios.get('/api/social-links')
       ]);
       setMediaList(mediaRes.data || []);
       setSocialLinksList(socialRes.data || []);
@@ -407,7 +407,7 @@ export default function Dashboard() {
   const fetchArticlesAdmin = async () => {
     setLoadingArticles(true);
     try {
-      let url = 'http://localhost:5000/api/articles';
+      let url = '/api/articles';
       if (articleCategoryFilter !== 'all') {
         url += `?category=${articleCategoryFilter}`;
       }
@@ -437,7 +437,7 @@ export default function Dashboard() {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.patch(
-        `http://localhost:5000/api/admin/users/${userId}/status`,
+        `/api/admin/users/${userId}/status`,
         { status: targetStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -470,7 +470,7 @@ export default function Dashboard() {
         try {
           const token = localStorage.getItem('token');
           const response = await axios.patch(
-            `http://localhost:5000/api/admin/users/${userId}/role`,
+            `/api/admin/users/${userId}/role`,
             { role: targetRole },
             { headers: { Authorization: `Bearer ${token}` } }
           );
@@ -502,7 +502,7 @@ export default function Dashboard() {
         try {
           const token = localStorage.getItem('token');
           const response = await axios.delete(
-            `http://localhost:5000/api/admin/users/${userId}`,
+            `/api/admin/users/${userId}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
           setAdminActionMsg({ type: 'success', message: response.data.message });
@@ -531,7 +531,7 @@ export default function Dashboard() {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.patch(
-        `http://localhost:5000/api/admin/users/${resetPasswordModalUser.id}/reset-password`,
+        `/api/admin/users/${resetPasswordModalUser.id}/reset-password`,
         { newPassword: newPasswordInput },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -566,7 +566,7 @@ export default function Dashboard() {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        'http://localhost:5000/api/admin/users',
+        '/api/admin/users',
         newUserForm,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -601,7 +601,7 @@ export default function Dashboard() {
         try {
           const token = localStorage.getItem('token');
           await axios.post(
-            'http://localhost:5000/api/attendance',
+            '/api/attendance',
             { latitude, longitude },
             { headers: { Authorization: `Bearer ${token}` } }
           );
@@ -631,7 +631,7 @@ export default function Dashboard() {
     setProfileSaveMsg({ type: '', message: '' });
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.put('http://localhost:5000/api/profile-info', profileForm, {
+      const response = await axios.put('/api/profile-info', profileForm, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setProfileSaveMsg({ type: 'success', message: response.data.message });
@@ -691,7 +691,7 @@ export default function Dashboard() {
       }
 
       if (editingMemberId) {
-        await axios.put(`http://localhost:5000/api/team/${editingMemberId}`, formData, {
+        await axios.put(`/api/team/${editingMemberId}`, formData, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data'
@@ -699,7 +699,7 @@ export default function Dashboard() {
         });
         setTeamActionMsg({ type: 'success', message: 'Data anggota tim berhasil diperbarui!' });
       } else {
-        await axios.post('http://localhost:5000/api/team', formData, {
+        await axios.post('/api/team', formData, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data'
@@ -733,7 +733,7 @@ export default function Dashboard() {
         closeConfirmModal();
         try {
           const token = localStorage.getItem('token');
-          await axios.delete(`http://localhost:5000/api/team/${id}`, {
+          await axios.delete(`/api/team/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           setTeamActionMsg({ type: 'success', message: 'Anggota tim berhasil dihapus.' });
@@ -791,12 +791,12 @@ export default function Dashboard() {
     try {
       const token = localStorage.getItem('token');
       if (editingMediaId) {
-        await axios.put(`http://localhost:5000/api/media/${editingMediaId}`, mediaForm, {
+        await axios.put(`/api/media/${editingMediaId}`, mediaForm, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setMediaActionMsg({ type: 'success', message: 'Konten media berhasil diperbarui!' });
       } else {
-        await axios.post('http://localhost:5000/api/media', mediaForm, {
+        await axios.post('/api/media', mediaForm, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setMediaActionMsg({ type: 'success', message: 'Konten media baru berhasil ditambahkan!' });
@@ -827,7 +827,7 @@ export default function Dashboard() {
         closeConfirmModal();
         try {
           const token = localStorage.getItem('token');
-          await axios.delete(`http://localhost:5000/api/media/${id}`, {
+          await axios.delete(`/api/media/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           setMediaActionMsg({ type: 'success', message: 'Media berhasil dihapus.' });
@@ -848,7 +848,7 @@ export default function Dashboard() {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:5000/api/social-links', socialForm, {
+      await axios.post('/api/social-links', socialForm, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSocialActionMsg({ type: 'success', message: 'Akun media sosial berhasil ditambahkan!' });
@@ -875,7 +875,7 @@ export default function Dashboard() {
         closeConfirmModal();
         try {
           const token = localStorage.getItem('token');
-          await axios.delete(`http://localhost:5000/api/social-links/${id}`, {
+          await axios.delete(`/api/social-links/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           setSocialActionMsg({ type: 'success', message: 'Akun medsos berhasil dihapus.' });
@@ -959,7 +959,7 @@ export default function Dashboard() {
         formData.append('file_url', editArticleForm.file_url);
       }
 
-      await axios.put(`http://localhost:5000/api/articles/${editingArticle.id}`, formData, {
+      await axios.put(`/api/articles/${editingArticle.id}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -992,7 +992,7 @@ export default function Dashboard() {
         closeConfirmModal();
         try {
           const token = localStorage.getItem('token');
-          await axios.delete(`http://localhost:5000/api/articles/${id}`, {
+          await axios.delete(`/api/articles/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           setArticleActionMsg({ type: 'success', message: 'Konten berhasil dihapus oleh Admin.' });

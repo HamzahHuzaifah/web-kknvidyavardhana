@@ -14,7 +14,7 @@ export default function Navbar() {
   useEffect(() => {
     const fetchLogo = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/profile-info');
+        const res = await axios.get('/api/profile-info');
         if (res.data && res.data.logo_url) {
           setLogoUrl(res.data.logo_url);
         }
@@ -56,7 +56,7 @@ export default function Navbar() {
             <Link to="/" onClick={closeMenu} className="flex-shrink-0 flex items-center gap-2">
               {logoUrl ? (
                 <img
-                  src={`http://localhost:5000${logoUrl}`}
+                  src={`${logoUrl}`}
                   alt="Logo"
                   className="w-8 h-8 object-contain bg-white border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] p-0.5"
                 />
@@ -97,7 +97,7 @@ export default function Navbar() {
               <UserCircle size={17} /> Akun
             </Link>
 
-            {token ? (
+            {token && (
               <div className="flex items-center gap-3 pl-2 border-l-2 border-primary-light">
                 <Link to="/dashboard" className="flex items-center gap-1.5 text-xs font-bold hover:text-secondary-light">
                   <LayoutDashboard size={15} /> Dashboard
@@ -106,10 +106,6 @@ export default function Navbar() {
                   <LogOut size={13} /> Keluar
                 </button>
               </div>
-            ) : (
-              <Link to="/login" className="flex items-center gap-1.5 bg-gradient-blue text-white px-3.5 py-1.5 border-2 border-white shadow-[2px_2px_0px_0px_rgba(234,179,8,1)] hover:brightness-110 hover:translate-y-0.5 hover:shadow-none transition-all font-bold uppercase text-xs">
-                <LogIn size={15} /> Login
-              </Link>
             )}
           </div>
         </div>
@@ -137,7 +133,7 @@ export default function Navbar() {
             
             <div className="h-px bg-primary-light my-2"></div>
             
-            {token ? (
+            {token && (
               <>
                 <Link to="/dashboard" onClick={closeMenu} className="flex items-center gap-3 px-3 py-3 rounded-md hover:bg-primary-light transition-colors font-bold text-sm text-secondary-light">
                   <LayoutDashboard size={18} /> Dashboard
@@ -146,10 +142,6 @@ export default function Navbar() {
                   <LogOut size={18} /> Keluar
                 </button>
               </>
-            ) : (
-              <Link to="/login" onClick={closeMenu} className="flex items-center justify-center gap-2 mt-2 bg-gradient-blue text-white px-4 py-3 border-2 border-white shadow-[2px_2px_0px_0px_rgba(234,179,8,1)] hover:brightness-110 transition-all font-bold uppercase text-sm">
-                <LogIn size={18} /> Login
-              </Link>
             )}
           </div>
         </div>

@@ -193,7 +193,7 @@ export default function ArticlesTab({
               {selectedMediaForArticle.image ? (
                 <div className="flex items-center gap-3 p-2 bg-white border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                   <img 
-                    src={`http://localhost:5000${selectedMediaForArticle.image}`} 
+                    src={`${selectedMediaForArticle.image}`} 
                     alt="Sampul Terpilih" 
                     className="w-12 h-12 object-cover border border-primary-dark"
                   />
@@ -368,7 +368,7 @@ export default function ArticlesTab({
                   <td className="p-2.5 border-2 border-primary-dark text-center">
                     {item.file_url ? (
                       <a
-                        href={`http://localhost:5000${item.file_url}`}
+                        href={`${item.file_url}`}
                         target="_blank"
                         rel="noreferrer"
                         className="text-accent-dark hover:underline font-bold text-[11px] inline-flex items-center gap-1"

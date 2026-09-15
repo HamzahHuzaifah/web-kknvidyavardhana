@@ -20,7 +20,7 @@ export default function Login() {
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:5000/api/login', formData);
+      const response = await axios.post('/api/login', formData);
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('username', response.data.username);
       localStorage.setItem('role', response.data.role || 'user');
@@ -94,7 +94,7 @@ export default function Login() {
               to="/register"
               className="inline-flex items-center justify-center gap-2 w-full bg-gradient-yellow text-primary-dark font-bold py-2.5 px-4 border-2 border-primary-dark shadow-hard hover:translate-y-0.5 hover:shadow-none transition-all text-xs uppercase tracking-wider"
             >
-              <UserPlus size={16} /> Daftar Akun Baru (Menunggu ACC)
+              <UserPlus size={16} /> Daftar Akun Baru
             </Link>
           </div>
         </form>

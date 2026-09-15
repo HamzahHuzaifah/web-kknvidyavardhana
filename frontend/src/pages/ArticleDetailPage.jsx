@@ -59,7 +59,7 @@ export default function ArticleDetailPage() {
     addMeta('citation_publisher', article.publisher || 'KKN Vidya Vardhana');
     addMeta('citation_abstract_html_url', window.location.href);
     if (article.file_url && article.file_url.toLowerCase().endsWith('.pdf')) {
-      addMeta('citation_pdf_url', `http://localhost:5000${article.file_url}`);
+      addMeta('citation_pdf_url', `${article.file_url}`);
     }
     if (article.keywords) {
       addMeta('citation_keywords', article.keywords);
@@ -80,12 +80,12 @@ export default function ArticleDetailPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await axios.get(`http://localhost:5000/api/articles/${slug}`);
+      const res = await axios.get(`/api/articles/${slug}`);
       setArticle(res.data);
 
       // Track view counter
       if (res.data && res.data.id) {
-        axios.post(`http://localhost:5000/api/articles/${res.data.id}/view`).then((vRes) => {
+        axios.post(`/api/articles/${res.data.id}/view`).then((vRes) => {
           if (vRes.data && vRes.data.views_count !== undefined) {
             setArticle((prev) => prev ? { ...prev, views_count: vRes.data.views_count } : prev);
           }
@@ -102,7 +102,7 @@ export default function ArticleDetailPage() {
   const handleDownload = () => {
     if (!article) return;
     // Track download counter
-    axios.post(`http://localhost:5000/api/articles/${article.id}/download`).then((dRes) => {
+    axios.post(`/api/articles/${article.id}/download`).then((dRes) => {
       if (dRes.data && dRes.data.downloads_count !== undefined) {
         setArticle((prev) => prev ? { ...prev, downloads_count: dRes.data.downloads_count } : prev);
       }
@@ -271,7 +271,7 @@ export default function ArticleDetailPage() {
             <div className="flex flex-wrap items-center gap-2">
               {article.file_url && (
                 <a
-                  href={`http://localhost:5000${article.file_url}`}
+                  href={`${article.file_url}`}
                   download
                   onClick={handleDownload}
                   className="inline-flex items-center gap-2 bg-gradient-green text-white font-black text-xs uppercase px-4 py-2.5 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all"
@@ -382,7 +382,7 @@ export default function ArticleDetailPage() {
         {article.image_url && (
           <div className="bg-white border-2 border-primary-dark shadow-hard p-3">
             <img
-              src={`http://localhost:5000${article.image_url}`}
+              src={`${article.image_url}`}
               alt={article.title}
               className="w-full max-h-[480px] object-cover border border-primary-dark"
             />
@@ -413,7 +413,7 @@ export default function ArticleDetailPage() {
               </div>
               <div className="flex items-center gap-2">
                 <a
-                  href={`http://localhost:5000${article.file_url}`}
+                  href={`${article.file_url}`}
                   target="_blank"
                   rel="noreferrer"
                   className="text-[11px] font-black uppercase bg-white border border-primary-dark px-2.5 py-1 hover:bg-gray-100 flex items-center gap-1"
@@ -421,7 +421,7 @@ export default function ArticleDetailPage() {
                   <ExternalLink size={12} /> Buka Layar Penuh
                 </a>
                 <a
-                  href={`http://localhost:5000${article.file_url}`}
+                  href={`${article.file_url}`}
                   download
                   onClick={handleDownload}
                   className="text-[11px] font-black uppercase bg-gradient-green text-white border border-primary-dark px-2.5 py-1 flex items-center gap-1 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
@@ -433,7 +433,7 @@ export default function ArticleDetailPage() {
 
             <div className="w-full h-[680px] bg-gray-100 border-2 border-primary-dark overflow-hidden relative shadow-inner">
               <iframe
-                src={`http://localhost:5000${article.file_url}#view=FitH&toolbar=1`}
+                src={`${article.file_url}#view=FitH&toolbar=1`}
                 title={`PDF Viewer - ${article.title}`}
                 className="w-full h-full border-none"
               />

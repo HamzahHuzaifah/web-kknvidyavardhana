@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { initDB } = require('./config/db');
 const { uploadDir, syncExistingUploads } = require('./utils/fileHelper');
 
@@ -32,9 +33,13 @@ app.use('/api', fileRoutes);
 app.use('/api', profileRoutes);
 app.use('/api', mediaRoutes);
 
-// Root healthcheck
-app.get('/', (req, res) => {
-  res.send('API KKN Vidya Vardhana is running cleanly.');
+// Serve Frontend static files
+const frontendDistPath = path.join(__dirname, '../frontend/dist');
+app.use(express.static(frontendDistPath));
+
+// Catch-all route for React client-side routing
+app.get('*', (req, res) => {
+  res.sendFile(path.join(frontendDistPath, 'index.html'));
 });
 
 // Start Server

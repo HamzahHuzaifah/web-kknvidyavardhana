@@ -68,7 +68,7 @@ export default function FileManagerTab({
             <div className="w-14 h-14 bg-white border-2 border-primary-dark flex items-center justify-center p-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] shrink-0 overflow-hidden">
               {activeLogoUrl ? (
                 <img
-                  src={`http://localhost:5000${activeLogoUrl}`}
+                  src={`${activeLogoUrl}`}
                   alt="Logo Website Aktif"
                   className="w-full h-full object-contain"
                 />
@@ -107,7 +107,7 @@ export default function FileManagerTab({
                         fd.append('logo', f);
                         try {
                           const token = localStorage.getItem('token');
-                          const res = await axios.put('http://localhost:5000/api/settings/logo', fd, {
+                          const res = await axios.put('/api/settings/logo', fd, {
                             headers: {
                               Authorization: `Bearer ${token}`,
                               'Content-Type': 'multipart/form-data'
@@ -346,7 +346,7 @@ export default function FileManagerTab({
                   <div className="relative h-44 bg-gray-100 border-b-2 border-primary-dark overflow-hidden flex items-center justify-center">
                     {isImg ? (
                       <img
-                        src={`http://localhost:5000${file.file_url}`}
+                        src={`${file.file_url}`}
                         alt={file.original_name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 cursor-pointer"
                         onClick={() => setPreviewMediaModal(file)}
@@ -357,7 +357,7 @@ export default function FileManagerTab({
                         className="w-full h-full relative cursor-pointer group flex items-center justify-center bg-black"
                       >
                         <video
-                          src={`http://localhost:5000${file.file_url}`}
+                          src={`${file.file_url}`}
                           className="w-full h-full object-cover opacity-80"
                           preload="metadata"
                         />
@@ -473,7 +473,7 @@ export default function FileManagerTab({
                           </button>
                         ) : (
                           <a
-                            href={`http://localhost:5000${file.file_url}`}
+                            href={`${file.file_url}`}
                             download
                             className="text-[10px] font-black uppercase px-2 py-1 border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] bg-white text-primary-dark hover:bg-gray-100 flex items-center justify-center gap-1"
                           >
@@ -492,7 +492,7 @@ export default function FileManagerTab({
                           <Eye size={12} /> Pratinjau
                         </button>
                         <a
-                          href={`http://localhost:5000${file.file_url}`}
+                          href={`${file.file_url}`}
                           target="_blank"
                           rel="noreferrer"
                           className="text-gray-700 hover:text-primary-dark font-bold flex items-center gap-1"

@@ -330,7 +330,7 @@ export default function ProfileTab({
                   <td className="p-2 border-2 border-primary-dark text-center">
                     {m.image_url ? (
                       <img
-                        src={`http://localhost:5000${m.image_url}`}
+                        src={`${m.image_url}`}
                         alt={m.name}
                         className="w-10 h-10 object-cover border border-primary-dark mx-auto"
                       />

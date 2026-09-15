@@ -33,7 +33,7 @@ export default function ArticlesPage() {
   const fetchArticles = async () => {
     setLoading(true);
     try {
-      let url = 'http://localhost:5000/api/articles';
+      let url = '/api/articles';
       if (categoryFilter !== 'all') {
         url += `?category=${categoryFilter}`;
       }
@@ -187,7 +187,7 @@ export default function ArticlesPage() {
                   <div className="aspect-video w-full border-b-2 border-primary-dark bg-gray-100 relative overflow-hidden">
                     {item.image_url ? (
                       <img
-                        src={`http://localhost:5000${item.image_url}`}
+                        src={`${item.image_url}`}
                         alt={item.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
@@ -265,10 +265,10 @@ export default function ArticlesPage() {
 
                   {item.file_url && (
                     <a
-                      href={`http://localhost:5000${item.file_url}`}
+                      href={`${item.file_url}`}
                       download
                       onClick={() => {
-                        axios.post(`http://localhost:5000/api/articles/${item.id}/download`).catch(() => {});
+                        axios.post(`/api/articles/${item.id}/download`).catch(() => {});
                       }}
                       className="inline-flex items-center gap-1 bg-gradient-green text-white font-black text-xs uppercase px-3 py-2 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all"
                       title="Unduh Naskah / Modul"
@@ -311,7 +311,7 @@ export default function ArticlesPage() {
                 {selectedArticle.image_url && (
                   <div className="border-2 border-primary-dark overflow-hidden">
                     <img
-                      src={`http://localhost:5000${selectedArticle.image_url}`}
+                      src={`${selectedArticle.image_url}`}
                       alt={selectedArticle.title}
                       className="w-full max-h-96 object-cover"
                     />
@@ -337,7 +337,7 @@ export default function ArticlesPage() {
                     </div>
 
                     <a
-                      href={`http://localhost:5000${selectedArticle.file_url}`}
+                      href={`${selectedArticle.file_url}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 bg-gradient-green text-white font-black text-xs uppercase px-4 py-2.5 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all shrink-0"

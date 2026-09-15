@@ -52,8 +52,8 @@ export default function Profile() {
     const fetchData = async () => {
       try {
         const [profileRes, teamRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/profile-info'),
-          axios.get('http://localhost:5000/api/team')
+          axios.get('/api/profile-info'),
+          axios.get('/api/team')
         ]);
         setProfile(profileRes.data);
         setTeam(teamRes.data);
@@ -193,7 +193,7 @@ export default function Profile() {
                   <div className="w-28 h-28 my-4 border-2 border-primary-dark shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] bg-gray-100 overflow-hidden relative">
                     {member.image_url ? (
                       <img 
-                        src={`http://localhost:5000${member.image_url}`} 
+                        src={`${member.image_url}`} 
                         alt={member.name}
                         className="w-full h-full object-cover"
                       />

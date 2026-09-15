@@ -117,7 +117,7 @@ export default function UploadForm() {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/articles', data, {
+      const response = await axios.post('/api/articles', data, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${token}`

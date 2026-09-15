@@ -70,8 +70,8 @@ export default function Media() {
     const fetchData = async () => {
       try {
         const [mediaRes, socialRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/media'),
-          axios.get('http://localhost:5000/api/social-links')
+          axios.get('/api/media'),
+          axios.get('/api/social-links')
         ]);
         setMediaList(mediaRes.data);
         setSocialLinks(socialRes.data);
