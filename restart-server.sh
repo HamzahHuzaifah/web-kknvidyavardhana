@@ -27,8 +27,8 @@ cd frontend
 # Hapus node_modules lama agar reinstall dari awal (paksa cPanel menginstall fresh)
 rm -rf node_modules
 npm install
-# Gunakan npx agar otomatis mencari vite dari lokasi manapun
-npx vite build
+# Gunakan npx --yes agar otomatis konfirmasi tanpa perlu input manual
+npx --yes vite build
 cd ..
 
 # 4. Restart Server (Passenger cPanel)
