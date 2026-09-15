@@ -23,12 +23,10 @@ cd ..
 # 3. Update & Build Frontend (React)
 echo "[3/4] Menginstall & Mem-build Frontend..."
 cd frontend
-# Memaksa environment menjadi development agar vite terinstall
-export NODE_ENV=development
-npm install
-npm run build
-# Kembalikan ke production
-export NODE_ENV=production
+# Install semua dependencies termasuk devDependencies
+npm install --include=dev
+# Panggil vite langsung dari node_modules agar tidak bergantung pada NODE_ENV
+./node_modules/.bin/vite build
 cd ..
 
 # 4. Restart Server (Passenger cPanel)
