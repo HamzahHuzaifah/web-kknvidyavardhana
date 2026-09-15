@@ -3,6 +3,9 @@
 # Pastikan script berhenti jika ada perintah yang error
 set -e
 
+# Mengaktifkan Node.js Virtual Environment cPanel
+source /home/vidt4129/nodevenv/repositories/web-kknvidyavardhana/backend/22/bin/activate
+
 echo "========================================================"
 echo "🚀 MEMULAI UPDATE & RESTART KKN VIDYA VARDHANA..."
 echo "========================================================"
