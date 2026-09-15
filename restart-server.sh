@@ -10,9 +10,10 @@ echo "========================================================"
 echo "🚀 MEMULAI UPDATE & RESTART KKN VIDYA VARDHANA..."
 echo "========================================================"
 
-# 1. Menarik kode terbaru dari GitHub
+# 1. Menarik kode terbaru dari GitHub (paksa ikut GitHub)
 echo "[1/4] Menarik kode terbaru dari GitHub..."
-git pull
+git fetch origin
+git reset --hard origin/main
 
 # 2. Update dependencies Backend
 echo "[2/4] Menginstall/Update library Backend..."
