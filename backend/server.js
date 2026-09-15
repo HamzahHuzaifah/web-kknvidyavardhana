@@ -9,6 +9,7 @@ const articleRoutes = require('./routes/articleRoutes');
 const fileRoutes = require('./routes/fileRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const mediaRoutes = require('./routes/mediaRoutes');
+const sitemapRoutes = require('./routes/sitemapRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -29,6 +30,9 @@ app.use('/api', articleRoutes);
 app.use('/api', fileRoutes);
 app.use('/api', profileRoutes);
 app.use('/api', mediaRoutes);
+
+// Register Sitemap Route
+app.use('/', sitemapRoutes);
 
 // Serve Frontend static files
 const frontendDistPath = path.join(__dirname, '../frontend/dist');
