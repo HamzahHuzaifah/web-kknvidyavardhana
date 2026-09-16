@@ -321,8 +321,9 @@ router.post('/google-login', async (req, res) => {
 
     const email = payload.email;
     const googleId = payload.sub;
-    // Generate a username base from email
-    const usernameBase = email.split('@')[0];
+    // Generate a username base from Google profile name, fallback to email prefix
+    const rawName = payload.name || email.split('@')[0];
+    const usernameBase = rawName.trim().slice(0, 45);
 
     // Check if user exists
     let [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
