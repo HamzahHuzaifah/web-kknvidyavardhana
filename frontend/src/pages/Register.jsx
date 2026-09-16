@@ -6,6 +6,7 @@ import { UserPlus, AlertCircle, CheckCircle2, ArrowLeft, ShieldAlert } from 'luc
 export default function Register() {
   const [formData, setFormData] = useState({
     username: '',
+    email: '',
     password: '',
     confirmPassword: ''
   });
@@ -24,6 +25,11 @@ export default function Register() {
     setError('');
     setSuccessMsg('');
 
+    if (!formData.email.toLowerCase().endsWith('@gmail.com')) {
+      setError('Hanya akun @gmail.com yang diizinkan untuk mendaftar.');
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError('Konfirmasi password tidak cocok dengan password.');
       return;
@@ -39,6 +45,7 @@ export default function Register() {
     try {
       const response = await axios.post('/api/register', {
         username: formData.username,
+        email: formData.email,
         password: formData.password
       });
 
@@ -125,6 +132,23 @@ export default function Register() {
                   className="w-full border-2 border-primary-dark px-4 py-2.5 focus:outline-none focus:border-secondary-dark transition-colors font-medium bg-gray-50 text-sm"
                   placeholder="Buat username unik (min. 3 karakter)"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-black uppercase text-primary-dark mb-1">
+                  Alamat Gmail
+                </label>
+                <div className="relative">
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="contoh@gmail.com"
+                    required
+                    className="w-full bg-gray-50 border-2 border-primary-dark p-3 text-sm font-bold text-gray-800 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] focus:outline-none focus:translate-y-0.5 focus:shadow-[0px_0px_0px_0px_rgba(0,0,0,1)] transition-all"
+                  />
+                </div>
               </div>
 
               <div>

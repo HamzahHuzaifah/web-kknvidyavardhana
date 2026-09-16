@@ -45,6 +45,12 @@ const initDB = async (syncUploadsCallback) => {
     if (!colNames.includes('last_active')) {
       await pool.query("ALTER TABLE users ADD COLUMN last_active TIMESTAMP NULL");
     }
+    if (!colNames.includes('email')) {
+      await pool.query("ALTER TABLE users ADD COLUMN email VARCHAR(100) UNIQUE NULL");
+    }
+    if (!colNames.includes('google_id')) {
+      await pool.query("ALTER TABLE users ADD COLUMN google_id VARCHAR(100) UNIQUE NULL");
+    }
 
     // Default Admin Userxists and is approved
     const [adminRows] = await pool.query('SELECT * FROM users WHERE username = ?', ['admin']);
