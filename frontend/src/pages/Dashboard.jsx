@@ -1150,17 +1150,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* TAB 1: PRESENSI & RIWAYAT */}
-        {(!isAdmin || activeTab === 'attendance') && (
-          <AttendanceTab
-            isAdmin={isAdmin}
-            handleClockIn={handleClockIn}
-            isClockingIn={isClockingIn}
-            clockInStatus={clockInStatus}
-            loadingAttendance={loadingAttendance}
-            attendanceList={attendanceList}
-          />
-        )}
 
         {/* TABS RENDER */}
         <AnimatePresence mode="wait">
