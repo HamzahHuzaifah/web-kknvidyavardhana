@@ -224,9 +224,13 @@ INSERT INTO `team_members` (`id`, `name`, `role`, `major`, `image_url`, `display
 CREATE TABLE `users` (
   `id` int(11) NOT NULL,
   `username` varchar(50) NOT NULL,
+  `email` varchar(255) DEFAULT NULL,
   `password` varchar(255) NOT NULL,
   `role` varchar(20) DEFAULT 'user',
   `status` varchar(20) DEFAULT 'pending',
+  `google_id` varchar(255) DEFAULT NULL,
+  `active_token` varchar(500) DEFAULT NULL,
+  `last_active` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
