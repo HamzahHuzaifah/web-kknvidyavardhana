@@ -6,7 +6,7 @@ const rateLimit = require('express-rate-limit');
 const { pool } = require('../config/db');
 const { verifyToken, isAdmin, JWT_SECRET } = require('../middleware/auth');
 const { OAuth2Client } = require('google-auth-library');
-const { sendWelcomeEmail } = require('../utils/email');
+const { sendWelcomeEmail, sendRejectionEmail, sendAdminNotificationEmail } = require('../utils/email');
 
 const googleClient = new OAuth2Client(); // Client ID will be passed from frontend tokens
 
@@ -45,6 +45,9 @@ router.post('/register', registerLimiter, async (req, res) => {
       'INSERT INTO users (username, email, password, role, status) VALUES (?, ?, ?, ?, ?)',
       [username.trim(), email.trim(), hashedPassword, 'user', 'pending']
     );
+
+    // Notify admin about new registration
+    sendAdminNotificationEmail(username.trim(), email.trim()).catch(console.error);
 
     res.status(201).json({
       message: 'Registrasi berhasil! Akun Anda sedang menunggu persetujuan (ACC) dari Admin sebelum dapat digunakan.'
@@ -178,6 +181,9 @@ router.patch('/admin/users/:id/status', verifyToken, isAdmin, async (req, res) =
     if (status === 'approved' && prevStatus !== 'approved' && user.email) {
       // We don't await this so it doesn't block the response
       sendWelcomeEmail(user.email, user.username).catch(console.error);
+    } else if (status === 'rejected' && prevStatus !== 'rejected' && user.email) {
+      // If status changed to rejected, send rejection email
+      sendRejectionEmail(user.email, user.username).catch(console.error);
     }
 
     res.json({ message: `Status akun berhasil diubah menjadi '${status.toUpperCase()}'.` });
@@ -357,6 +363,9 @@ router.post('/google-login', async (req, res) => {
       // Fetch the newly created user
       const [newRows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
       user = newRows[0];
+
+      // Notify admin about new registration
+      sendAdminNotificationEmail(username, email).catch(console.error);
     } else {
       // User exists, if they don't have google_id, update it
       if (!user.google_id) {

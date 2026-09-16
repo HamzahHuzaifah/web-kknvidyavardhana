@@ -48,4 +48,69 @@ const sendWelcomeEmail = async (toEmail, username) => {
   }
 };
 
-module.exports = { sendWelcomeEmail };
+const sendRejectionEmail = async (toEmail, username) => {
+  if (!toEmail) return false;
+  
+  const mailOptions = {
+    from: `"Admin KKN Vidya Vardhana" <${EMAIL_USER}>`,
+    to: toEmail,
+    subject: 'Pemberitahuan Status Akun KKN Vidya Vardhana',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; padding: 20px; border-radius: 10px;">
+        <h2 style="color: #b91c1c; text-align: center;">Halo ${username}</h2>
+        <p style="color: #333; font-size: 16px;">
+          Mohon maaf, pendaftaran akun Anda untuk platform <strong>Web KKN Vidya Vardhana</strong> saat ini <strong style="color:#b91c1c;">ditolak</strong> oleh Administrator.
+        </p>
+        <p style="color: #333; font-size: 16px;">
+          Jika Anda merasa ini adalah sebuah kesalahan atau ingin menanyakan alasan penolakan, silakan hubungi Administrator secara langsung.
+        </p>
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+        <p style="color: #777; font-size: 12px; text-align: center;">
+          Email ini dikirim otomatis oleh sistem. Mohon jangan membalas pesan ini.
+        </p>
+      </div>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    console.error('Gagal mengirim email penolakan:', error);
+    return false;
+  }
+};
+
+const sendAdminNotificationEmail = async (newUsername, newUserEmail) => {
+  const mailOptions = {
+    from: `"Sistem Web KKN" <${EMAIL_USER}>`,
+    to: EMAIL_USER, // Send to the admin's email itself
+    subject: `Notifikasi: Ada Pendaftar Baru (${newUsername})!`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; padding: 20px; border-radius: 10px; background-color: #f9fafb;">
+        <h2 style="color: #0b2e59; text-align: center;">Notifikasi Pendaftar Baru</h2>
+        <p style="color: #333; font-size: 16px;">
+          Halo Admin! Ada pengguna baru yang baru saja mendaftar di Web KKN Vidya Vardhana dan sedang <strong>menunggu persetujuan (ACC)</strong> Anda.
+        </p>
+        <div style="background-color: #fff; padding: 15px; border: 1px solid #e5e7eb; border-radius: 5px; margin: 20px 0;">
+          <p style="margin: 5px 0;"><strong>Username:</strong> ${newUsername}</p>
+          <p style="margin: 5px 0;"><strong>Email:</strong> ${newUserEmail}</p>
+          <p style="margin: 5px 0;"><strong>Waktu Daftar:</strong> ${new Date().toLocaleString('id-ID')}</p>
+        </div>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="https://vidyavardhana.my.id/login" style="background-color: #eab308; color: #0b2e59; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">Buka Dashboard Admin</a>
+        </div>
+      </div>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    console.error('Gagal mengirim email notifikasi ke admin:', error);
+    return false;
+  }
+};
+
+module.exports = { sendWelcomeEmail, sendRejectionEmail, sendAdminNotificationEmail };
