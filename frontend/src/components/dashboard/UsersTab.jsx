@@ -11,7 +11,8 @@ import {
   Shield, 
   UserMinus, 
   Key, 
-  Trash2 
+  Trash2,
+  LogOut
 } from 'lucide-react';
 
 export default function UsersTab({
