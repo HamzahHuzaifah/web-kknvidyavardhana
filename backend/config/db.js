@@ -31,17 +31,22 @@ const initDB = async (syncUploadsCallback) => {
     `);
 
     // Ensure role and status columns exist if table was previously created
-    const [userCols] = await pool.query('SHOW COLUMNS FROM users');
-    const colNames = userCols.map((c) => c.Field);
-
+    const [cols] = await pool.query('SHOW COLUMNS FROM users');
+    const colNames = cols.map((c) => c.Field);
     if (!colNames.includes('role')) {
-      await pool.query("ALTER TABLE users ADD COLUMN role ENUM('user', 'admin') DEFAULT 'user'");
+      await pool.query("ALTER TABLE users ADD COLUMN role ENUM('admin','user') DEFAULT 'user'");
     }
     if (!colNames.includes('status')) {
-      await pool.query("ALTER TABLE users ADD COLUMN status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending'");
+      await pool.query("ALTER TABLE users ADD COLUMN status ENUM('pending','acc','rejected') DEFAULT 'pending'");
+    }
+    if (!colNames.includes('active_token')) {
+      await pool.query("ALTER TABLE users ADD COLUMN active_token VARCHAR(500) NULL");
+    }
+    if (!colNames.includes('last_active')) {
+      await pool.query("ALTER TABLE users ADD COLUMN last_active TIMESTAMP NULL");
     }
 
-    // Ensure default admin exists and is approved
+    // Default Admin Userxists and is approved
     const [adminRows] = await pool.query('SELECT * FROM users WHERE username = ?', ['admin']);
     const hashedPwd = await bcrypt.hash('admin123', 10);
     if (adminRows.length === 0) {

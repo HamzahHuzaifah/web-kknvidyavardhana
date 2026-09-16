@@ -30,6 +30,7 @@ export default function UsersTab({
   onDeleteUser,
   onOpenAddUserModal,
   onOpenResetPasswordModal,
+  onForceLogout,
   currentUsername
 }) {
   const filteredUsers = userList.filter((u) => {
@@ -247,6 +248,19 @@ export default function UsersTab({
 
                       <td className="p-3 border-2 border-primary-dark text-gray-600 font-medium">
                         {new Date(usr.created_at).toLocaleString('id-ID')}
+                        <div className="mt-1">
+                          {usr.last_active && new Date() - new Date(usr.last_active) < 5 * 60 * 1000 ? (
+                            <span className="text-[10px] font-black text-green-700 bg-green-100 border border-green-700 px-1.5 py-0.5 uppercase flex items-center w-fit gap-1">
+                              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                              Online
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold text-gray-500 bg-gray-100 border border-gray-400 px-1.5 py-0.5 uppercase flex items-center w-fit gap-1">
+                              <span className="w-2 h-2 rounded-full bg-gray-400"></span>
+                              Offline
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       <td className="p-3 border-2 border-primary-dark">
@@ -340,6 +354,17 @@ export default function UsersTab({
                               title="Reset password pengguna"
                             >
                               <Key size={11} /> Sandi
+                            </button>
+                          )}
+
+                          {/* FORCE LOGOUT BUTTON */}
+                          {usr.status === 'approved' && !isSelf && (
+                            <button
+                              onClick={() => onForceLogout(usr.id, usr.username)}
+                              className="inline-flex items-center gap-1 bg-red-600 text-white font-black px-2 py-1 border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase text-[10px]"
+                              title="Logout Paksa"
+                            >
+                              <LogOut size={11} /> Kick
                             </button>
                           )}
 

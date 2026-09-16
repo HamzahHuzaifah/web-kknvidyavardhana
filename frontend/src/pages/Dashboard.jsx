@@ -434,6 +434,32 @@ export default function Dashboard() {
     }
   };
 
+  // Force Logout User
+  const handleForceLogout = async (userId, targetUsername) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Logout Paksa Pengguna',
+      message: `Apakah Anda yakin ingin MELOGOUT PAKSA sesi pengguna '${targetUsername}'? Pengguna akan langsung dikeluarkan dari sistem.`,
+      confirmText: 'Ya, Logout Paksa',
+      cancelText: 'Batal',
+      showCancel: true,
+      type: 'danger',
+      onConfirm: async () => {
+        setAdminActionMsg({ type: '', message: '' });
+        try {
+          const response = await api.post(`/api/admin/users/${userId}/logout`);
+          setAdminActionMsg({ type: 'success', message: response.data.message });
+          fetchUsers(); // Refresh to update online status
+        } catch (error) {
+          setAdminActionMsg({
+            type: 'error',
+            message: error.response?.data?.error || 'Gagal melogout paksa pengguna.'
+          });
+        }
+      }
+    });
+  };
+
   // Update User Role
   const handleUpdateUserRole = (userId, targetRole, targetUsername) => {
     const isPromote = targetRole === 'admin';
@@ -1175,6 +1201,7 @@ export default function Dashboard() {
             onDeleteUser={handleDeleteUser}
             onOpenAddUserModal={() => setShowAddUserModal(true)}
             onOpenResetPasswordModal={(usr) => setResetPasswordModalUser(usr)}
+            onForceLogout={handleForceLogout}
             currentUsername={username}
               />
             </TabTransition>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import api from '../services/api';
 import { Home, User, BookOpen, LayoutDashboard, Image as ImageIcon, LogIn, LogOut, UserCircle, Menu, X } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 
@@ -37,7 +38,12 @@ export default function Navbar() {
     return () => window.removeEventListener('logoUpdated', handleLogoUpdate);
   }, []);
 
-  const confirmLogout = () => {
+  const confirmLogout = async () => {
+    try {
+      await api.post('/api/logout'); // Tells backend to nullify active_token
+    } catch (e) {
+      console.error(e);
+    }
     localStorage.removeItem('token');
     localStorage.removeItem('username');
     localStorage.removeItem('role');

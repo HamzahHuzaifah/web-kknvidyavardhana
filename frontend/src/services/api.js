@@ -20,4 +20,22 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Handle 401 Unauthorized automatically
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // Clear storage and redirect if token is invalid/kicked
+      localStorage.removeItem('token');
+      localStorage.removeItem('username');
+      localStorage.removeItem('role');
+      // Using window.location to force full reload to login
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login?msg=session_expired';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;

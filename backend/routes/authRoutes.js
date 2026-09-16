@@ -2,11 +2,25 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
 const { pool } = require('../config/db');
 const { verifyToken, isAdmin, JWT_SECRET } = require('../middleware/auth');
 
+// Rate Limiters
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10, // Limit each IP to 10 register requests per `window` (here, per hour)
+  message: { error: 'Terlalu banyak permintaan pembuatan akun dari IP ini, silakan coba lagi setelah 1 jam.' }
+});
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 login requests per `window` (here, per 15 minutes)
+  message: { error: 'Terlalu banyak percobaan login yang gagal. IP diblokir sementara, silakan coba 15 menit lagi.' }
+});
+
 // API: Register User
-router.post('/register', async (req, res) => {
+router.post('/register', registerLimiter, async (req, res) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) {
@@ -34,7 +48,7 @@ router.post('/register', async (req, res) => {
 });
 
 // API: Login
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   try {
     const { username, password } = req.body;
     const [rows] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
@@ -69,6 +83,9 @@ router.post('/login', async (req, res) => {
       { expiresIn: '1d' }
     );
 
+    // Save active_token to DB (Kick out other sessions)
+    await pool.query('UPDATE users SET active_token = ?, last_active = NOW() WHERE id = ?', [token, user.id]);
+
     res.json({
       token,
       username: user.username,
@@ -85,12 +102,35 @@ router.post('/login', async (req, res) => {
 router.get('/admin/users', verifyToken, isAdmin, async (req, res) => {
   try {
     const [rows] = await pool.query(
-      'SELECT id, username, role, status, created_at FROM users ORDER BY created_at DESC'
+      'SELECT id, username, role, status, created_at, last_active FROM users ORDER BY created_at DESC'
     );
     res.json(rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Gagal memuat daftar pengguna.' });
+  }
+});
+
+// API: Logout (User explicitly logs out)
+router.post('/logout', verifyToken, async (req, res) => {
+  try {
+    await pool.query('UPDATE users SET active_token = NULL WHERE id = ?', [req.userId]);
+    res.json({ message: 'Logout berhasil.' });
+  } catch (err) {
+    console.error('Logout error:', err);
+    res.status(500).json({ error: 'Gagal melakukan logout.' });
+  }
+});
+
+// API: Force Logout User (Admin Only)
+router.post('/admin/users/:id/logout', verifyToken, isAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('UPDATE users SET active_token = NULL WHERE id = ?', [id]);
+    res.json({ message: 'Sesi pengguna berhasil diputus (Logout Paksa).' });
+  } catch (err) {
+    console.error('Force logout error:', err);
+    res.status(500).json({ error: 'Gagal melakukan logout paksa.' });
   }
 });
 
