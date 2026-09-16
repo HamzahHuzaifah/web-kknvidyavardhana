@@ -428,3 +428,20 @@ router.post('/google-login', async (req, res) => {
 });
 
 module.exports = router;
+
+
+// API: Test Email Connection (For Debugging)
+router.get('/test-email', async (req, res) => {
+  try {
+    const { sendWelcomeEmail } = require('../utils/email');
+    const email = req.query.email || 'hamzahuzaifah@gmail.com';
+    const result = await sendWelcomeEmail(email, 'Tester');
+    if (result.success) {
+      res.json({ success: true, message: 'Email berhasil terkirim ke ' + email });
+    } else {
+      res.status(500).json({ success: false, error: result.error });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.toString() });
+  }
+});

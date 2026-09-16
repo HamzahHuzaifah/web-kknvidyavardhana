@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendWelcomeEmail = async (toEmail, username) => {
-  if (!toEmail) return false;
+  if (!toEmail) return { success: false, error: 'Email kosong' };
   
   const mailOptions = {
     from: `"Admin KKN Vidya Vardhana" <${EMAIL_USER}>`,
@@ -20,7 +20,7 @@ const sendWelcomeEmail = async (toEmail, username) => {
     subject: 'Selamat! Akun Anda Telah Disetujui (ACC) 🎉',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; padding: 20px; border-radius: 10px;">
-        <h2 style="color: #0b2e59; text-align: center;">Halo ${username}!</h2>
+        <h2 style="color: #0f172a; text-align: center;">Halo ${username}!</h2>
         <p style="color: #333; font-size: 16px;">
           Kabar gembira! Akun Anda untuk platform <strong>Web KKN Vidya Vardhana</strong> telah disetujui (Di-ACC) oleh Administrator.
         </p>
@@ -28,7 +28,7 @@ const sendWelcomeEmail = async (toEmail, username) => {
           Anda sekarang memiliki akses penuh untuk masuk ke dalam sistem dan berpartisipasi dalam publikasi artikel maupun modul program kerja kita.
         </p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="https://vidyavardhana.my.id/login" style="background-color: #0b2e59; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">Login ke Dashboard</a>
+          <a href="https://vidyavardhana.my.id/login" style="background-color: #0f172a; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Login ke Dashboard</a>
         </div>
         <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
         <p style="color: #777; font-size: 12px; text-align: center;">
@@ -41,15 +41,15 @@ const sendWelcomeEmail = async (toEmail, username) => {
   try {
     const info = await transporter.sendMail(mailOptions);
     console.log('Email terkirim:', info.response);
-    return true;
+    return { success: true };
   } catch (error) {
     console.error('Gagal mengirim email:', error);
-    return false;
+    return { success: false, error: error.message || error.toString() };
   }
 };
 
 const sendRejectionEmail = async (toEmail, username) => {
-  if (!toEmail) return false;
+  if (!toEmail) return { success: false, error: 'Email kosong' };
   
   const mailOptions = {
     from: `"Admin KKN Vidya Vardhana" <${EMAIL_USER}>`,
@@ -62,7 +62,10 @@ const sendRejectionEmail = async (toEmail, username) => {
           Mohon maaf, pendaftaran akun Anda untuk platform <strong>Web KKN Vidya Vardhana</strong> saat ini <strong style="color:#b91c1c;">ditolak</strong> oleh Administrator.
         </p>
         <p style="color: #333; font-size: 16px;">
-          Jika Anda merasa ini adalah sebuah kesalahan atau ingin menanyakan alasan penolakan, silakan hubungi Administrator secara langsung.
+          Hal ini mungkin dikarenakan data yang Anda masukkan tidak sesuai, atau Anda bukan merupakan anggota yang terdaftar pada Kelompok 7 KKN Vidya Vardhana.
+        </p>
+        <p style="color: #333; font-size: 16px;">
+          Jika Anda merasa ini adalah sebuah kesalahan, silakan hubungi Administrator secara langsung.
         </p>
         <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
         <p style="color: #777; font-size: 12px; text-align: center;">
@@ -74,10 +77,10 @@ const sendRejectionEmail = async (toEmail, username) => {
 
   try {
     await transporter.sendMail(mailOptions);
-    return true;
+    return { success: true };
   } catch (error) {
     console.error('Gagal mengirim email penolakan:', error);
-    return false;
+    return { success: false, error: error.message || error.toString() };
   }
 };
 
@@ -106,15 +109,15 @@ const sendAdminNotificationEmail = async (newUsername, newUserEmail) => {
 
   try {
     await transporter.sendMail(mailOptions);
-    return true;
+    return { success: true };
   } catch (error) {
     console.error('Gagal mengirim email notifikasi ke admin:', error);
-    return false;
+    return { success: false, error: error.message || error.toString() };
   }
 };
 
 const sendSuspendedEmail = async (toEmail, username) => {
-  if (!toEmail) return false;
+  if (!toEmail) return { success: false, error: 'Email kosong' };
   
   const mailOptions = {
     from: `"Admin KKN Vidya Vardhana" <${EMAIL_USER}>`,
@@ -142,15 +145,15 @@ const sendSuspendedEmail = async (toEmail, username) => {
 
   try {
     await transporter.sendMail(mailOptions);
-    return true;
+    return { success: true };
   } catch (error) {
     console.error('Gagal mengirim email pembekuan:', error);
-    return false;
+    return { success: false, error: error.message || error.toString() };
   }
 };
 
 const sendDeletedEmail = async (toEmail, username) => {
-  if (!toEmail) return false;
+  if (!toEmail) return { success: false, error: 'Email kosong' };
   
   const mailOptions = {
     from: `"Admin KKN Vidya Vardhana" <${EMAIL_USER}>`,
@@ -178,10 +181,10 @@ const sendDeletedEmail = async (toEmail, username) => {
 
   try {
     await transporter.sendMail(mailOptions);
-    return true;
+    return { success: true };
   } catch (error) {
     console.error('Gagal mengirim email penghapusan:', error);
-    return false;
+    return { success: false, error: error.message || error.toString() };
   }
 };
 
