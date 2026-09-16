@@ -113,4 +113,82 @@ const sendAdminNotificationEmail = async (newUsername, newUserEmail) => {
   }
 };
 
-module.exports = { sendWelcomeEmail, sendRejectionEmail, sendAdminNotificationEmail };
+const sendSuspendedEmail = async (toEmail, username) => {
+  if (!toEmail) return false;
+  
+  const mailOptions = {
+    from: `"Admin KKN Vidya Vardhana" <${EMAIL_USER}>`,
+    to: toEmail,
+    subject: 'Peringatan: Akun KKN Vidya Vardhana Anda Telah Dibekukan',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; padding: 20px; border-radius: 10px;">
+        <h2 style="color: #ea580c; text-align: center;">Halo ${username}</h2>
+        <p style="color: #333; font-size: 16px;">
+          Kami menginformasikan bahwa akun Anda pada platform <strong>Web KKN Vidya Vardhana</strong> saat ini <strong style="color:#ea580c;">DIBEKUKAN / DINONAKTIFKAN</strong> oleh Administrator.
+        </p>
+        <p style="color: #333; font-size: 16px;">
+          Anda tidak akan dapat melakukan login atau aktivitas apapun di dalam web hingga status Anda diaktifkan kembali.
+        </p>
+        <p style="color: #333; font-size: 16px; font-weight: bold;">
+          Silakan hubungi Administrator (atau hubungi nomor admin) untuk meminta penjelasan atau memulihkan akun Anda.
+        </p>
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+        <p style="color: #777; font-size: 12px; text-align: center;">
+          Email ini dikirim otomatis oleh sistem. Mohon jangan membalas pesan ini.
+        </p>
+      </div>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    console.error('Gagal mengirim email pembekuan:', error);
+    return false;
+  }
+};
+
+const sendDeletedEmail = async (toEmail, username) => {
+  if (!toEmail) return false;
+  
+  const mailOptions = {
+    from: `"Admin KKN Vidya Vardhana" <${EMAIL_USER}>`,
+    to: toEmail,
+    subject: 'Pemberitahuan: Akun KKN Vidya Vardhana Anda Telah Dihapus',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; padding: 20px; border-radius: 10px;">
+        <h2 style="color: #b91c1c; text-align: center;">Halo ${username}</h2>
+        <p style="color: #333; font-size: 16px;">
+          Sistem kami mencatat bahwa akun Anda pada platform <strong>Web KKN Vidya Vardhana</strong> telah <strong style="color:#b91c1c;">DIHAPUS SECARA PERMANEN</strong> oleh Administrator.
+        </p>
+        <p style="color: #333; font-size: 16px;">
+          Semua data yang terkait dengan akun Anda kemungkinan telah dihapus dari sistem atau di-nonaktifkan. Anda tidak dapat lagi menggunakan email atau username tersebut untuk masuk.
+        </p>
+        <p style="color: #333; font-size: 16px; font-weight: bold;">
+          Jika Anda merasa ini adalah kesalahan, silakan segera hubungi nomor Administrator.
+        </p>
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+        <p style="color: #777; font-size: 12px; text-align: center;">
+          Email ini dikirim otomatis oleh sistem. Mohon jangan membalas pesan ini.
+        </p>
+      </div>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    console.error('Gagal mengirim email penghapusan:', error);
+    return false;
+  }
+};
+
+module.exports = { 
+  sendWelcomeEmail, 
+  sendRejectionEmail, 
+  sendAdminNotificationEmail,
+  sendSuspendedEmail,
+  sendDeletedEmail
+};

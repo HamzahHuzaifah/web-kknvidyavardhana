@@ -6,7 +6,13 @@ const rateLimit = require('express-rate-limit');
 const { pool } = require('../config/db');
 const { verifyToken, isAdmin, JWT_SECRET } = require('../middleware/auth');
 const { OAuth2Client } = require('google-auth-library');
-const { sendWelcomeEmail, sendRejectionEmail, sendAdminNotificationEmail } = require('../utils/email');
+const { 
+  sendWelcomeEmail, 
+  sendRejectionEmail, 
+  sendAdminNotificationEmail,
+  sendSuspendedEmail,
+  sendDeletedEmail
+} = require('../utils/email');
 
 const googleClient = new OAuth2Client(); // Client ID will be passed from frontend tokens
 
@@ -179,11 +185,15 @@ router.patch('/admin/users/:id/status', verifyToken, isAdmin, async (req, res) =
     
     // If status changed to approved, send welcome email
     if (status === 'approved' && prevStatus !== 'approved' && user.email) {
-      // We don't await this so it doesn't block the response
       sendWelcomeEmail(user.email, user.username).catch(console.error);
     } else if (status === 'rejected' && prevStatus !== 'rejected' && user.email) {
-      // If status changed to rejected, send rejection email
-      sendRejectionEmail(user.email, user.username).catch(console.error);
+      if (prevStatus === 'pending') {
+        // If status changed to rejected from pending, send rejection email
+        sendRejectionEmail(user.email, user.username).catch(console.error);
+      } else if (prevStatus === 'approved') {
+        // If status changed to rejected from approved, send suspended email
+        sendSuspendedEmail(user.email, user.username).catch(console.error);
+      }
     }
 
     res.json({ message: `Status akun berhasil diubah menjadi '${status.toUpperCase()}'.` });
@@ -224,13 +234,21 @@ router.delete('/admin/users/:id', verifyToken, isAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Anda tidak dapat menghapus akun Anda sendiri!' });
     }
 
-    const [target] = await pool.query('SELECT username FROM users WHERE id = ?', [id]);
+    const [target] = await pool.query('SELECT username, email FROM users WHERE id = ?', [id]);
     if (target.length === 0) {
       return res.status(404).json({ error: 'Pengguna tidak ditemukan.' });
     }
 
+    const userToDelete = target[0];
+
     await pool.query('DELETE FROM users WHERE id = ?', [id]);
-    res.json({ message: `Akun '${target[0].username}' berhasil dihapus secara permanen.` });
+    
+    // Notify user that their account is deleted
+    if (userToDelete.email) {
+      sendDeletedEmail(userToDelete.email, userToDelete.username).catch(console.error);
+    }
+
+    res.json({ message: `Akun '${userToDelete.username}' berhasil dihapus secara permanen.` });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Gagal menghapus akun pengguna.' });
