@@ -130,7 +130,7 @@ const sendSuspendedEmail = async (toEmail, username) => {
           Anda tidak akan dapat melakukan login atau aktivitas apapun di dalam web hingga status Anda diaktifkan kembali.
         </p>
         <p style="color: #333; font-size: 16px; font-weight: bold;">
-          Silakan hubungi Administrator (atau hubungi nomor admin) untuk meminta penjelasan atau memulihkan akun Anda.
+          Silakan hubungi Administrator (atau hubungi nomor admin KKN) untuk meminta penjelasan atau memulihkan akun Anda.
         </p>
         <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
         <p style="color: #777; font-size: 12px; text-align: center;">

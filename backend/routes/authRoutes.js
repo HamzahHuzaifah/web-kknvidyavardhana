@@ -53,7 +53,7 @@ router.post('/register', registerLimiter, async (req, res) => {
     );
 
     // Notify admin about new registration
-    sendAdminNotificationEmail(username.trim(), email.trim()).catch(console.error);
+    await sendAdminNotificationEmail(username.trim(), email.trim());
 
     res.status(201).json({
       message: 'Registrasi berhasil! Akun Anda sedang menunggu persetujuan (ACC) dari Admin sebelum dapat digunakan.'
@@ -185,14 +185,14 @@ router.patch('/admin/users/:id/status', verifyToken, isAdmin, async (req, res) =
     
     // If status changed to approved, send welcome email
     if (status === 'approved' && prevStatus !== 'approved' && user.email) {
-      sendWelcomeEmail(user.email, user.username).catch(console.error);
+      await sendWelcomeEmail(user.email, user.username);
     } else if (status === 'rejected' && prevStatus !== 'rejected' && user.email) {
       if (prevStatus === 'pending') {
         // If status changed to rejected from pending, send rejection email
-        sendRejectionEmail(user.email, user.username).catch(console.error);
+        await sendRejectionEmail(user.email, user.username);
       } else if (prevStatus === 'approved') {
         // If status changed to rejected from approved, send suspended email
-        sendSuspendedEmail(user.email, user.username).catch(console.error);
+        await sendSuspendedEmail(user.email, user.username);
       }
     }
 
@@ -245,7 +245,7 @@ router.delete('/admin/users/:id', verifyToken, isAdmin, async (req, res) => {
     
     // Notify user that their account is deleted
     if (userToDelete.email) {
-      sendDeletedEmail(userToDelete.email, userToDelete.username).catch(console.error);
+      await sendDeletedEmail(userToDelete.email, userToDelete.username);
     }
 
     res.json({ message: `Akun '${userToDelete.username}' berhasil dihapus secara permanen.` });
@@ -308,7 +308,7 @@ router.post('/admin/users', verifyToken, isAdmin, async (req, res) => {
 
     // Because admin created and approved, send email directly if email provided
     if (email) {
-      sendWelcomeEmail(email.trim(), username.trim()).catch(console.error);
+      await sendWelcomeEmail(email.trim(), username.trim());
     }
 
     res.status(201).json({
@@ -383,7 +383,7 @@ router.post('/google-login', async (req, res) => {
       user = newRows[0];
 
       // Notify admin about new registration
-      sendAdminNotificationEmail(username, email).catch(console.error);
+      await sendAdminNotificationEmail(username, email);
     } else {
       // User exists, if they don't have google_id, update it
       if (!user.google_id) {
