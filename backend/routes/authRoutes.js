@@ -429,10 +429,3 @@ router.post('/google-login', async (req, res) => {
 
 module.exports = router;
 
-    } else {
-      res.status(500).json({ success: false, error: result.error });
-    }
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.toString() });
-  }
-});
