@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 
 import { motion, AnimatePresence } from 'framer-motion';
+
 import ConfirmModal from '../components/ConfirmModal';
 import UsersTab from '../components/dashboard/UsersTab';
 import ArticlesTab from '../components/dashboard/ArticlesTab';
@@ -21,8 +22,11 @@ import SocialMediaTab from '../components/dashboard/SocialMediaTab';
 
 import AddUserModal from '../components/dashboard/modals/AddUserModal';
 import ResetPasswordModal from '../components/dashboard/modals/ResetPasswordModal';
+import EditPermissionsModal from '../components/dashboard/modals/EditPermissionsModal';
 import PreviewMediaModal from '../components/dashboard/modals/PreviewMediaModal';
 import MediaPickerModal from '../components/dashboard/modals/MediaPickerModal';
+
+
 
 export default function Dashboard() {
   const username = localStorage.getItem('username') || 'Pengguna';
@@ -80,35 +84,11 @@ export default function Dashboard() {
   const [newPasswordInput, setNewPasswordInput] = useState('');
   const [savingResetPassword, setSavingResetPassword] = useState(false);
 
-  // Profile & Team state
-  const [profileForm, setProfileForm] = useState({
-    about_title: '',
-    about_description: '',
-    vision: '',
-    mission: '',
-    village_name: '',
-    village_description: '',
-    village_population: '',
-    village_rtrw: '',
-    village_area: '',
-    village_latitude: '',
-    village_longitude: '',
-    village_map_label: ''
-  });
-  const [teamList, setTeamList] = useState([]);
-  const [loadingProfile, setLoadingProfile] = useState(false);
-  const [profileSaveMsg, setProfileSaveMsg] = useState({ type: '', message: '' });
+  const [showEditPermissionsModal, setShowEditPermissionsModal] = useState(false);
+  const [editPermissionsUser, setEditPermissionsUser] = useState(null);
+  const [permissionsForm, setPermissionsForm] = useState({ can_upload_berita: false, can_upload_publikasi: false, can_upload_modul: false });
+  const [savingPermissions, setSavingPermissions] = useState(false);
 
-  const [editingMemberId, setEditingMemberId] = useState(null);
-  const [memberForm, setMemberForm] = useState({
-    name: '',
-    role: '',
-    major: '',
-    display_order: 0
-  });
-  const [memberImage, setMemberImage] = useState(null);
-  const [teamActionMsg, setTeamActionMsg] = useState({ type: '', message: '' });
-  const [savingMember, setSavingMember] = useState(false);
 
   // Media & Social state
   const [mediaList, setMediaList] = useState([]);
@@ -145,7 +125,11 @@ export default function Dashboard() {
     abstract: '',
     keywords: '',
     authors_meta: '',
-    doi_or_reg: ''
+    doi_or_reg: '',
+    references_list: '',
+    volume: '',
+    issue: '',
+    published_date: ''
   });
   const [editArticleImage, setEditArticleImage] = useState(null);
   const [editArticleDoc, setEditArticleDoc] = useState(null);
@@ -197,42 +181,6 @@ export default function Dashboard() {
     }
   };
 
-  // Fetch Profile & Team
-  const fetchProfileAndTeam = async () => {
-    if (!isAdmin) return;
-    setLoadingProfile(true);
-    try {
-      const [profileRes, teamRes] = await Promise.all([
-        axios.get('/api/profile-info'),
-        axios.get('/api/team')
-      ]);
-
-      if (profileRes.data) {
-        setProfileForm({
-          about_title: profileRes.data.about_title || '',
-          about_description: profileRes.data.about_description || '',
-          vision: profileRes.data.vision || '',
-          mission: profileRes.data.mission || '',
-          village_name: profileRes.data.village_name || '',
-          village_description: profileRes.data.village_description || '',
-          village_population: profileRes.data.village_population || '',
-          village_rtrw: profileRes.data.village_rtrw || '',
-          village_area: profileRes.data.village_area || '',
-          village_latitude: profileRes.data.village_latitude || '',
-          village_longitude: profileRes.data.village_longitude || '',
-          village_map_label: profileRes.data.village_map_label || ''
-        });
-        if (profileRes.data.logo_url) {
-          setActiveLogoUrl(profileRes.data.logo_url);
-        }
-      }
-      setTeamList(teamRes.data || []);
-    } catch (error) {
-      console.error('Error fetching profile & team:', error);
-    } finally {
-      setLoadingProfile(false);
-    }
-  };
 
   // Fetch Media Files
   const fetchMediaFiles = async () => {
@@ -407,7 +355,6 @@ export default function Dashboard() {
   useEffect(() => {
     if (isAdmin) {
       fetchUsers();
-      fetchProfileAndTeam();
       fetchMediaAndSocial();
       fetchMediaFiles();
     }
@@ -541,13 +488,24 @@ export default function Dashboard() {
     setSavingResetPassword(true);
     setAdminActionMsg({ type: '', message: '' });
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.patch(
-        `/api/admin/users/${resetPasswordModalUser.id}/reset-password`,
-        { new_password: newPasswordInput },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setAdminActionMsg({ type: 'success', message: response.data.message });
+      let response;
+      if (resetPasswordModalUser.isSelf) {
+        response = await axios.patch(
+          '/api/users/me/reset-password',
+          { new_password: newPasswordInput },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        // Show success alert for self password change since they aren't on UsersTab
+        showAlert(response.data.message, 'Berhasil');
+      } else {
+        response = await axios.patch(
+          `/api/admin/users/${resetPasswordModalUser.id}/reset-password`,
+          { new_password: newPasswordInput },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setAdminActionMsg({ type: 'success', message: response.data.message });
+      }
+      
       setResetPasswordModalUser(null);
       setNewPasswordInput('');
       fetchUsers();
@@ -596,6 +554,43 @@ export default function Dashboard() {
     }
   };
 
+
+
+  const handleOpenEditPermissions = (user) => {
+    setEditPermissionsUser(user);
+    setPermissionsForm({
+      can_upload_berita: !!user.can_upload_berita,
+      can_upload_publikasi: !!user.can_upload_publikasi,
+      can_upload_modul: !!user.can_upload_modul
+    });
+    setShowEditPermissionsModal(true);
+  };
+
+  const handleSavePermissions = async (e) => {
+    e.preventDefault();
+    if (!editPermissionsUser) return;
+    setSavingPermissions(true);
+    setAdminActionMsg({ type: '', message: '' });
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.patch(
+        `/api/admin/users/${editPermissionsUser.id}/permissions`,
+        permissionsForm,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setAdminActionMsg({ type: 'success', message: response.data.message });
+      setShowEditPermissionsModal(false);
+      fetchUsers(); // Refresh user list to get new permissions
+    } catch (error) {
+      setAdminActionMsg({
+        type: 'error',
+        message: error.response?.data?.error || 'Gagal menyimpan izin upload.'
+      });
+    } finally {
+      setSavingPermissions(false);
+    }
+  };
+
   // Clock In
   const handleClockIn = () => {
     setIsClockingIn(true);
@@ -632,135 +627,7 @@ export default function Dashboard() {
     );
   };
 
-  // Profile Save
-  const handleProfileChange = (e) => {
-    const { name, value } = e.target;
-    setProfileForm({ ...profileForm, [name]: value });
-  };
 
-  const handleSaveProfile = async (e) => {
-    e.preventDefault();
-    setProfileSaveMsg({ type: '', message: '' });
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.put('/api/profile-info', profileForm, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setProfileSaveMsg({ type: 'success', message: response.data.message });
-    } catch (error) {
-      setProfileSaveMsg({
-        type: 'error',
-        message: error.response?.data?.error || 'Gagal menyimpan profil.'
-      });
-    }
-  };
-
-  // Team Member Handlers
-  const handleMemberFormChange = (e) => {
-    const { name, value } = e.target;
-    setMemberForm({ ...memberForm, [name]: value });
-  };
-
-  const handleMemberImageChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setMemberImage(e.target.files[0]);
-    }
-  };
-
-  const handleStartEditMember = (member) => {
-    setEditingMemberId(member.id);
-    setMemberForm({
-      name: member.name,
-      role: member.role,
-      major: member.major || '',
-      display_order: member.display_order || 0
-    });
-    setMemberImage(null);
-    setTeamActionMsg({ type: '', message: '' });
-  };
-
-  const handleCancelEditMember = () => {
-    setEditingMemberId(null);
-    setMemberForm({ name: '', role: '', major: '', display_order: 0 });
-    setMemberImage(null);
-    setTeamActionMsg({ type: '', message: '' });
-  };
-
-  const handleSaveMember = async (e) => {
-    e.preventDefault();
-    setSavingMember(true);
-    setTeamActionMsg({ type: '', message: '' });
-
-    try {
-      const token = localStorage.getItem('token');
-      const formData = new FormData();
-      formData.append('name', memberForm.name);
-      formData.append('role', memberForm.role);
-      formData.append('major', memberForm.major);
-      formData.append('display_order', memberForm.display_order);
-      if (memberImage) {
-        formData.append('image', memberImage);
-      }
-
-      if (editingMemberId) {
-        await axios.put(`/api/team/${editingMemberId}`, formData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-          }
-        });
-        setTeamActionMsg({ type: 'success', message: 'Data anggota tim berhasil diperbarui!' });
-      } else {
-        await axios.post('/api/team', formData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-          }
-        });
-        setTeamActionMsg({ type: 'success', message: 'Anggota tim baru berhasil ditambahkan!' });
-      }
-
-      handleCancelEditMember();
-      fetchProfileAndTeam();
-    } catch (error) {
-      setTeamActionMsg({
-        type: 'error',
-        message: error.response?.data?.error || 'Gagal menyimpan anggota tim.'
-      });
-    } finally {
-      setSavingMember(false);
-    }
-  };
-
-  const handleDeleteMember = (id) => {
-    setConfirmModal({
-      isOpen: true,
-      title: 'Hapus Anggota Tim',
-      message: 'Apakah Anda yakin ingin menghapus data anggota ini dari daftar susunan pengurus?',
-      confirmText: 'Ya, Hapus',
-      cancelText: 'Batal',
-      showCancel: true,
-      type: 'danger',
-      onConfirm: async () => {
-        closeConfirmModal();
-        try {
-          const token = localStorage.getItem('token');
-          await axios.delete(`/api/team/${id}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          setTeamActionMsg({ type: 'success', message: 'Anggota tim berhasil dihapus.' });
-          fetchProfileAndTeam();
-        } catch (error) {
-          setTeamActionMsg({
-            type: 'error',
-            message: error.response?.data?.error || 'Gagal menghapus anggota tim.'
-          });
-        }
-      }
-    });
-  };
-
-  // Media Handlers
   const handleMediaFormChange = (e) => {
     const { name, value, type, checked } = e.target;
     setMediaForm({
@@ -913,6 +780,10 @@ export default function Dashboard() {
       keywords: article.keywords || '',
       authors_meta: article.authors_meta || '',
       doi_or_reg: article.doi_or_reg || '',
+      references_list: article.references_list || '',
+      volume: article.volume || '',
+      issue: article.issue || '',
+      published_date: article.published_date ? new Date(article.published_date).toISOString().split('T')[0] : '',
       image_url: article.image_url || '',
       file_url: article.file_url || ''
     });
@@ -935,6 +806,10 @@ export default function Dashboard() {
       keywords: '',
       authors_meta: '',
       doi_or_reg: '',
+      references_list: '',
+      volume: '',
+      issue: '',
+      published_date: '',
       image_url: '', 
       file_url: '' 
     });
@@ -959,7 +834,11 @@ export default function Dashboard() {
       formData.append('abstract', editArticleForm.abstract || '');
       formData.append('keywords', editArticleForm.keywords || '');
       formData.append('authors_meta', editArticleForm.authors_meta || '');
-      formData.append('doi_or_reg', editArticleForm.doi_or_reg || '');
+      if (editArticleForm.doi_or_reg) formData.append('doi_or_reg', editArticleForm.doi_or_reg);
+      if (editArticleForm.references_list) formData.append('references_list', editArticleForm.references_list);
+      if (editArticleForm.volume) formData.append('volume', editArticleForm.volume);
+      if (editArticleForm.issue) formData.append('issue', editArticleForm.issue);
+      if (editArticleForm.published_date) formData.append('published_date', editArticleForm.published_date);
       if (editArticleImage) {
         formData.append('image', editArticleImage);
       } else if (editArticleForm.image_url) {
@@ -1031,17 +910,7 @@ export default function Dashboard() {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
-  const TabTransition = ({ children, tabKey }) => (
-    <motion.div
-      key={tabKey}
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -15 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
-    >
-      {children}
-    </motion.div>
-  );
+
 
   return (
     <div className="bg-gray-50 min-h-screen py-10 px-4">
@@ -1052,11 +921,19 @@ export default function Dashboard() {
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-yellow rounded-full mix-blend-multiply opacity-30 -mr-12 -mt-12 pointer-events-none"></div>
 
           <div>
-            <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-3xl font-black text-primary-dark uppercase">
-                Halo, {username}!
-              </h1>
-              <span className={`text-xs font-black px-2.5 py-1 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] uppercase ${
+              <div className="flex items-start sm:items-center gap-4 mb-2">
+              <div className="flex flex-col items-start gap-1">
+                <h1 className="text-3xl font-black text-primary-dark uppercase leading-none">
+                  Halo, {username}!
+                </h1>
+                <button
+                  onClick={() => setResetPasswordModalUser({ username: username, isSelf: true })}
+                  className="text-[10px] font-bold bg-white border border-gray-300 text-gray-700 px-2 py-0.5 shadow-sm uppercase hover:bg-gray-100 hover:text-primary-dark transition-colors"
+                >
+                  Ubah Sandi Saya
+                </button>
+              </div>
+              <span className={`text-xs font-black px-2.5 py-1 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] uppercase mt-1 sm:mt-0 ${
                 isAdmin 
                   ? 'bg-gradient-yellow text-primary-dark' 
                   : 'bg-gradient-green text-white'
@@ -1155,9 +1032,8 @@ export default function Dashboard() {
 
 
         {/* TABS RENDER */}
-        <AnimatePresence mode="wait">
+        <div className="tab-content-area">
           {!isAdmin && activeTab === 'welcome' && (
-            <TabTransition tabKey="welcome">
               <div className="bg-white border-2 border-primary-dark shadow-hard p-10 text-center space-y-6">
                 <Compass className="w-16 h-16 mx-auto text-primary-dark opacity-20" />
                 <h2 className="text-2xl font-black text-primary-dark uppercase">Selamat Datang di Portal KKN</h2>
@@ -1171,12 +1047,10 @@ export default function Dashboard() {
                   <UploadCloud size={20} /> Mulai Upload Konten
                 </Link>
               </div>
-            </TabTransition>
           )}
 
           {/* TAB 2: ACC & KELOLA USER */}
           {isAdmin && activeTab === 'users' && (
-            <TabTransition tabKey="users">
               <UsersTab
             userList={userList}
             loadingUsers={loadingUsers}
@@ -1193,15 +1067,14 @@ export default function Dashboard() {
             onDeleteUser={handleDeleteUser}
             onOpenAddUserModal={() => setShowAddUserModal(true)}
             onOpenResetPasswordModal={(usr) => setResetPasswordModalUser(usr)}
+            onOpenEditPermissionsModal={handleOpenEditPermissions}
             onForceLogout={handleForceLogout}
             currentUsername={username}
               />
-            </TabTransition>
           )}
 
           {/* TAB 3: KELOLA BERITA, PUBLIKASI & MODUL */}
           {isAdmin && activeTab === 'articles' && (
-            <TabTransition tabKey="articles">
               <ArticlesTab
             articlesList={articlesList}
             loadingArticles={loadingArticles}
@@ -1223,12 +1096,10 @@ export default function Dashboard() {
             setMediaPickerTarget={setMediaPickerTarget}
             setShowMediaPickerModal={setShowMediaPickerModal}
               />
-            </TabTransition>
           )}
 
           {/* TAB 4: MANAJER BERKAS */}
           {isAdmin && activeTab === 'files' && (
-            <TabTransition tabKey="files">
               <FileManagerTab
             fileList={fileList}
             fileCounts={fileCounts}
@@ -1253,34 +1124,30 @@ export default function Dashboard() {
             setPreviewMediaModal={setPreviewMediaModal}
             formatFileSize={formatFileSize}
               />
-            </TabTransition>
           )}
 
           {/* TAB 5: PROFIL & TIM */}
           {isAdmin && activeTab === 'profile' && (
-            <TabTransition tabKey="profile">
               <ProfileTab
-            profileForm={profileForm}
-            handleProfileChange={handleProfileChange}
-            handleSaveProfile={handleSaveProfile}
-            profileSaveMsg={profileSaveMsg}
-            teamList={teamList}
-            teamActionMsg={teamActionMsg}
-            memberForm={memberForm}
-            handleMemberFormChange={handleMemberFormChange}
-            handleMemberImageChange={handleMemberImageChange}
-            handleSaveMember={handleSaveMember}
-            handleStartEditMember={handleStartEditMember}
-            editingMemberId={editingMemberId}
-            savingMember={savingMember}
-            handleDeleteMember={handleDeleteMember}
+                token={localStorage.getItem('token')}
+                onConfirm={({ title, message, confirmText, type, onConfirm: onConfirmFn }) => {
+                  setConfirmModal({
+                    isOpen: true,
+                    title,
+                    message,
+                    confirmText,
+                    cancelText: 'Batal',
+                    showCancel: true,
+                    type,
+                    onConfirm: async () => { closeConfirmModal(); await onConfirmFn(); },
+                    isLoading: false
+                  });
+                }}
               />
-            </TabTransition>
           )}
 
           {/* TAB 6: MEDIA & MEDSOS */}
           {isAdmin && activeTab === 'media' && (
-            <TabTransition tabKey="media">
               <SocialMediaTab
                 socialLinksList={socialLinksList}
                 socialForm={socialForm}
@@ -1298,9 +1165,8 @@ export default function Dashboard() {
                 handleDeleteMedia={handleDeleteMedia}
                 mediaActionMsg={mediaActionMsg}
               />
-            </TabTransition>
           )}
-        </AnimatePresence>
+        </div>
 
         {/* MODALS */}
         <AddUserModal
@@ -1313,12 +1179,12 @@ export default function Dashboard() {
         />
 
         <ResetPasswordModal
-          resetPasswordModalUser={resetPasswordModalUser}
+          user={resetPasswordModalUser}
           onClose={() => setResetPasswordModalUser(null)}
-          newPasswordInput={newPasswordInput}
-          setNewPasswordInput={setNewPasswordInput}
-          handleResetPasswordSubmit={handleResetPasswordSubmit}
-          savingResetPassword={savingResetPassword}
+          newPassword={newPasswordInput}
+          setNewPassword={setNewPasswordInput}
+          onSubmit={handleResetPasswordSubmit}
+          isSaving={savingResetPassword}
         />
 
         <PreviewMediaModal
@@ -1347,6 +1213,17 @@ export default function Dashboard() {
               setEditArticleDoc(null);
             }
           }}
+        />
+
+        {/* EDIT PERMISSIONS MODAL */}
+        <EditPermissionsModal
+          isOpen={showEditPermissionsModal}
+          onClose={() => setShowEditPermissionsModal(false)}
+          targetUser={editPermissionsUser}
+          form={permissionsForm}
+          setForm={setPermissionsForm}
+          onSubmit={handleSavePermissions}
+          isSaving={savingPermissions}
         />
 
         {/* CUSTOM BRANDED CONFIRMATION / ALERT MODAL */}

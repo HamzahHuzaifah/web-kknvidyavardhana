@@ -51,22 +51,37 @@ const initDB = async (syncUploadsCallback) => {
     if (!colNames.includes('google_id')) {
       await pool.query("ALTER TABLE users ADD COLUMN google_id VARCHAR(100) UNIQUE NULL");
     }
+    if (!colNames.includes('can_upload_berita')) {
+      await pool.query("ALTER TABLE users ADD COLUMN can_upload_berita BOOLEAN DEFAULT FALSE");
+    }
+    if (!colNames.includes('can_upload_publikasi')) {
+      await pool.query("ALTER TABLE users ADD COLUMN can_upload_publikasi BOOLEAN DEFAULT FALSE");
+    }
+    if (!colNames.includes('can_upload_modul')) {
+      await pool.query("ALTER TABLE users ADD COLUMN can_upload_modul BOOLEAN DEFAULT FALSE");
+    }
 
     // Default Admin Userxists and is approved
     const [adminRows] = await pool.query('SELECT * FROM users WHERE username = ?', ['admin']);
     const hashedPwd = await bcrypt.hash('admin123', 10);
     if (adminRows.length === 0) {
-      await pool.query('INSERT INTO users (username, password, role, status) VALUES (?, ?, ?, ?)', [
+      await pool.query('INSERT INTO users (username, password, role, status, can_upload_berita, can_upload_publikasi, can_upload_modul) VALUES (?, ?, ?, ?, ?, ?, ?)', [
         'admin',
-        hashedPwd,
-        'admin',
-        'approved'
-      ]);
-    } else {
-      await pool.query('UPDATE users SET password = ?, role = ?, status = ? WHERE username = ?', [
         hashedPwd,
         'admin',
         'approved',
+        true,
+        true,
+        true
+      ]);
+    } else {
+      await pool.query('UPDATE users SET password = ?, role = ?, status = ?, can_upload_berita = ?, can_upload_publikasi = ?, can_upload_modul = ? WHERE username = ?', [
+        hashedPwd,
+        'admin',
+        'approved',
+        true,
+        true,
+        true,
         'admin'
       ]);
     }
@@ -280,6 +295,18 @@ const initDB = async (syncUploadsCallback) => {
     }
     if (!artColNames.includes('publisher')) {
       await pool.query("ALTER TABLE articles ADD COLUMN publisher VARCHAR(150) DEFAULT 'KKN Vidya Vardhana'");
+    }
+    if (!artColNames.includes('references_list')) {
+      await pool.query('ALTER TABLE articles ADD COLUMN references_list TEXT DEFAULT NULL');
+    }
+    if (!artColNames.includes('volume')) {
+      await pool.query('ALTER TABLE articles ADD COLUMN volume INT DEFAULT NULL');
+    }
+    if (!artColNames.includes('issue')) {
+      await pool.query('ALTER TABLE articles ADD COLUMN issue INT DEFAULT NULL');
+    }
+    if (!artColNames.includes('published_date')) {
+      await pool.query('ALTER TABLE articles ADD COLUMN published_date DATE DEFAULT NULL');
     }
 
     // 8. Create media_files table (Central Media Library / File Manager)

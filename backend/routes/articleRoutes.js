@@ -78,7 +78,11 @@ router.post('/articles', verifyToken, uploadFields, async (req, res) => {
       keywords, 
       authors_meta, 
       doi_or_reg,
-      publisher 
+      publisher,
+      references_list,
+      volume,
+      issue,
+      published_date
     } = req.body;
 
     if (!title || !content) {
@@ -86,6 +90,17 @@ router.post('/articles', verifyToken, uploadFields, async (req, res) => {
     }
 
     const validCategory = ['berita', 'publikasi', 'modul'].includes(category) ? category : 'berita';
+
+    // Fetch user permissions
+    const [userRows] = await pool.query('SELECT role, can_upload_berita, can_upload_publikasi, can_upload_modul FROM users WHERE id = ?', [req.userId]);
+    const user = userRows[0];
+    
+    if (user && user.role !== 'admin') {
+       if (validCategory === 'berita' && !user.can_upload_berita) return res.status(403).json({ error: 'Anda tidak memiliki hak akses untuk mengupload Berita.' });
+       if (validCategory === 'publikasi' && !user.can_upload_publikasi) return res.status(403).json({ error: 'Anda tidak memiliki hak akses untuk mengupload Publikasi Ilmiah.' });
+       if (validCategory === 'modul' && !user.can_upload_modul) return res.status(403).json({ error: 'Anda tidak memiliki hak akses untuk mengupload Modul.' });
+    }
+
     const slug = generateSlug(title) + '-' + Date.now().toString().slice(-4);
 
     let imageUrl = req.files && req.files['image'] ? `/uploads/${req.files['image'][0].filename}` : (req.body.image_url || null);
@@ -102,8 +117,8 @@ router.post('/articles', verifyToken, uploadFields, async (req, res) => {
 
     const [result] = await pool.query(
       `INSERT INTO articles 
-       (title, slug, category, content, image_url, file_url, author_id, author_name, abstract, keywords, authors_meta, doi_or_reg, publisher) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (title, slug, category, content, image_url, file_url, author_id, author_name, abstract, keywords, authors_meta, doi_or_reg, publisher, references_list, volume, issue, published_date) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         title, 
         slug, 
@@ -117,7 +132,11 @@ router.post('/articles', verifyToken, uploadFields, async (req, res) => {
         keywords || null,
         authors_meta || null,
         doi_or_reg || null,
-        publisher || 'KKN Vidya Vardhana'
+        publisher || 'KKN Vidya Vardhana',
+        references_list || null,
+        volume ? parseInt(volume) : null,
+        issue ? parseInt(issue) : null,
+        published_date || null
       ]
     );
 
@@ -154,7 +173,11 @@ router.put('/articles/:id', verifyToken, isAdmin, uploadFields, async (req, res)
       keywords,
       authors_meta,
       doi_or_reg,
-      publisher
+      publisher,
+      references_list,
+      volume,
+      issue,
+      published_date
     } = req.body;
 
     if (!title || !content) {
@@ -171,7 +194,11 @@ router.put('/articles/:id', verifyToken, isAdmin, uploadFields, async (req, res)
       keywords = ?,
       authors_meta = ?,
       doi_or_reg = ?,
-      publisher = ?`;
+      publisher = ?,
+      references_list = ?,
+      volume = ?,
+      issue = ?,
+      published_date = ?`;
     let params = [
       title, 
       validCategory, 
@@ -180,7 +207,11 @@ router.put('/articles/:id', verifyToken, isAdmin, uploadFields, async (req, res)
       keywords || null, 
       authors_meta || null, 
       doi_or_reg || null,
-      publisher || 'KKN Vidya Vardhana'
+      publisher || 'KKN Vidya Vardhana',
+      references_list || null,
+      volume ? parseInt(volume) : null,
+      issue ? parseInt(issue) : null,
+      published_date || null
     ];
 
     if (req.files && req.files['image']) {

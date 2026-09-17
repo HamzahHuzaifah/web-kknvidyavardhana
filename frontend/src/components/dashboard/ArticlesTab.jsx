@@ -13,6 +13,8 @@ import {
   Trash2 
 } from 'lucide-react';
 import ReactQuill from 'react-quill-new';
+import CustomSelect from '../CustomSelect';
+import CustomDatePicker from '../CustomDatePicker';
 import 'react-quill-new/dist/quill.snow.css';
 
 export default function ArticlesTab({
@@ -110,15 +112,16 @@ export default function ArticlesTab({
               <label className="block text-primary-dark font-bold text-xs uppercase mb-1">
                 Kategori *
               </label>
-              <select
+              <CustomSelect
                 value={editArticleForm.category}
-                onChange={(e) => setEditArticleForm({ ...editArticleForm, category: e.target.value })}
-                className="w-full border-2 border-primary-dark px-3 py-2 text-xs font-medium bg-white outline-none"
-              >
-                <option value="berita">📰 Berita</option>
-                <option value="publikasi">📑 Publikasi</option>
-                <option value="modul">📚 Modul & Buku</option>
-              </select>
+                onChange={(val) => setEditArticleForm({ ...editArticleForm, category: val })}
+                options={[
+                  { value: 'berita', label: '📰 Berita' },
+                  { value: 'publikasi', label: '📑 Publikasi' },
+                  { value: 'modul', label: '📚 Modul & Buku' }
+                ]}
+                className="w-full"
+              />
             </div>
 
             <div>
@@ -172,6 +175,56 @@ export default function ArticlesTab({
                 className="w-full border-2 border-primary-dark p-2.5 text-xs font-medium bg-white outline-none"
               />
             </div>
+
+            {editArticleForm.category === 'publikasi' && (
+              <>
+                <div>
+                  <label className="block text-primary-dark font-bold text-xs uppercase mb-1">
+                    Volume & Issue
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      value={editArticleForm.volume || ''}
+                      onChange={(e) => setEditArticleForm({ ...editArticleForm, volume: e.target.value })}
+                      placeholder="Vol"
+                      className="w-1/2 border-2 border-primary-dark px-2 py-2 text-xs font-medium bg-white outline-none"
+                    />
+                    <input
+                      type="number"
+                      value={editArticleForm.issue || ''}
+                      onChange={(e) => setEditArticleForm({ ...editArticleForm, issue: e.target.value })}
+                      placeholder="No"
+                      className="w-1/2 border-2 border-primary-dark px-2 py-2 text-xs font-medium bg-white outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-primary-dark font-bold text-xs uppercase mb-1">
+                    Tanggal Publikasi Asli
+                  </label>
+                  <CustomDatePicker
+                    value={editArticleForm.published_date || ''}
+                    onChange={(val) => setEditArticleForm({ ...editArticleForm, published_date: val })}
+                    className="w-full"
+                  />
+                </div>
+
+                <div className="sm:col-span-3">
+                  <label className="block text-primary-dark font-bold text-xs uppercase mb-1">
+                    Daftar Pustaka (References)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={editArticleForm.references_list || ''}
+                    onChange={(e) => setEditArticleForm({ ...editArticleForm, references_list: e.target.value })}
+                    placeholder="Tuliskan daftar pustaka yang digunakan, pisahkan dengan baris baru (Enter)..."
+                    className="w-full border-2 border-primary-dark p-2.5 text-xs font-medium bg-white outline-none leading-relaxed"
+                  />
+                </div>
+              </>
+            )}
 
             <div className="sm:col-span-3 space-y-1">
               <div className="flex items-center justify-between">

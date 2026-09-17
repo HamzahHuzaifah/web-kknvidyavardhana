@@ -1,5 +1,6 @@
 import React from 'react';
 import { UserPlus, X, Lock } from 'lucide-react';
+import CustomSelect from '../../CustomSelect';
 
 export default function AddUserModal({
   isOpen,
@@ -77,14 +78,15 @@ export default function AddUserModal({
             <label className="block text-primary-dark font-black text-xs uppercase mb-1">
               Hak Akses (Role) *
             </label>
-            <select
+            <CustomSelect
               value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}
-              className="w-full border-2 border-primary-dark p-2 text-xs bg-white outline-none font-bold"
-            >
-              <option value="user">User (Anggota Reguler)</option>
-              <option value="admin">Administrator (Akses Penuh)</option>
-            </select>
+              onChange={(val) => setForm({ ...form, role: val })}
+              options={[
+                { value: 'user', label: 'User (Anggota Reguler)' },
+                { value: 'admin', label: 'Administrator (Akses Penuh)' }
+              ]}
+              className="w-full"
+            />
           </div>
 
           <div className="pt-2 flex items-center justify-end gap-2 border-t border-gray-200">

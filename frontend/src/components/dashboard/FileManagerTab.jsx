@@ -21,6 +21,7 @@ import {
   Trash2, 
   Download 
 } from 'lucide-react';
+import CustomSelect from '../CustomSelect';
 
 export default function FileManagerTab({
   fileList,
@@ -268,17 +269,18 @@ export default function FileManagerTab({
 
           {/* SEARCH & SOURCE FILTER */}
           <div className="flex flex-wrap items-center gap-2">
-            <select
+            <CustomSelect
               value={fileSourceFilter}
-              onChange={(e) => setFileSourceFilter(e.target.value)}
-              className="border-2 border-primary-dark px-2.5 py-1.5 text-xs font-bold bg-white outline-none"
-            >
-              <option value="all">Semua Sumber</option>
-              <option value="direct_upload">🚀 Upload Langsung</option>
-              <option value="article">📰 Dari Berita / Modul</option>
-              <option value="team">👥 Dari Profil / Tim</option>
-              <option value="logo">👑 Logo Website</option>
-            </select>
+              onChange={setFileSourceFilter}
+              options={[
+                { value: 'all', label: 'Semua Sumber' },
+                { value: 'direct_upload', label: '🚀 Upload Langsung' },
+                { value: 'article', label: '📰 Dari Berita / Modul' },
+                { value: 'team', label: '👥 Dari Profil / Tim' },
+                { value: 'logo', label: '👑 Logo Website' }
+              ]}
+              className="min-w-[150px]"
+            />
 
             <div className="relative">
               <input

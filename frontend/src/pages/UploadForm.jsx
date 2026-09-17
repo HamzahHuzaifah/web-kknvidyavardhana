@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
+import CustomDatePicker from '../components/CustomDatePicker';
 
 export default function UploadForm() {
   const [formData, setFormData] = useState({
@@ -34,6 +35,10 @@ export default function UploadForm() {
     keywords: '',
     authors_meta: '',
     doi_or_reg: '',
+    references_list: '',
+    volume: '',
+    issue: '',
+    published_date: '',
     image: null,
     document: null
   });
@@ -41,25 +46,71 @@ export default function UploadForm() {
   const [documentName, setDocumentName] = useState('');
   const [status, setStatus] = useState({ type: '', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [permissions, setPermissions] = useState(null);
+  const [loadingPermissions, setLoadingPermissions] = useState(true);
   const navigate = useNavigate();
 
   const token = localStorage.getItem('token');
   const username = localStorage.getItem('username');
   const role = localStorage.getItem('role');
 
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      try {
+        const response = await axios.get('/api/users/me/permissions', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setPermissions(response.data);
+        
+        if (response.data.role !== 'admin') {
+          if (!response.data.can_upload_berita && response.data.can_upload_publikasi) {
+            setFormData(prev => ({ ...prev, category: 'publikasi' }));
+          } else if (!response.data.can_upload_berita && !response.data.can_upload_publikasi && response.data.can_upload_modul) {
+            setFormData(prev => ({ ...prev, category: 'modul' }));
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch permissions:', err);
+      } finally {
+        setLoadingPermissions(false);
+      }
+    };
+    if (token) fetchPermissions();
+  }, [token]);
+
+
+  const handleFillDummyData = () => {
+    setFormData({
+      title: 'Strategi Implementasi E-Government dalam Meningkatkan Pelayanan Publik di Era Digital',
+      category: 'publikasi',
+      content: '<p>Penelitian ini mengeksplorasi efektivitas penerapan sistem E-Government di tingkat pemerintahan daerah. Melalui pendekatan kualitatif dan studi kasus pada 3 kota besar, ditemukan bahwa kendala utama bukan pada infrastruktur teknologi, melainkan pada literasi digital aparat dan kultur birokrasi. Artikel ini membedah faktor-faktor tersebut secara mendalam.</p><h2>Metode Penelitian</h2><p>Penelitian menggunakan pendekatan kualitatif dengan teknik pengumpulan data observasi partisipatif dan wawancara mendalam.</p><h2>Hasil dan Pembahasan</h2><p>Tingkat adopsi teknologi sangat bervariasi dan bergantung pada kepemimpinan di masing-masing instansi. Pelayanan publik meningkat drastis setelah SOP digital disederhanakan sebesar 40%.</p>',
+      abstract: 'Penelitian ini bertujuan menganalisis implementasi e-government pada pelayanan publik. Hasil menunjukkan adanya korelasi positif antara literasi digital aparatur dengan kepuasan masyarakat. Rekomendasi mencakup program pelatihan berkelanjutan dan restrukturisasi SOP pelayanan digital.',
+      keywords: 'E-Government, Pelayanan Publik, Literasi Digital, Reformasi Birokrasi',
+      authors_meta: 'Budi Santoso, Siti Aminah, Reza Pahlevi',
+      doi_or_reg: '10.56070/egov.2026.012',
+      volume: '12',
+      issue: '2',
+      published_date: '2026-05-14',
+      references_list: 'Santoso, B. (2025). Administrasi Publik Digital. Jakarta: Penerbit Universitas.\nAminah, S. (2024). Analisis Kebijakan E-Gov. Jurnal Ilmu Pemerintahan, 8(2), 45-60.\nPahlevi, R. (2023). Dinamika Organisasi Birokrasi di Indonesia. Bandung: Pustaka Abadi.',
+      image: null,
+      document: null
+    });
+    setStatus({ type: 'success', message: 'Form berhasil diisi dengan data dummy publikasi jurnal ilmiah!' });
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleQuillChange = (value) => {
-    setFormData({ ...formData, content: value });
+    setFormData(prev => ({ ...prev, content: value }));
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData({ ...formData, image: file });
+      setFormData(prev => ({ ...prev, image: file }));
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result);
@@ -71,7 +122,7 @@ export default function UploadForm() {
   const handleDocumentChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData({ ...formData, document: file });
+      setFormData(prev => ({ ...prev, document: file }));
       setDocumentName(file.name);
     }
   };
@@ -106,8 +157,12 @@ export default function UploadForm() {
     data.append('content', formData.content);
     data.append('abstract', formData.abstract);
     data.append('keywords', formData.keywords);
-    data.append('authors_meta', formData.authors_meta);
-    data.append('doi_or_reg', formData.doi_or_reg);
+    if (formData.authors_meta) data.append('authors_meta', formData.authors_meta);
+    if (formData.doi_or_reg) data.append('doi_or_reg', formData.doi_or_reg);
+    if (formData.references_list) data.append('references_list', formData.references_list);
+    if (formData.volume) data.append('volume', formData.volume);
+    if (formData.issue) data.append('issue', formData.issue);
+    if (formData.published_date) data.append('published_date', formData.published_date);
 
     if (formData.image) {
       data.append('image', formData.image);
@@ -136,6 +191,10 @@ export default function UploadForm() {
         keywords: '',
         authors_meta: '',
         doi_or_reg: '',
+        volume: '',
+        issue: '',
+        published_date: '',
+        references_list: '',
         image: null, 
         document: null 
       });
@@ -187,12 +246,21 @@ export default function UploadForm() {
             </h1>
           </div>
 
-          <Link
-            to="/berita"
-            className="inline-flex items-center gap-1.5 text-xs font-black uppercase text-primary-dark border-2 border-primary-dark bg-white px-3.5 py-2 shadow-hard hover:translate-y-0.5 hover:shadow-none transition-all self-start sm:self-auto"
-          >
-            <ArrowLeft size={14} /> Lihat Semua Publikasi
-          </Link>
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={handleFillDummyData}
+              className="inline-flex items-center gap-1.5 text-xs font-black uppercase text-white bg-gradient-blue border-2 border-primary-dark px-3.5 py-2 shadow-hard hover:translate-y-0.5 hover:shadow-none transition-all"
+            >
+              <Sparkles size={14} /> Isi Dummy Data (Test)
+            </button>
+            <Link
+              to="/berita"
+              className="inline-flex items-center gap-1.5 text-xs font-black uppercase text-primary-dark border-2 border-primary-dark bg-white px-3.5 py-2 shadow-hard hover:translate-y-0.5 hover:shadow-none transition-all"
+            >
+              <ArrowLeft size={14} /> Publikasi
+            </Link>
+          </div>
         </div>
 
         {/* Info Box Akun Login */}
@@ -244,6 +312,20 @@ export default function UploadForm() {
         )}
 
         {/* MAIN FORM */}
+        {loadingPermissions ? (
+          <div className="bg-white border-2 border-primary-dark shadow-hard p-10 text-center font-bold text-gray-500">
+            Memeriksa hak akses Anda...
+          </div>
+        ) : permissions && permissions.role !== 'admin' && !permissions.can_upload_berita && !permissions.can_upload_publikasi && !permissions.can_upload_modul ? (
+          <div className="bg-red-50 border-2 border-red-600 shadow-hard p-10 text-center space-y-4">
+            <ShieldAlert size={48} className="mx-auto text-red-600" />
+            <h2 className="text-xl font-black text-red-700 uppercase">Akses Upload Belum Dibuka</h2>
+            <p className="text-sm font-medium text-red-800 max-w-md mx-auto">
+              Akun Anda saat ini belum memiliki izin untuk mengunggah jenis konten apa pun. 
+              Silakan hubungi Administrator KKN untuk membuka akses upload Anda.
+            </p>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="bg-white border-2 border-primary-dark shadow-hard p-6 md:p-8 space-y-6">
           
           {/* CATEGORY SELECTOR PILLS */}
@@ -256,19 +338,22 @@ export default function UploadForm() {
                 { 
                   id: 'berita', 
                   label: '📰 Berita & Kabar', 
-                  desc: 'Dokumentasi kegiatan harian, kabar desa, dan liputan program kerja.' 
+                  desc: 'Dokumentasi kegiatan harian, kabar desa, dan liputan program kerja.',
+                  allowed: permissions?.role === 'admin' || permissions?.can_upload_berita
                 },
                 { 
                   id: 'publikasi', 
                   label: '📑 Jurnal & Publikasi Ilmiah', 
-                  desc: 'Laporan pengabdian ilmiah, paper riset KKN, artikel berstandar OJS & SINTA.' 
+                  desc: 'Laporan pengabdian ilmiah, paper riset KKN, artikel berstandar OJS & SINTA.',
+                  allowed: permissions?.role === 'admin' || permissions?.can_upload_publikasi
                 },
                 { 
                   id: 'modul', 
                   label: '📚 Modul & Buku Saku', 
-                  desc: 'Panduan teknis, modul edukasi masyarakat, dan buku saku pelatihan.' 
+                  desc: 'Panduan teknis, modul edukasi masyarakat, dan buku saku pelatihan.',
+                  allowed: permissions?.role === 'admin' || permissions?.can_upload_modul
                 }
-              ].map((c) => (
+              ].filter(c => c.allowed).map((c) => (
                 <button
                   type="button"
                   key={c.id}
@@ -370,6 +455,45 @@ export default function UploadForm() {
                 <span className="text-[9px] text-gray-500 mt-0.5 block">Pisahkan kata kunci dengan tanda titik koma (;) atau koma</span>
               </div>
 
+              {/* ISSUE, VOLUME, PUBLISHED DATE */}
+              {isAcademic && (
+                <>
+                  <div>
+                    <label className="block text-primary-dark font-black text-[11px] uppercase tracking-wider mb-1 flex items-center gap-1">
+                      <BookOpen size={14} /> Volume & Issue
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        name="volume"
+                        value={formData.volume}
+                        onChange={handleInputChange}
+                        placeholder="Vol"
+                        className="w-1/2 border-2 border-primary-dark p-2 text-xs bg-white outline-none font-medium"
+                      />
+                      <input
+                        type="number"
+                        name="issue"
+                        value={formData.issue}
+                        onChange={handleInputChange}
+                        placeholder="No"
+                        className="w-1/2 border-2 border-primary-dark p-2 text-xs bg-white outline-none font-medium"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-primary-dark font-black text-[11px] uppercase tracking-wider mb-1 flex items-center gap-1">
+                      <Tag size={14} /> Tanggal Publikasi Asli
+                    </label>
+                    <CustomDatePicker
+                      value={formData.published_date}
+                      onChange={(val) => handleInputChange({ target: { name: 'published_date', value: val } })}
+                      className="w-full"
+                    />
+                  </div>
+                </>
+              )}
+
               {/* ABSTRACT */}
               <div className="sm:col-span-2">
                 <label className="block text-primary-dark font-black text-[11px] uppercase tracking-wider mb-1">
@@ -384,6 +508,23 @@ export default function UploadForm() {
                   className="w-full border-2 border-primary-dark p-2.5 text-xs bg-white outline-none font-medium"
                 />
               </div>
+
+              {/* REFERENCES (Daftar Pustaka) */}
+              {isAcademic && (
+                <div className="sm:col-span-2">
+                  <label className="block text-primary-dark font-black text-[11px] uppercase tracking-wider mb-1">
+                    Daftar Pustaka (References)
+                  </label>
+                  <textarea
+                    name="references_list"
+                    rows={4}
+                    value={formData.references_list}
+                    onChange={handleInputChange}
+                    placeholder="Tuliskan daftar pustaka yang digunakan, pisahkan dengan baris baru (Enter)..."
+                    className="w-full border-2 border-primary-dark p-2.5 text-xs bg-white outline-none font-medium leading-relaxed"
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -521,6 +662,7 @@ export default function UploadForm() {
             )}
           </button>
         </form>
+        )}
 
       </div>
     </div>

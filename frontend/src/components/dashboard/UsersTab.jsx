@@ -15,6 +15,8 @@ import {
   LogOut
 } from 'lucide-react';
 
+import CustomSelect from '../CustomSelect';
+
 export default function UsersTab({
   userList,
   loadingUsers,
@@ -31,6 +33,7 @@ export default function UsersTab({
   onDeleteUser,
   onOpenAddUserModal,
   onOpenResetPasswordModal,
+  onOpenEditPermissionsModal,
   onForceLogout,
   currentUsername
 }) {
@@ -125,29 +128,31 @@ export default function UsersTab({
 
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-primary-dark uppercase">Role:</span>
-            <select
+            <CustomSelect
               value={userRoleFilter}
-              onChange={(e) => setUserRoleFilter(e.target.value)}
-              className="border-2 border-primary-dark px-2 py-1.5 text-xs font-bold bg-white outline-none"
-            >
-              <option value="all">Semua Role</option>
-              <option value="admin">Administrator</option>
-              <option value="user">User (Anggota)</option>
-            </select>
+              onChange={setUserRoleFilter}
+              options={[
+                { value: 'all', label: 'Semua Role' },
+                { value: 'admin', label: 'Administrator' },
+                { value: 'user', label: 'User (Anggota)' }
+              ]}
+              className="min-w-[150px]"
+            />
           </div>
 
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-primary-dark uppercase">Status:</span>
-            <select
+            <CustomSelect
               value={userStatusFilter}
-              onChange={(e) => setUserStatusFilter(e.target.value)}
-              className="border-2 border-primary-dark px-2 py-1.5 text-xs font-bold bg-white outline-none"
-            >
-              <option value="all">Semua Status</option>
-              <option value="pending">⏳ Pending (Menunggu ACC)</option>
-              <option value="approved">✓ Approved (Aktif)</option>
-              <option value="rejected">✕ Rejected (Ditolak)</option>
-            </select>
+              onChange={setUserStatusFilter}
+              options={[
+                { value: 'all', label: 'Semua Status' },
+                { value: 'pending', label: '⏳ Pending (Menunggu ACC)' },
+                { value: 'approved', label: '✓ Approved (Aktif)' },
+                { value: 'rejected', label: '✕ Rejected (Ditolak)' }
+              ]}
+              className="min-w-[200px]"
+            />
           </div>
         </div>
 
@@ -324,8 +329,19 @@ export default function UsersTab({
                             </button>
                           )}
 
-                          {/* ROLE MANAGEMENT */}
-                          {!isMainAdmin && !isSelf && (
+                          {/* EDIT PERMISSIONS BUTTON (Always visible for approved users) */}
+                          {usr.status === 'approved' && !isMainAdmin && (
+                            <button
+                              onClick={() => onOpenEditPermissionsModal(usr)}
+                              className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-900 font-black px-2 py-1 border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase text-[10px]"
+                              title="Atur Hak Akses Upload"
+                            >
+                              <Shield size={11} /> Izin
+                            </button>
+                          )}
+
+                          {/* ROLE TOGGLE */}
+                          {!isMainAdmin && usr.status === 'approved' && (
                             <>
                               {usr.role === 'user' ? (
                                 <button

@@ -127,7 +127,7 @@ router.post('/login', loginLimiter, async (req, res) => {
 router.get('/admin/users', verifyToken, isAdmin, async (req, res) => {
   try {
     const [rows] = await pool.query(
-      'SELECT id, username, role, status, created_at, last_active FROM users ORDER BY created_at DESC'
+      'SELECT id, username, role, status, can_upload_berita, can_upload_publikasi, can_upload_modul, created_at, last_active FROM users ORDER BY created_at DESC'
     );
     res.json(rows);
   } catch (err) {
@@ -156,6 +156,38 @@ router.post('/admin/users/:id/logout', verifyToken, isAdmin, async (req, res) =>
   } catch (err) {
     console.error('Force logout error:', err);
     res.status(500).json({ error: 'Gagal melakukan logout paksa.' });
+  }
+});
+
+// API: Get My Upload Permissions
+router.get('/users/me/permissions', verifyToken, async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT role, can_upload_berita, can_upload_publikasi, can_upload_modul FROM users WHERE id = ?',
+      [req.userId]
+    );
+    if (rows.length === 0) return res.status(404).json({ error: 'Pengguna tidak ditemukan.' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Gagal memuat hak akses.' });
+  }
+});
+
+// API: Update User Upload Permissions (Admin Only)
+router.patch('/admin/users/:id/permissions', verifyToken, isAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { can_upload_berita, can_upload_publikasi, can_upload_modul } = req.body;
+    
+    await pool.query(
+      'UPDATE users SET can_upload_berita = ?, can_upload_publikasi = ?, can_upload_modul = ? WHERE id = ?',
+      [!!can_upload_berita, !!can_upload_publikasi, !!can_upload_modul, id]
+    );
+    res.json({ message: 'Hak akses upload berhasil diperbarui.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Gagal memperbarui hak akses upload.' });
   }
 });
 
@@ -321,6 +353,26 @@ router.post('/admin/users', verifyToken, isAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Gagal menambahkan akun pengguna.' });
+  }
+});
+
+// API: Reset Own Password
+router.patch('/users/me/reset-password', verifyToken, async (req, res) => {
+  try {
+    const id = req.userId;
+    const { new_password } = req.body;
+
+    if (!new_password || new_password.trim().length < 6) {
+      return res.status(400).json({ error: 'Password baru minimal 6 karakter.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(new_password.trim(), 10);
+    await pool.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, id]);
+
+    res.json({ message: 'Password Anda berhasil diperbarui!' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Gagal mereset password.' });
   }
 });
 

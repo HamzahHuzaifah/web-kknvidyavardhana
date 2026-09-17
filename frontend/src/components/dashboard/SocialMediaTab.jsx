@@ -4,8 +4,10 @@ import {
   Trash2, 
   Play, 
   Save, 
-  Pencil 
+  Pencil,
+  ExternalLink 
 } from 'lucide-react';
+import CustomSelect from '../CustomSelect';
 
 export default function SocialMediaTab({
   socialLinksList,
@@ -49,17 +51,18 @@ export default function SocialMediaTab({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-primary-dark font-bold text-[11px] uppercase mb-1">Platform *</label>
-              <select
+              <CustomSelect
                 value={socialForm.platform}
-                onChange={(e) => setSocialForm({ ...socialForm, platform: e.target.value })}
-                className="w-full border-2 border-primary-dark px-2.5 py-1.5 text-xs bg-white outline-none"
-              >
-                <option value="instagram">Instagram</option>
-                <option value="youtube">YouTube</option>
-                <option value="tiktok">TikTok</option>
-                <option value="facebook">Facebook</option>
-                <option value="other">Lainnya</option>
-              </select>
+                onChange={(val) => setSocialForm({ ...socialForm, platform: val })}
+                options={[
+                  { value: 'instagram', label: 'Instagram' },
+                  { value: 'youtube', label: 'YouTube' },
+                  { value: 'tiktok', label: 'TikTok' },
+                  { value: 'facebook', label: 'Facebook' },
+                  { value: 'other', label: 'Lainnya' }
+                ]}
+                className="w-full"
+              />
             </div>
             <div>
               <label className="block text-primary-dark font-bold text-[11px] uppercase mb-1">Username / Handle *</label>
@@ -152,17 +155,17 @@ export default function SocialMediaTab({
             </div>
             <div>
               <label className="block text-primary-dark font-bold text-[11px] uppercase mb-1">Platform *</label>
-              <select
-                name="platform"
+              <CustomSelect
                 value={mediaForm.platform}
-                onChange={handleMediaFormChange}
-                className="w-full border-2 border-primary-dark px-2.5 py-1.5 text-xs bg-white outline-none"
-              >
-                <option value="youtube">YouTube</option>
-                <option value="instagram">Instagram</option>
-                <option value="tiktok">TikTok</option>
-                <option value="other">Lainnya</option>
-              </select>
+                onChange={(val) => handleMediaFormChange({ target: { name: 'platform', value: val } })}
+                options={[
+                  { value: 'youtube', label: 'YouTube' },
+                  { value: 'instagram', label: 'Instagram' },
+                  { value: 'tiktok', label: 'TikTok' },
+                  { value: 'other', label: 'Lainnya' }
+                ]}
+                className="w-full"
+              />
             </div>
             <div>
               <label className="block text-primary-dark font-bold text-[11px] uppercase mb-1">Urutan</label>
