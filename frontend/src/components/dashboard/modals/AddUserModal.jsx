@@ -47,6 +47,20 @@ export default function AddUserModal({
 
           <div>
             <label className="block text-primary-dark font-black text-xs uppercase mb-1">
+              Email *
+            </label>
+            <input
+              type="email"
+              value={form.email || ''}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              required
+              placeholder="contoh: budi@gmail.com"
+              className="w-full border-2 border-primary-dark p-2 text-xs bg-white outline-none focus:bg-yellow-50 font-medium"
+            />
+          </div>
+
+          <div>
+            <label className="block text-primary-dark font-black text-xs uppercase mb-1">
               Password Sementara *
             </label>
             <input

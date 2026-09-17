@@ -73,7 +73,7 @@ export default function Dashboard() {
 
   // Add User & Reset Password Modal states
   const [showAddUserModal, setShowAddUserModal] = useState(false);
-  const [newUserForm, setNewUserForm] = useState({ username: '', password: '', role: 'user' });
+  const [newUserForm, setNewUserForm] = useState({ username: '', email: '', password: '', role: 'user' });
   const [savingNewUser, setSavingNewUser] = useState(false);
 
   const [resetPasswordModalUser, setResetPasswordModalUser] = useState(null);
@@ -544,7 +544,7 @@ export default function Dashboard() {
       const token = localStorage.getItem('token');
       const response = await axios.patch(
         `/api/admin/users/${resetPasswordModalUser.id}/reset-password`,
-        { newPassword: newPasswordInput },
+        { new_password: newPasswordInput },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setAdminActionMsg({ type: 'success', message: response.data.message });
@@ -584,7 +584,7 @@ export default function Dashboard() {
       );
       setAdminActionMsg({ type: 'success', message: response.data.message });
       setShowAddUserModal(false);
-      setNewUserForm({ username: '', password: '', role: 'user' });
+      setNewUserForm({ username: '', email: '', password: '', role: 'user' });
       fetchUsers();
     } catch (error) {
       setAdminActionMsg({
@@ -906,9 +906,9 @@ export default function Dashboard() {
   const handleStartEditArticle = (article) => {
     setEditingArticle(article);
     setEditArticleForm({
-      title: article.title,
+      title: article.title || '',
       category: article.category || 'berita',
-      content: article.content,
+      content: article.content || '',
       abstract: article.abstract || '',
       keywords: article.keywords || '',
       authors_meta: article.authors_meta || '',
