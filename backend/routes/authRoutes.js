@@ -393,10 +393,10 @@ router.post('/google-login', async (req, res) => {
 
     // Check status
     if (user.status === 'pending') {
-      return res.status(403).json({ error: 'Akun Google Anda sedang menunggu persetujuan (ACC) dari Admin.' });
+      return res.status(403).json({ error: 'Akun Google Anda sedang menunggu persetujuan (ACC) dari Admin, Silahkan cek email Anda secara berkala dan jika tidak ada silahkan cek spam email Anda dan laporkan bukan spam agar masuk ke email utama.' });
     }
     if (user.status === 'rejected') {
-      return res.status(403).json({ error: 'Pendaftaran akun Anda ditolak oleh Admin.' });
+      return res.status(403).json({ error: 'Pendaftaran akun Anda ditolak oleh Admin. Silahkan menghubungi Admin jika terjadi kesalahan.' });
     }
 
     // Login successful
