@@ -447,7 +447,10 @@ export default function Dashboard() {
       onConfirm: async () => {
         setAdminActionMsg({ type: '', message: '' });
         try {
-          const response = await api.post(`/api/admin/users/${userId}/logout`);
+          const token = localStorage.getItem('token');
+          const response = await axios.post(`/api/admin/users/${userId}/logout`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
           setAdminActionMsg({ type: 'success', message: response.data.message });
           fetchUsers(); // Refresh to update online status
         } catch (error) {
