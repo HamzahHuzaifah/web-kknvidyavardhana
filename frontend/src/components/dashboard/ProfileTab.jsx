@@ -36,8 +36,9 @@ export default function ProfileTab({ token, onConfirm }) {
   const [teamList, setTeamList] = useState([]);
   const [loadingTeam, setLoadingTeam] = useState(false);
   const [editingMemberId, setEditingMemberId] = useState(null);
-  const [memberForm, setMemberForm] = useState({ name: '', role: '', major: '', display_order: 0 });
+  const [memberForm, setMemberForm] = useState({ user_id: '', name: '', role: '', major: '', display_order: 0 });
   const [memberImage, setMemberImage] = useState(null);
+  const [usersList, setUsersList] = useState([]);
   const [teamActionMsg, setTeamActionMsg] = useState({ type: '', message: '' });
   const [savingMember, setSavingMember] = useState(false);
   const [convertingMemberImage, setConvertingMemberImage] = useState(false);
@@ -46,9 +47,10 @@ export default function ProfileTab({ token, onConfirm }) {
   const fetchAll = async () => {
     setLoadingTeam(true);
     try {
-      const [profileRes, teamRes] = await Promise.all([
+      const [profileRes, teamRes, usersRes] = await Promise.all([
         axios.get('/api/profile-info'),
-        axios.get('/api/team')
+        axios.get('/api/team'),
+        axios.get('/api/admin/users', { headers: { Authorization: `Bearer ${token}` } })
       ]);
       if (profileRes.data && typeof profileRes.data === 'object' && !Array.isArray(profileRes.data)) {
         setProfileForm({
@@ -66,6 +68,7 @@ export default function ProfileTab({ token, onConfirm }) {
         });
       }
       setTeamList(Array.isArray(teamRes.data) ? teamRes.data : []);
+      setUsersList(Array.isArray(usersRes.data) ? usersRes.data : []);
     } catch (err) {
       console.error('Error fetching profile & team:', err);
     } finally {
@@ -105,7 +108,13 @@ export default function ProfileTab({ token, onConfirm }) {
   // ── Team Member Handlers ────────────────────────────────
   const handleMemberFormChange = (e) => {
     const { name, value } = e.target;
-    setMemberForm(prev => ({ ...prev, [name]: value }));
+    setMemberForm(prev => {
+      if (name === 'user_id') {
+        const selectedUser = usersList.find(u => u.id === Number(value));
+        return { ...prev, user_id: value, name: selectedUser ? (selectedUser.username || prev.name) : prev.name };
+      }
+      return { ...prev, [name]: value };
+    });
   };
 
   const handleMemberImageChange = async (e) => {
@@ -118,6 +127,7 @@ export default function ProfileTab({ token, onConfirm }) {
   const handleStartEditMember = (member) => {
     setEditingMemberId(member.id);
     setMemberForm({
+      user_id: member.user_id || '',
       name: member.name,
       role: member.role,
       major: member.major || '',
@@ -130,7 +140,7 @@ export default function ProfileTab({ token, onConfirm }) {
 
   const handleCancelEditMember = () => {
     setEditingMemberId(null);
-    setMemberForm({ name: '', role: '', major: '', display_order: 0 });
+    setMemberForm({ user_id: '', name: '', role: '', major: '', display_order: 0 });
     setMemberImage(null);
     setTeamActionMsg({ type: '', message: '' });
   };
@@ -141,6 +151,7 @@ export default function ProfileTab({ token, onConfirm }) {
     setTeamActionMsg({ type: '', message: '' });
     try {
       const formData = new FormData();
+      formData.append('user_id', memberForm.user_id);
       formData.append('name', memberForm.name);
       formData.append('role', memberForm.role);
       formData.append('major', memberForm.major);
@@ -342,7 +353,17 @@ export default function ProfileTab({ token, onConfirm }) {
           <form onSubmit={handleSaveMember} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
               <div>
-                <label className="block text-primary-dark font-bold text-[11px] uppercase mb-1">Nama *</label>
+                <label className="block text-primary-dark font-bold text-[11px] uppercase mb-1">Akun Terdaftar *</label>
+                <select name="user_id" value={memberForm.user_id} onChange={handleMemberFormChange} required
+                  className="w-full border-2 border-primary-dark px-2.5 py-1.5 text-xs font-medium bg-white outline-none focus:bg-yellow-50">
+                  <option value="" disabled>-- Pilih Akun --</option>
+                  {usersList.map(u => (
+                    <option key={u.id} value={u.id}>{u.username} ({u.role})</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-primary-dark font-bold text-[11px] uppercase mb-1">Nama Tampil *</label>
                 <input type="text" name="name" value={memberForm.name} onChange={handleMemberFormChange} required
                   className="w-full border-2 border-primary-dark px-2.5 py-1.5 text-xs font-medium bg-white outline-none focus:bg-yellow-50" />
               </div>

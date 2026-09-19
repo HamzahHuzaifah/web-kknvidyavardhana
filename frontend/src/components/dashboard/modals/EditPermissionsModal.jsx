@@ -71,6 +71,19 @@ export default function EditPermissionsModal({
                 <span className="text-[10px] text-gray-500">Izin mengupload modul edukasi dan panduan teknis.</span>
               </div>
             </label>
+
+            <label className="flex items-center gap-3 p-3 border-2 border-primary-dark cursor-pointer hover:bg-gray-50 transition-colors">
+              <input
+                type="checkbox"
+                checked={form.can_edit_profile}
+                onChange={(e) => setForm({ ...form, can_edit_profile: e.target.checked })}
+                className="w-4 h-4 text-primary-dark rounded-sm focus:ring-primary-dark cursor-pointer"
+              />
+              <div className="flex flex-col">
+                <span className="text-xs font-black uppercase text-primary-dark">Edit Profil Tim</span>
+                <span className="text-[10px] text-gray-500">Izin mengubah profil biodata mandiri di halaman Susunan Pengurus.</span>
+              </div>
+            </label>
           </div>
 
           <div className="flex justify-end gap-2 pt-2 border-t-2 border-dashed border-gray-300">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Clock, 
@@ -20,6 +20,7 @@ import ProfileTab from '../components/dashboard/ProfileTab';
 import SocialMediaTab from '../components/dashboard/SocialMediaTab';
 import JumbotronTab from '../components/dashboard/JumbotronTab';
 import EditAccountModal from '../components/dashboard/modals/EditAccountModal';
+import MyProfileTab from '../components/dashboard/MyProfileTab';
 import ErrorBoundary from '../components/ErrorBoundary';
 import axios from 'axios';
 
@@ -30,6 +31,7 @@ export default function Dashboard() {
 
   const [activeTab, setActiveTab] = useState(isAdmin ? 'users' : 'welcome');
   const [editAccountModalUser, setEditAccountModalUser] = useState(null);
+  const [userPermissions, setUserPermissions] = useState(null);
   
   // Custom Pop-up / Confirm Dialog State
   const [confirmModal, setConfirmModal] = useState({
@@ -43,6 +45,19 @@ export default function Dashboard() {
     onConfirm: null,
     isLoading: false
   });
+
+  useEffect(() => {
+    if (!isAdmin) {
+      const token = localStorage.getItem('token');
+      if (token) {
+        axios.get('/api/users/me/permissions', {
+          headers: { Authorization: `Bearer ${token}` }
+        }).then(res => {
+          setUserPermissions(res.data);
+        }).catch(err => console.error(err));
+      }
+    }
+  }, [isAdmin]);
 
   const closeConfirmModal = () => {
     setConfirmModal((prev) => ({ ...prev, isOpen: false }));
@@ -259,15 +274,27 @@ export default function Dashboard() {
                 <p className="text-gray-600 font-medium max-w-lg mx-auto">
                   Anda masuk sebagai <strong>User (Anggota Biasa)</strong>. Saat ini akses Anda terbatas pada fitur publikasi artikel, berita, dan modul. Hubungi Ketua / Admin jika membutuhkan akses pengelolaan data profil atau persetujuan.
                 </p>
-                <div className="pt-6">
+                <div className="pt-6 flex justify-center gap-4">
                   <Link
                     to="/upload"
                     className="inline-flex items-center gap-2 bg-gradient-yellow text-primary-dark font-black px-6 py-3 border-2 border-primary-dark shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all uppercase tracking-wider"
                   >
                     <UploadCloud size={20} /> Mulai Upload Berita
                   </Link>
+                  {userPermissions?.can_edit_profile && (
+                    <button
+                      onClick={() => setActiveTab('my-profile')}
+                      className="inline-flex items-center gap-2 bg-gradient-blue text-white font-black px-6 py-3 border-2 border-primary-dark shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all uppercase tracking-wider"
+                    >
+                      <Compass size={20} /> Kelola Profil Saya
+                    </button>
+                  )}
                 </div>
               </div>
+            )}
+
+            {!isAdmin && activeTab === 'my-profile' && userPermissions?.can_edit_profile && (
+              <MyProfileTab token={localStorage.getItem('token')} />
             )}
           </motion.div>
         </AnimatePresence>

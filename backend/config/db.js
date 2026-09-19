@@ -60,25 +60,30 @@ const initDB = async (syncUploadsCallback) => {
     if (!colNames.includes('can_upload_modul')) {
       await pool.query("ALTER TABLE users ADD COLUMN can_upload_modul BOOLEAN DEFAULT FALSE");
     }
+    if (!colNames.includes('can_edit_profile')) {
+      await pool.query("ALTER TABLE users ADD COLUMN can_edit_profile BOOLEAN DEFAULT FALSE");
+    }
 
     // Default Admin Userxists and is approved
     const [adminRows] = await pool.query('SELECT * FROM users WHERE username = ?', ['admin']);
     const hashedPwd = await bcrypt.hash('admin123', 10);
     if (adminRows.length === 0) {
-      await pool.query('INSERT INTO users (username, password, role, status, can_upload_berita, can_upload_publikasi, can_upload_modul) VALUES (?, ?, ?, ?, ?, ?, ?)', [
+      await pool.query('INSERT INTO users (username, password, role, status, can_upload_berita, can_upload_publikasi, can_upload_modul, can_edit_profile) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
         'admin',
         hashedPwd,
         'admin',
         'approved',
+        true,
         true,
         true,
         true
       ]);
     } else {
-      await pool.query('UPDATE users SET password = ?, role = ?, status = ?, can_upload_berita = ?, can_upload_publikasi = ?, can_upload_modul = ? WHERE username = ?', [
+      await pool.query('UPDATE users SET password = ?, role = ?, status = ?, can_upload_berita = ?, can_upload_publikasi = ?, can_upload_modul = ?, can_edit_profile = ? WHERE username = ?', [
         hashedPwd,
         'admin',
         'approved',
+        true,
         true,
         true,
         true,
@@ -161,14 +166,24 @@ const initDB = async (syncUploadsCallback) => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS team_members (
         id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT UNIQUE NULL,
         name VARCHAR(255) NOT NULL,
         role VARCHAR(100) NOT NULL,
         major VARCHAR(100),
         image_url VARCHAR(255),
         display_order INT DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
       )
     `);
+
+    // Ensure user_id column exists in team_members
+    const [tmCols] = await pool.query('SHOW COLUMNS FROM team_members');
+    const tmColNames = tmCols.map((c) => c.Field);
+    if (!tmColNames.includes('user_id')) {
+      await pool.query("ALTER TABLE team_members ADD COLUMN user_id INT UNIQUE NULL");
+      await pool.query("ALTER TABLE team_members ADD CONSTRAINT fk_team_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL");
+    }
 
     // Seed default team members if table empty
     const [teamRows] = await pool.query('SELECT COUNT(*) as cnt FROM team_members');

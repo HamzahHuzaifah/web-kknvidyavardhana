@@ -122,9 +122,9 @@ router.get('/team', async (req, res) => {
 // API: Add Team Member (Admin Only)
 router.post('/team', verifyToken, isAdmin, upload.single('image'), async (req, res) => {
   try {
-    const { name, role, major, display_order } = req.body;
-    if (!name || !role) {
-      return res.status(400).json({ error: 'Nama dan peran/jabatan wajib diisi.' });
+    const { user_id, name, role, major, display_order } = req.body;
+    if (!user_id || !name || !role) {
+      return res.status(400).json({ error: 'Akun terdaftar, Nama, dan Jabatan wajib diisi.' });
     }
 
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
@@ -135,8 +135,8 @@ router.post('/team', verifyToken, isAdmin, upload.single('image'), async (req, r
     }
 
     const [result] = await pool.query(
-      'INSERT INTO team_members (name, role, major, image_url, display_order) VALUES (?, ?, ?, ?, ?)',
-      [name, role, major || '', imageUrl, orderNum]
+      'INSERT INTO team_members (user_id, name, role, major, image_url, display_order) VALUES (?, ?, ?, ?, ?, ?)',
+      [user_id, name, role, major || '', imageUrl, orderNum]
     );
 
     res.status(201).json({
@@ -158,10 +158,10 @@ router.post('/team', verifyToken, isAdmin, upload.single('image'), async (req, r
 router.post('/team/:id/edit', verifyToken, isAdmin, upload.single('image'), async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, role, major, display_order } = req.body;
+    const { user_id, name, role, major, display_order } = req.body;
 
-    if (!name || !role) {
-      return res.status(400).json({ error: 'Nama dan peran/jabatan wajib diisi.' });
+    if (!user_id || !name || !role) {
+      return res.status(400).json({ error: 'Akun terdaftar, Nama, dan Jabatan wajib diisi.' });
     }
 
     const orderNum = parseInt(display_order) || 0;
@@ -170,13 +170,13 @@ router.post('/team/:id/edit', verifyToken, isAdmin, upload.single('image'), asyn
       const imageUrl = `/uploads/${req.file.filename}`;
       await registerMediaFile(req.file, req.username || 'Admin', 'team');
       await pool.query(
-        'UPDATE team_members SET name = ?, role = ?, major = ?, image_url = ?, display_order = ? WHERE id = ?',
-        [name, role, major || '', imageUrl, orderNum, id]
+        'UPDATE team_members SET user_id = ?, name = ?, role = ?, major = ?, image_url = ?, display_order = ? WHERE id = ?',
+        [user_id, name, role, major || '', imageUrl, orderNum, id]
       );
     } else {
       await pool.query(
-        'UPDATE team_members SET name = ?, role = ?, major = ?, display_order = ? WHERE id = ?',
-        [name, role, major || '', orderNum, id]
+        'UPDATE team_members SET user_id = ?, name = ?, role = ?, major = ?, display_order = ? WHERE id = ?',
+        [user_id, name, role, major || '', orderNum, id]
       );
     }
 
@@ -196,6 +196,63 @@ router.post('/team/:id/delete', verifyToken, isAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Gagal menghapus anggota tim.' });
+  }
+});
+
+// API: Get Own Profile (User)
+router.get('/team/me', verifyToken, async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM team_members WHERE user_id = ?', [req.userId]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Profil tim belum tersedia untuk akun ini.' });
+    }
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Gagal memuat profil tim Anda.' });
+  }
+});
+
+// API: Update Own Profile (User)
+router.post('/team/me/edit', verifyToken, upload.single('image'), async (req, res) => {
+  try {
+    // Check permission
+    const [userRows] = await pool.query('SELECT can_edit_profile FROM users WHERE id = ?', [req.userId]);
+    if (userRows.length === 0 || !userRows[0].can_edit_profile) {
+      return res.status(403).json({ error: 'Anda tidak memiliki izin untuk mengedit profil tim.' });
+    }
+
+    const { name, role, major } = req.body;
+    if (!name || !role) {
+      return res.status(400).json({ error: 'Nama dan peran/jabatan wajib diisi.' });
+    }
+
+    // Check if team member exists for this user
+    const [teamRows] = await pool.query('SELECT id FROM team_members WHERE user_id = ?', [req.userId]);
+    if (teamRows.length === 0) {
+      return res.status(404).json({ error: 'Profil tim Anda belum dibuat oleh Admin.' });
+    }
+
+    const teamId = teamRows[0].id;
+
+    if (req.file) {
+      const imageUrl = `/uploads/${req.file.filename}`;
+      await registerMediaFile(req.file, req.username || 'User', 'team');
+      await pool.query(
+        'UPDATE team_members SET name = ?, role = ?, major = ?, image_url = ? WHERE id = ?',
+        [name, role, major || '', imageUrl, teamId]
+      );
+    } else {
+      await pool.query(
+        'UPDATE team_members SET name = ?, role = ?, major = ? WHERE id = ?',
+        [name, role, major || '', teamId]
+      );
+    }
+
+    res.json({ message: 'Profil Anda berhasil diperbarui!' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Gagal memperbarui profil tim Anda.' });
   }
 });
 

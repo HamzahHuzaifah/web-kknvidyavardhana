@@ -45,7 +45,12 @@ export default function UsersTab({
 
   const [showEditPermissionsModal, setShowEditPermissionsModal] = useState(false);
   const [editPermissionsUser, setEditPermissionsUser] = useState(null);
-  const [permissionsForm, setPermissionsForm] = useState({ can_upload_berita: false, can_upload_publikasi: false, can_upload_modul: false });
+  const [permissionsForm, setPermissionsForm] = useState({
+    can_upload_berita: false,
+    can_upload_publikasi: false,
+    can_upload_modul: false,
+    can_edit_profile: false
+  });
   const [savingPermissions, setSavingPermissions] = useState(false);
 
   // Fetch Users
@@ -251,7 +256,8 @@ export default function UsersTab({
     setPermissionsForm({
       can_upload_berita: !!user.can_upload_berita,
       can_upload_publikasi: !!user.can_upload_publikasi,
-      can_upload_modul: !!user.can_upload_modul
+      can_upload_modul: !!user.can_upload_modul,
+      can_edit_profile: !!user.can_edit_profile
     });
     setShowEditPermissionsModal(true);
   };

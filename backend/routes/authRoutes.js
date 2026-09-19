@@ -127,7 +127,7 @@ router.post('/login', loginLimiter, async (req, res) => {
 router.get('/admin/users', verifyToken, isAdmin, async (req, res) => {
   try {
     const [rows] = await pool.query(
-      'SELECT id, username, email, role, status, can_upload_berita, can_upload_publikasi, can_upload_modul, created_at, last_active FROM users ORDER BY created_at DESC'
+      'SELECT id, username, email, role, status, can_upload_berita, can_upload_publikasi, can_upload_modul, can_edit_profile, created_at, last_active FROM users ORDER BY created_at DESC'
     );
     res.json(rows);
   } catch (err) {
@@ -163,7 +163,7 @@ router.post('/admin/users/:id/logout', verifyToken, isAdmin, async (req, res) =>
 router.get('/users/me/permissions', verifyToken, async (req, res) => {
   try {
     const [rows] = await pool.query(
-      'SELECT role, can_upload_berita, can_upload_publikasi, can_upload_modul FROM users WHERE id = ?',
+      'SELECT role, can_upload_berita, can_upload_publikasi, can_upload_modul, can_edit_profile FROM users WHERE id = ?',
       [req.userId]
     );
     if (rows.length === 0) return res.status(404).json({ error: 'Pengguna tidak ditemukan.' });
@@ -178,11 +178,11 @@ router.get('/users/me/permissions', verifyToken, async (req, res) => {
 router.post('/admin/users/:id/permissions/update', verifyToken, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { can_upload_berita, can_upload_publikasi, can_upload_modul } = req.body;
+    const { can_upload_berita, can_upload_publikasi, can_upload_modul, can_edit_profile } = req.body;
     
     await pool.query(
-      'UPDATE users SET can_upload_berita = ?, can_upload_publikasi = ?, can_upload_modul = ? WHERE id = ?',
-      [!!can_upload_berita, !!can_upload_publikasi, !!can_upload_modul, id]
+      'UPDATE users SET can_upload_berita = ?, can_upload_publikasi = ?, can_upload_modul = ?, can_edit_profile = ? WHERE id = ?',
+      [!!can_upload_berita, !!can_upload_publikasi, !!can_upload_modul, !!can_edit_profile, id]
     );
     res.json({ message: 'Hak akses upload berhasil diperbarui.' });
   } catch (err) {
