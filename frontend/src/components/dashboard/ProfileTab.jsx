@@ -189,7 +189,7 @@ export default function ProfileTab({ token, onConfirm }) {
       type: 'danger',
       onConfirm: async () => {
         try {
-          await axios.post(`/api/team/${id}/delete`, {
+          await axios.post(`/api/team/${id}/delete`, {}, {
             headers: { Authorization: `Bearer ${token}` }
           });
           setTeamActionMsg({ type: 'success', message: 'Anggota tim berhasil dihapus.' });
