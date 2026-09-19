@@ -244,7 +244,10 @@ export default function Dashboard() {
               )}
 
               {isAdmin && activeTab === 'profile' && (
-                <ProfileTab token={localStorage.getItem('token')} />
+                <ProfileTab 
+                  token={localStorage.getItem('token')} 
+                  onConfirm={(config) => setConfirmModal({ ...config, isOpen: true })} 
+                />
               )}
 
               {isAdmin && activeTab === 'social' && (
