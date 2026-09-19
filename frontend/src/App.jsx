@@ -10,6 +10,7 @@ import Profile from './pages/Profile';
 import Dashboard from './pages/Dashboard';
 import Media from './pages/Media';
 import ArticlesPage from './pages/ArticlesPage';
+import PortfolioDetail from './pages/PortfolioDetail';
 import ArticleDetailPage from './pages/ArticleDetailPage';
 import AnimatedPage from './components/AnimatedPage';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -46,6 +47,7 @@ function AnimatedRoutes() {
         <Route path="/" element={<AnimatedPage><Home /></AnimatedPage>} />
         <Route path="/profile" element={<AnimatedPage><Profile /></AnimatedPage>} />
         <Route path="/media" element={<AnimatedPage><Media /></AnimatedPage>} />
+        <Route path="/portofolio/:id" element={<PortfolioDetail />} />
         <Route path="/berita" element={<AnimatedPage><ArticlesPage /></AnimatedPage>} />
         <Route path="/berita/:slug" element={<AnimatedPage><ArticleDetailPage /></AnimatedPage>} />
         <Route path="/login" element={<AnimatedPage><Login /></AnimatedPage>} />

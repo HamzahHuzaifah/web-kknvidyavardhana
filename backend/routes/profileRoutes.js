@@ -222,7 +222,13 @@ router.post('/team/me/edit', verifyToken, upload.single('image'), async (req, re
       return res.status(403).json({ error: 'Anda tidak memiliki izin untuk mengedit profil tim.' });
     }
 
-    const { name, role, major } = req.body;
+    const { 
+      name, role, major, 
+      greeting, about_me, 
+      portfolio_projects, skills_experience, testimonials, 
+      contact_email, contact_phone, social_links 
+    } = req.body;
+    
     if (!name || !role) {
       return res.status(400).json({ error: 'Nama dan peran/jabatan wajib diisi.' });
     }
@@ -235,17 +241,34 @@ router.post('/team/me/edit', verifyToken, upload.single('image'), async (req, re
 
     const teamId = teamRows[0].id;
 
+    const queryParams = [
+      name, role, major || '', 
+      greeting || '', about_me || '', 
+      portfolio_projects || '[]', skills_experience || '[]', testimonials || '[]',
+      contact_email || '', contact_phone || '', social_links || '[]'
+    ];
+
     if (req.file) {
       const imageUrl = `/uploads/${req.file.filename}`;
       await registerMediaFile(req.file, req.username || 'User', 'team');
       await pool.query(
-        'UPDATE team_members SET name = ?, role = ?, major = ?, image_url = ? WHERE id = ?',
-        [name, role, major || '', imageUrl, teamId]
+        `UPDATE team_members SET 
+          name = ?, role = ?, major = ?, 
+          greeting = ?, about_me = ?, 
+          portfolio_projects = ?, skills_experience = ?, testimonials = ?,
+          contact_email = ?, contact_phone = ?, social_links = ?,
+          image_url = ? WHERE id = ?`,
+        [...queryParams, imageUrl, teamId]
       );
     } else {
       await pool.query(
-        'UPDATE team_members SET name = ?, role = ?, major = ? WHERE id = ?',
-        [name, role, major || '', teamId]
+        `UPDATE team_members SET 
+          name = ?, role = ?, major = ?, 
+          greeting = ?, about_me = ?, 
+          portfolio_projects = ?, skills_experience = ?, testimonials = ?,
+          contact_email = ?, contact_phone = ?, social_links = ?
+          WHERE id = ?`,
+        [...queryParams, teamId]
       );
     }
 
@@ -253,6 +276,21 @@ router.post('/team/me/edit', verifyToken, upload.single('image'), async (req, re
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Gagal memperbarui profil tim Anda.' });
+  }
+});
+
+// API: Get Team Member Portfolio (Public)
+router.get('/team/:id/portfolio', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [rows] = await pool.query('SELECT * FROM team_members WHERE id = ?', [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Profil anggota tidak ditemukan.' });
+    }
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Gagal memuat profil anggota.' });
   }
 });
 

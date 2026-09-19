@@ -172,6 +172,14 @@ const initDB = async (syncUploadsCallback) => {
         major VARCHAR(100),
         image_url VARCHAR(255),
         display_order INT DEFAULT 0,
+        greeting LONGTEXT,
+        about_me LONGTEXT,
+        portfolio_projects LONGTEXT,
+        skills_experience LONGTEXT,
+        testimonials LONGTEXT,
+        contact_email VARCHAR(255),
+        contact_phone VARCHAR(50),
+        social_links LONGTEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
       )
@@ -183,6 +191,23 @@ const initDB = async (syncUploadsCallback) => {
     if (!tmColNames.includes('user_id')) {
       await pool.query("ALTER TABLE team_members ADD COLUMN user_id INT UNIQUE NULL");
       await pool.query("ALTER TABLE team_members ADD CONSTRAINT fk_team_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL");
+    }
+    
+    // Ensure new portfolio columns exist
+    const portfolioCols = [
+      { name: 'greeting', type: 'LONGTEXT' },
+      { name: 'about_me', type: 'LONGTEXT' },
+      { name: 'portfolio_projects', type: 'LONGTEXT' },
+      { name: 'skills_experience', type: 'LONGTEXT' },
+      { name: 'testimonials', type: 'LONGTEXT' },
+      { name: 'contact_email', type: 'VARCHAR(255)' },
+      { name: 'contact_phone', type: 'VARCHAR(50)' },
+      { name: 'social_links', type: 'LONGTEXT' }
+    ];
+    for (const pCol of portfolioCols) {
+      if (!tmColNames.includes(pCol.name)) {
+        await pool.query(`ALTER TABLE team_members ADD COLUMN ${pCol.name} ${pCol.type}`);
+      }
     }
 
     // Seed default team members if table empty

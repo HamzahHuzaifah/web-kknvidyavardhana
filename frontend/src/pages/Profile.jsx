@@ -192,11 +192,17 @@ export default function Profile() {
                   </span>
 
                   {member.major && (
-                    <div className="flex items-center gap-1.5 text-xs text-gray-600 font-medium">
+                    <div className="flex items-center gap-1.5 text-xs text-gray-600 font-medium mb-4">
                       <GraduationCap size={14} className="text-secondary-dark shrink-0" />
                       <span>{member.major}</span>
                     </div>
                   )}
+
+                  <Link to={`/portofolio/${member.id}`} className="mt-auto pt-4 w-full">
+                    <button className="w-full bg-white border-2 border-primary-dark text-primary-dark font-black text-[10px] uppercase py-2 hover:bg-primary-dark hover:text-white transition-colors">
+                      Lihat Profil Lengkap ↗
+                    </button>
+                  </Link>
                 </div>
               ))}
             </div>
