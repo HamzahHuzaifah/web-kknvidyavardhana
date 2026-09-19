@@ -25,6 +25,7 @@ import {
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import CustomDatePicker from '../components/CustomDatePicker';
+import { convertHeicToJpgIfNeeded } from '../utils/heicHelper';
 
 export default function UploadForm() {
   const [formData, setFormData] = useState({
@@ -46,6 +47,7 @@ export default function UploadForm() {
   const [documentName, setDocumentName] = useState('');
   const [status, setStatus] = useState({ type: '', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isConvertingImage, setIsConvertingImage] = useState(false);
   const [permissions, setPermissions] = useState(null);
   const [loadingPermissions, setLoadingPermissions] = useState(true);
   const navigate = useNavigate();
@@ -107,16 +109,14 @@ export default function UploadForm() {
     setFormData(prev => ({ ...prev, content: value }));
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData(prev => ({ ...prev, image: file }));
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleFileChange = async (e) => {
+    let file = e.target.files[0];
+    if (!file) return;
+    file = await convertHeicToJpgIfNeeded(file, setIsConvertingImage);
+    setFormData(prev => ({ ...prev, image: file }));
+    const reader = new FileReader();
+    reader.onloadend = () => setPreview(reader.result);
+    reader.readAsDataURL(file);
   };
 
   const handleDocumentChange = (e) => {
@@ -580,11 +580,17 @@ export default function UploadForm() {
                   <UploadCloud size={28} className="text-gray-400 mb-1" />
                   <span className="text-xs font-black text-primary-dark uppercase">Pilih Gambar Sampul</span>
                   <span className="text-[10px] text-gray-500 mt-0.5">JPG, PNG, WebP (Maks 10MB)</span>
+                  {isConvertingImage && (
+                    <p className="text-[10px] font-bold text-secondary-dark uppercase animate-pulse">
+                      ⏳ Mengonversi HEIC ke JPG...
+                    </p>
+                  )}
                   <input
                     id="image-upload"
                     type="file"
                     accept="image/*,.heic,.heif"
                     onChange={handleFileChange}
+                    disabled={isConvertingImage}
                     className="hidden"
                   />
                 </label>

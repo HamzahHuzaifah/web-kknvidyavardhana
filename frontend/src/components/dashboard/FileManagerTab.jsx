@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import CustomSelect from '../CustomSelect';
 import PreviewMediaModal from './modals/PreviewMediaModal';
+import { processFilesForHeic, convertHeicToJpgIfNeeded } from '../../utils/heicHelper';
 
 export default function FileManagerTab({
   isAdmin,
@@ -38,6 +39,7 @@ export default function FileManagerTab({
   const [fileSourceFilter, setFileSourceFilter] = useState('all');
   const [fileSearchTerm, setFileSearchTerm] = useState('');
   const [fileUploading, setFileUploading] = useState(false);
+  const [convertingHeic, setConvertingHeic] = useState(false);
   const [fileActionMsg, setFileActionMsg] = useState({ type: '', message: '' });
   const [activeLogoUrl, setActiveLogoUrl] = useState('');
   const [copiedUrl, setCopiedUrl] = useState('');
@@ -83,6 +85,9 @@ export default function FileManagerTab({
 
     setFileUploading(true);
     setFileActionMsg({ type: '', message: '' });
+
+    // Convert any HEIC/HEIF files to JPG before uploading
+    files = await processFilesForHeic(files, setConvertingHeic);
 
     const formData = new FormData();
     for (let i = 0; i < files.length; i++) {
@@ -350,16 +355,18 @@ export default function FileManagerTab({
             multiple
             accept="image/*,.heic,.heif,video/*,.mov,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar"
             onChange={handleUploadMediaFiles}
-            disabled={fileUploading}
+            disabled={fileUploading || convertingHeic}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
           />
           <div className="flex flex-col items-center justify-center space-y-2 pointer-events-none">
-            {fileUploading ? (
-              <>
-                <RefreshCw size={36} className="text-secondary-dark animate-spin" />
-                <p className="font-black text-sm text-primary-dark uppercase">Sedang Mengunggah Berkas...</p>
-                <p className="text-xs text-gray-500">Mohon tunggu beberapa saat hingga seluruh file tersimpan.</p>
-              </>
+            {(fileUploading || convertingHeic) ? (
+            <>
+              <RefreshCw size={36} className="text-secondary-dark animate-spin" />
+              <p className="font-black text-sm text-primary-dark uppercase">
+                {convertingHeic ? 'Mengonversi HEIC ke JPG...' : 'Sedang Mengunggah Berkas...'}
+              </p>
+              <p className="text-xs text-gray-500">Mohon tunggu beberapa saat hingga seluruh file tersimpan.</p>
+            </>
             ) : (
               <>
                 <div className="w-14 h-14 bg-gradient-yellow text-primary-dark border-2 border-primary-dark flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">

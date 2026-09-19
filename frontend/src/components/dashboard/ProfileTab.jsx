@@ -12,6 +12,7 @@ import {
   X,
   MapPin
 } from 'lucide-react';
+import { convertHeicToJpgIfNeeded } from '../../utils/heicHelper';
 
 export default function ProfileTab({ token, onConfirm }) {
   // ── Profile Form State ──────────────────────────────────
@@ -39,6 +40,7 @@ export default function ProfileTab({ token, onConfirm }) {
   const [memberImage, setMemberImage] = useState(null);
   const [teamActionMsg, setTeamActionMsg] = useState({ type: '', message: '' });
   const [savingMember, setSavingMember] = useState(false);
+  const [convertingMemberImage, setConvertingMemberImage] = useState(false);
 
   // ── Fetch Data ──────────────────────────────────────────
   const fetchAll = async () => {
@@ -106,9 +108,10 @@ export default function ProfileTab({ token, onConfirm }) {
     setMemberForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleMemberImageChange = (e) => {
+  const handleMemberImageChange = async (e) => {
     if (e.target.files && e.target.files[0]) {
-      setMemberImage(e.target.files[0]);
+      const file = await convertHeicToJpgIfNeeded(e.target.files[0], setConvertingMemberImage);
+      setMemberImage(file);
     }
   };
 
@@ -361,7 +364,11 @@ export default function ProfileTab({ token, onConfirm }) {
               <div className="sm:col-span-2 md:col-span-4">
                 <label className="block text-primary-dark font-bold text-[11px] uppercase mb-1">Foto Anggota</label>
                 <input type="file" accept="image/*,.heic,.heif" onChange={handleMemberImageChange}
+                  disabled={convertingMemberImage}
                   className="w-full border-2 border-primary-dark p-1 text-xs bg-white" />
+                {convertingMemberImage && (
+                  <p className="text-[10px] font-bold text-secondary-dark uppercase animate-pulse mt-1">⏳ Mengonversi HEIC ke JPG...</p>
+                )}
               </div>
             </div>
 

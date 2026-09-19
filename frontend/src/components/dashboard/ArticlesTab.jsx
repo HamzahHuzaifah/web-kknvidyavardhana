@@ -18,6 +18,7 @@ import ReactQuill from 'react-quill-new';
 import CustomSelect from '../CustomSelect';
 import CustomDatePicker from '../CustomDatePicker';
 import 'react-quill-new/dist/quill.snow.css';
+import { convertHeicToJpgIfNeeded } from '../../utils/heicHelper';
 
 import MediaPickerModal from './modals/MediaPickerModal';
 
@@ -51,6 +52,7 @@ export default function ArticlesTab({
   const [editArticleImage, setEditArticleImage] = useState(null);
   const [editArticleDoc, setEditArticleDoc] = useState(null);
   const [savingArticle, setSavingArticle] = useState(false);
+  const [convertingArticleImage, setConvertingArticleImage] = useState(false);
   
   const [showMediaPickerModal, setShowMediaPickerModal] = useState(false);
   const [mediaPickerTarget, setMediaPickerTarget] = useState('image');
@@ -437,9 +439,17 @@ export default function ArticlesTab({
                 <input
                   type="file"
                   accept="image/*,.heic,.heif"
-                  onChange={(e) => setEditArticleImage(e.target.files[0] || null)}
+                  disabled={convertingArticleImage}
+                  onChange={async (e) => {
+                    let file = e.target.files[0] || null;
+                    if (file) file = await convertHeicToJpgIfNeeded(file, setConvertingArticleImage);
+                    setEditArticleImage(file);
+                  }}
                   className="w-full border-2 border-primary-dark p-1 text-xs bg-white"
                 />
+                {convertingArticleImage && (
+                  <p className="text-[10px] font-bold text-secondary-dark uppercase animate-pulse mt-1">⏳ Mengonversi HEIC ke JPG...</p>
+                )}
               )}
             </div>
 
