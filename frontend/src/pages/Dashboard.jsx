@@ -244,7 +244,7 @@ export default function Dashboard() {
               )}
 
               {isAdmin && activeTab === 'profile' && (
-                <ProfileTab />
+                <ProfileTab token={localStorage.getItem('token')} />
               )}
 
               {isAdmin && activeTab === 'social' && (
