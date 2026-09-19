@@ -74,8 +74,8 @@ export default function UsersTab({
     setAdminActionMsg({ type: '', message: '' });
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.patch(
-        `/api/admin/users/${userId}/status`,
+      const response = await axios.post(
+        `/api/admin/users/${userId}/status/update`,
         { status: targetStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -106,8 +106,8 @@ export default function UsersTab({
         setAdminActionMsg({ type: '', message: '' });
         try {
           const token = localStorage.getItem('token');
-          const response = await axios.patch(
-            `/api/admin/users/${userId}/role`,
+          const response = await axios.post(
+            `/api/admin/users/${userId}/role/update`,
             { role: targetRole },
             { headers: { Authorization: `Bearer ${token}` } }
           );
@@ -138,8 +138,9 @@ export default function UsersTab({
         setAdminActionMsg({ type: '', message: '' });
         try {
           const token = localStorage.getItem('token');
-          const response = await axios.delete(
-            `/api/admin/users/${userId}`,
+          const response = await axios.post(
+            `/api/admin/users/${userId}/delete`,
+            {},
             { headers: { Authorization: `Bearer ${token}` } }
           );
           setAdminActionMsg({ type: 'success', message: response.data.message });
@@ -223,9 +224,9 @@ export default function UsersTab({
     setAdminActionMsg({ type: '', message: '' });
     try {
       const token = localStorage.getItem('token');
-      const url = isSelf ? '/api/users/me/account' : `/api/admin/users/${id}/account`;
+      const url = isSelf ? '/api/users/me/account/update' : `/api/admin/users/${id}/account/update`;
       
-      const response = await axios.patch(url, formData, {
+      const response = await axios.post(url, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -262,8 +263,8 @@ export default function UsersTab({
     setAdminActionMsg({ type: '', message: '' });
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.patch(
-        `/api/admin/users/${editPermissionsUser.id}/permissions`,
+      const response = await axios.post(
+        `/api/admin/users/${editPermissionsUser.id}/permissions/update`,
         permissionsForm,
         { headers: { Authorization: `Bearer ${token}` } }
       );
