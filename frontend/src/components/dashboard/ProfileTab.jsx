@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { convertHeicToJpgIfNeeded } from '../../utils/heicHelper';
 
-export default function ProfileTab({ token, onConfirm }) {
+export default function ProfileTab({ token, setConfirmModal, closeConfirmModal }) {
   // ── Profile Form State ──────────────────────────────────
   const [profileForm, setProfileForm] = useState({
     about_title: '',
@@ -182,7 +182,8 @@ export default function ProfileTab({ token, onConfirm }) {
   };
 
   const handleDeleteMember = (id) => {
-    onConfirm({
+    setConfirmModal({
+      isOpen: true,
       title: 'Hapus Anggota Tim',
       message: 'Apakah Anda yakin ingin menghapus data anggota ini dari daftar susunan pengurus?',
       confirmText: 'Ya, Hapus',
@@ -199,6 +200,8 @@ export default function ProfileTab({ token, onConfirm }) {
             type: 'error',
             message: error.response?.data?.error || 'Gagal menghapus anggota tim.'
           });
+        } finally {
+          closeConfirmModal();
         }
       }
     });
