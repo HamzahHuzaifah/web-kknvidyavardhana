@@ -11,25 +11,29 @@ echo "🚀 MEMULAI UPDATE & RESTART KKN VIDYA VARDHANA..."
 echo "========================================================"
 
 # 1. Menarik kode terbaru dari GitHub (paksa ikut GitHub)
-echo "[1/3] Menarik kode terbaru dari GitHub..."
+echo "[1/5] Menarik kode terbaru dari GitHub..."
 git fetch origin
 git reset --hard origin/main
 
 # 2. Update dependencies Backend
-echo "[2/3] Menginstall/Update library Backend..."
+echo "[2/5] Menginstall/Update library Backend..."
 cd backend
 npm install
 cd ..
 
 # 3. Build Frontend
-echo "[3/4] Menginstall library & Build Frontend..."
-cd frontend
-npm install
-npm run build
-cd ..
+# Catatan: frontend dijalankan di subshell agar tidak terpengaruh nodevenv backend.
+# Menggunakan PATH eksplisit agar vite bisa ditemukan tanpa bergantung pada system PATH.
+echo "[3/5] Menginstall library & Build Frontend..."
+(
+  cd frontend
+  npm install
+  # Gunakan path langsung ke vite agar tidak gagal karena nodevenv backend
+  PATH="./node_modules/.bin:$PATH" npm run build
+)
 
 # 4. Deploy hasil build ke public_html (agar tampil di web)
-echo "[4/4] Menyalin hasil build ke public_html..."
+echo "[4/5] Menyalin hasil build ke public_html..."
 cp -r frontend/dist/. /home/vidt4129/public_html/
 echo "✅ Frontend berhasil di-deploy ke public_html!"
 
