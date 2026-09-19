@@ -127,7 +127,7 @@ router.post('/login', loginLimiter, async (req, res) => {
 router.get('/admin/users', verifyToken, isAdmin, async (req, res) => {
   try {
     const [rows] = await pool.query(
-      'SELECT id, username, role, status, can_upload_berita, can_upload_publikasi, can_upload_modul, created_at, last_active FROM users ORDER BY created_at DESC'
+      'SELECT id, username, email, role, status, can_upload_berita, can_upload_publikasi, can_upload_modul, created_at, last_active FROM users ORDER BY created_at DESC'
     );
     res.json(rows);
   } catch (err) {
@@ -356,23 +356,93 @@ router.post('/admin/users', verifyToken, isAdmin, async (req, res) => {
   }
 });
 
-// API: Reset Own Password
-router.patch('/users/me/reset-password', verifyToken, async (req, res) => {
+// API: Update Own Account Details (Username, Email, Password)
+router.patch('/users/me/account', verifyToken, async (req, res) => {
   try {
     const id = req.userId;
-    const { new_password } = req.body;
+    const { username, email, new_password } = req.body;
 
-    if (!new_password || new_password.trim().length < 6) {
+    if (!username || !email) {
+      return res.status(400).json({ error: 'Username dan email wajib diisi.' });
+    }
+
+    if (!email.toLowerCase().endsWith('@gmail.com')) {
+      return res.status(400).json({ error: 'Hanya alamat @gmail.com yang diizinkan untuk keamanan.' });
+    }
+
+    // Check if new username/email already exists for OTHER users
+    const [existing] = await pool.query(
+      'SELECT id FROM users WHERE (username = ? OR email = ?) AND id != ?',
+      [username.trim(), email.trim(), id]
+    );
+
+    if (existing.length > 0) {
+      return res.status(400).json({ error: 'Username atau email sudah digunakan oleh akun lain.' });
+    }
+
+    let query = 'UPDATE users SET username = ?, email = ?';
+    let params = [username.trim(), email.trim()];
+
+    if (new_password && new_password.trim().length >= 6) {
+      const hashedPassword = await bcrypt.hash(new_password.trim(), 10);
+      query += ', password = ?';
+      params.push(hashedPassword);
+    } else if (new_password) {
       return res.status(400).json({ error: 'Password baru minimal 6 karakter.' });
     }
 
-    const hashedPassword = await bcrypt.hash(new_password.trim(), 10);
-    await pool.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, id]);
+    query += ' WHERE id = ?';
+    params.push(id);
 
-    res.json({ message: 'Password Anda berhasil diperbarui!' });
+    await pool.query(query, params);
+
+    res.json({ message: 'Profil akun Anda berhasil diperbarui!' });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Gagal mereset password.' });
+    res.status(500).json({ error: 'Gagal memperbarui profil akun.' });
+  }
+});
+
+// API: Update Any User Account Details (Admin Only)
+router.patch('/admin/users/:id/account', verifyToken, isAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { username, email, new_password } = req.body;
+
+    if (!username || !email) {
+      return res.status(400).json({ error: 'Username dan email wajib diisi.' });
+    }
+
+    // Check if new username/email already exists for OTHER users
+    const [existing] = await pool.query(
+      'SELECT id FROM users WHERE (username = ? OR email = ?) AND id != ?',
+      [username.trim(), email.trim(), id]
+    );
+
+    if (existing.length > 0) {
+      return res.status(400).json({ error: 'Username atau email sudah digunakan oleh akun lain.' });
+    }
+
+    let query = 'UPDATE users SET username = ?, email = ?';
+    let params = [username.trim(), email.trim()];
+
+    if (new_password && new_password.trim().length >= 6) {
+      const hashedPassword = await bcrypt.hash(new_password.trim(), 10);
+      query += ', password = ?';
+      params.push(hashedPassword);
+    } else if (new_password) {
+      return res.status(400).json({ error: 'Password baru minimal 6 karakter.' });
+    }
+
+    query += ' WHERE id = ?';
+    params.push(id);
+
+    await pool.query(query, params);
+
+    res.json({ message: `Profil akun '${username.trim()}' berhasil diperbarui!` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Gagal memperbarui profil akun pengguna.' });
   }
 });
 

@@ -9,6 +9,7 @@ const articleRoutes = require('./routes/articleRoutes');
 const fileRoutes = require('./routes/fileRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const mediaRoutes = require('./routes/mediaRoutes');
+const jumbotronRoutes = require('./routes/jumbotronRoutes');
 const sitemapRoutes = require('./routes/sitemapRoutes');
 
 const app = express();
@@ -30,6 +31,7 @@ app.use('/api', articleRoutes);
 app.use('/api', fileRoutes);
 app.use('/api', profileRoutes);
 app.use('/api', mediaRoutes);
+app.use('/api/jumbotron', jumbotronRoutes);
 
 // Register Sitemap Route
 app.use('/', sitemapRoutes);

@@ -4,9 +4,6 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Hero from '../components/Hero';
 import ArticleCard from '../components/ArticleCard';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
 import { 
   Compass, 
   Sparkles, 
@@ -30,28 +27,7 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 
-// Fix Leaflet marker icon issue in React
-import iconUrl from 'leaflet/dist/images/marker-icon.png';
-import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
-import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
 
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl,
-  iconUrl,
-  shadowUrl,
-});
-
-// Component to dynamically re-center map
-function ChangeMapView({ coords }) {
-  const map = useMap();
-  useEffect(() => {
-    if (coords && coords[0] && coords[1]) {
-      map.setView(coords, map.getZoom());
-    }
-  }, [coords, map]);
-  return null;
-}
 
 // Helper to convert social video URLs into working embed URLs
 function formatEmbedUrl(url, platform, isAutoplay) {
@@ -185,16 +161,20 @@ export default function Home() {
   const [mediaPage, setMediaPage] = useState(1);
   const mediaPerPage = 2;
 
+  // Jumbotron state
+  const [jumbotronSlides, setJumbotronSlides] = useState([]);
+
   // Fetch all data
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [artRes, profRes, teamRes, mediaRes, socialRes] = await Promise.all([
+        const [artRes, profRes, teamRes, mediaRes, socialRes, jumboRes] = await Promise.all([
           axios.get('/api/articles'),
           axios.get('/api/profile-info'),
           axios.get('/api/team'),
           axios.get('/api/media'),
-          axios.get('/api/social-links')
+          axios.get('/api/social-links'),
+          axios.get('/api/jumbotron')
         ]);
 
         setArticles(artRes.data || []);
@@ -202,6 +182,7 @@ export default function Home() {
         setTeam(teamRes.data || []);
         setMediaList(mediaRes.data || []);
         setSocialLinks(socialRes.data || []);
+        setJumbotronSlides(jumboRes.data || []);
       } catch (error) {
         console.error('Error fetching home page data:', error);
       } finally {
@@ -242,9 +223,15 @@ export default function Home() {
 
   // Map coordinates
   const defaultPosition = [-6.6578, 106.6669];
-  const position = profile && profile.village_latitude && profile.village_longitude
-    ? [parseFloat(profile.village_latitude), parseFloat(profile.village_longitude)]
-    : defaultPosition;
+  // Default Maps Position
+  // Helper to extract src from iframe string
+  const getIframeSrc = (iframeString) => {
+    if (!iframeString) return null;
+    const match = iframeString.match(/src="([^"]+)"/);
+    return match ? match[1] : null;
+  };
+
+  const mapSrc = getIframeSrc(profile?.village_map_iframe) || 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3963.0125866170425!2d106.6669!3d-6.6578!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69d7a224a18017%3A0xc4eb01df3f707f!2sDesa%20Ciasihan!5e0!3m2!1sid!2sid!4v1700000000000!5m2!1sid!2sid';
 
   const getPlatformIcon = (platform) => {
     switch (platform?.toLowerCase()) {
@@ -276,11 +263,9 @@ export default function Home() {
     <div className="bg-gray-50 min-h-screen pb-20 space-y-24 overflow-x-hidden">
       {/* 1. HERO SECTION (TOP) */}
       <Hero
-        location="Desa Ciasihan, Pamijahan"
-        titleLine1="Selamat Datang di Website"
-        titleLine2="KKN Vidya Vardhana"
-        description="Pusat informasi dan publikasi program kerja Kuliah Kerja Nyata. Bersama membangun desa, mewujudkan kemajuan berkelanjutan."
-        ctaText="Jelajahi Program"
+        location={profile?.village_name ? `Desa ${profile.village_name}` : "Desa Ciasihan, Pamijahan"}
+        slides={jumbotronSlides}
+        animationType={profile?.jumbotron_animation || 'fade'}
       />
 
       {/* =========================================================================
@@ -489,30 +474,28 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Leaflet Map */}
+                {/* Google Map */}
                 <div className="lg:col-span-2 bg-white border-2 border-primary-dark shadow-hard p-2 relative flex flex-col">
                   <div className="absolute -top-3.5 -left-3.5 bg-gradient-yellow text-primary-dark font-black px-3 py-1 border-2 border-primary-dark shadow-hard z-20 text-xs uppercase">
-                    Peta Interaktif: {profile?.village_name || 'Desa Ciasihan'}
+                    Peta Interaktif: {profile?.village_map_label || profile?.village_name || 'Desa Ciasihan'}
                   </div>
                   <div className="h-[380px] w-full border-2 border-primary-dark relative z-10 mt-2">
-                    <MapContainer center={position} zoom={14} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
-                      <ChangeMapView coords={position} />
-                      <TileLayer
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                      />
-                      <Marker position={position}>
-                        <Popup>
-                          <strong className="text-xs font-bold uppercase text-primary-dark">
-                            {profile?.village_map_label || 'Pusat Kegiatan Desa'}
-                          </strong>
-                          <br />
-                          <span className="text-[11px] text-gray-600">
-                            Lat: {position[0]}, Lng: {position[1]}
-                          </span>
-                        </Popup>
-                      </Marker>
-                    </MapContainer>
+                    {profile?.village_map_iframe && !mapSrc ? (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-500 p-4 text-center font-bold">
+                        Format iframe Google Maps tidak valid. Mohon periksa kembali kode semat (embed) di pengaturan Profil.
+                      </div>
+                    ) : (
+                      <iframe
+                        src={mapSrc}
+                        width="100%"
+                        height="100%"
+                        style={{ border: 0 }}
+                        allowFullScreen=""
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        title="Google Maps"
+                      ></iframe>
+                    )}
                   </div>
                 </div>
               </div>

@@ -1,4 +1,6 @@
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 import { 
   BookOpen, 
   PlusCircle, 
@@ -17,27 +19,191 @@ import CustomSelect from '../CustomSelect';
 import CustomDatePicker from '../CustomDatePicker';
 import 'react-quill-new/dist/quill.snow.css';
 
+import MediaPickerModal from './modals/MediaPickerModal';
+
 export default function ArticlesTab({
-  articlesList,
-  loadingArticles,
-  articleCategoryFilter,
-  setArticleCategoryFilter,
-  articleActionMsg,
-  editingArticle,
-  editArticleForm,
-  setEditArticleForm,
-  selectedMediaForArticle,
-  setSelectedMediaForArticle,
-  setEditArticleImage,
-  setEditArticleDoc,
-  savingArticle,
-  handleSaveArticle,
-  handleStartEditArticle,
-  handleCancelEditArticle,
-  handleDeleteArticle,
-  setMediaPickerTarget,
-  setShowMediaPickerModal
+  setConfirmModal,
+  closeConfirmModal
 }) {
+  const [articlesList, setArticlesList] = useState([]);
+  const [loadingArticles, setLoadingArticles] = useState(false);
+  const [articleCategoryFilter, setArticleCategoryFilter] = useState('all');
+  const [articleActionMsg, setArticleActionMsg] = useState({ type: '', message: '' });
+  
+  const [editingArticle, setEditingArticle] = useState(null);
+  const [editArticleForm, setEditArticleForm] = useState({
+    title: '',
+    category: 'berita',
+    content: '',
+    abstract: '',
+    keywords: '',
+    authors_meta: '',
+    doi_or_reg: '',
+    references_list: '',
+    volume: '',
+    issue: '',
+    published_date: '',
+    image_url: '',
+    file_url: ''
+  });
+  
+  const [selectedMediaForArticle, setSelectedMediaForArticle] = useState({ image: null, document: null });
+  const [editArticleImage, setEditArticleImage] = useState(null);
+  const [editArticleDoc, setEditArticleDoc] = useState(null);
+  const [savingArticle, setSavingArticle] = useState(false);
+  
+  const [showMediaPickerModal, setShowMediaPickerModal] = useState(false);
+  const [mediaPickerTarget, setMediaPickerTarget] = useState('image');
+
+  const fetchArticlesAdmin = async () => {
+    setLoadingArticles(true);
+    try {
+      let url = '/api/articles';
+      if (articleCategoryFilter !== 'all') {
+        url += `?category=${articleCategoryFilter}`;
+      }
+      const response = await axios.get(url);
+      setArticlesList(response.data || []);
+    } catch (error) {
+      console.error('Error fetching articles for admin:', error);
+    } finally {
+      setLoadingArticles(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchArticlesAdmin();
+  }, [articleCategoryFilter]);
+
+  const handleStartEditArticle = (article) => {
+    setEditingArticle(article);
+    setEditArticleForm({
+      title: article.title || '',
+      category: article.category || 'berita',
+      content: article.content || '',
+      abstract: article.abstract || '',
+      keywords: article.keywords || '',
+      authors_meta: article.authors_meta || '',
+      doi_or_reg: article.doi_or_reg || '',
+      references_list: article.references_list || '',
+      volume: article.volume || '',
+      issue: article.issue || '',
+      published_date: article.published_date ? new Date(article.published_date).toISOString().split('T')[0] : '',
+      image_url: article.image_url || '',
+      file_url: article.file_url || ''
+    });
+    setEditArticleImage(null);
+    setEditArticleDoc(null);
+    setSelectedMediaForArticle({
+      image: article.image_url || null,
+      document: article.file_url || null
+    });
+    setArticleActionMsg({ type: '', message: '' });
+  };
+
+  const handleCancelEditArticle = () => {
+    setEditingArticle(null);
+    setEditArticleForm({ 
+      title: '', 
+      category: 'berita', 
+      content: '', 
+      abstract: '',
+      keywords: '',
+      authors_meta: '',
+      doi_or_reg: '',
+      references_list: '',
+      volume: '',
+      issue: '',
+      published_date: '',
+      image_url: '', 
+      file_url: '' 
+    });
+    setEditArticleImage(null);
+    setEditArticleDoc(null);
+    setSelectedMediaForArticle({ image: null, document: null });
+    setArticleActionMsg({ type: '', message: '' });
+  };
+
+  const handleSaveArticle = async (e) => {
+    e.preventDefault();
+    if (!editingArticle) return;
+    setSavingArticle(true);
+    setArticleActionMsg({ type: '', message: '' });
+
+    try {
+      const token = localStorage.getItem('token');
+      const formData = new FormData();
+      formData.append('title', editArticleForm.title);
+      formData.append('category', editArticleForm.category);
+      formData.append('content', editArticleForm.content);
+      formData.append('abstract', editArticleForm.abstract || '');
+      formData.append('keywords', editArticleForm.keywords || '');
+      formData.append('authors_meta', editArticleForm.authors_meta || '');
+      if (editArticleForm.doi_or_reg) formData.append('doi_or_reg', editArticleForm.doi_or_reg);
+      if (editArticleForm.references_list) formData.append('references_list', editArticleForm.references_list);
+      if (editArticleForm.volume) formData.append('volume', editArticleForm.volume);
+      if (editArticleForm.issue) formData.append('issue', editArticleForm.issue);
+      if (editArticleForm.published_date) formData.append('published_date', editArticleForm.published_date);
+      if (editArticleImage) {
+        formData.append('image', editArticleImage);
+      } else if (editArticleForm.image_url) {
+        formData.append('image_url', editArticleForm.image_url);
+      }
+      if (editArticleDoc) {
+        formData.append('document', editArticleDoc);
+      } else if (editArticleForm.file_url) {
+        formData.append('file_url', editArticleForm.file_url);
+      }
+
+      await axios.put(`/api/articles/${editingArticle.id}`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      setArticleActionMsg({ type: 'success', message: 'Konten berhasil diperbarui oleh Admin!' });
+      handleCancelEditArticle();
+      fetchArticlesAdmin();
+    } catch (error) {
+      setArticleActionMsg({
+        type: 'error',
+        message: error.response?.data?.error || 'Gagal memperbarui konten.'
+      });
+    } finally {
+      setSavingArticle(false);
+    }
+  };
+
+  const handleDeleteArticle = (id) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Hapus Konten Publikasi',
+      message: 'Apakah Anda yakin ingin menghapus postingan/konten ini secara permanen? Data yang telah dihapus tidak dapat dipulihkan.',
+      confirmText: 'Ya, Hapus Permanen',
+      cancelText: 'Batal',
+      showCancel: true,
+      type: 'danger',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          const token = localStorage.getItem('token');
+          await axios.delete(`/api/articles/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setArticleActionMsg({ type: 'success', message: 'Konten berhasil dihapus oleh Admin.' });
+          fetchArticlesAdmin();
+        } catch (error) {
+          setArticleActionMsg({
+            type: 'error',
+            message: error.response?.data?.error || 'Gagal menghapus konten.'
+          });
+        }
+      },
+      isLoading: false
+    });
+  };
+
   return (
     <div className="bg-white border-2 border-primary-dark shadow-hard p-6 space-y-6">
       <div className="border-b-2 border-primary-dark pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -456,6 +622,30 @@ export default function ArticlesTab({
           </table>
         </div>
       )}
+
+      {/* Media Picker Modal */}
+      <MediaPickerModal
+        isOpen={showMediaPickerModal}
+        onClose={() => setShowMediaPickerModal(false)}
+        target={mediaPickerTarget}
+        onSelectFile={(file, target) => {
+          if (target === 'image') {
+            setSelectedMediaForArticle((prev) => ({ ...prev, image: file.file_url }));
+            setEditArticleForm((prev) => ({ ...prev, image_url: file.file_url }));
+          } else {
+            setSelectedMediaForArticle((prev) => ({ ...prev, document: file.file_url }));
+            setEditArticleForm((prev) => ({ ...prev, file_url: file.file_url }));
+          }
+        }}
+        formatFileSize={(bytes) => {
+          if (!bytes || bytes === 0) return '0 B';
+          const k = 1024;
+          const sizes = ['B', 'KB', 'MB', 'GB'];
+          const i = Math.floor(Math.log(bytes) / Math.log(k));
+          return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }}
+      />
+
     </div>
   );
 }

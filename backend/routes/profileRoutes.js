@@ -31,10 +31,10 @@ router.put('/profile-info', verifyToken, isAdmin, async (req, res) => {
       village_population,
       village_rtrw,
       village_area,
-      village_latitude,
-      village_longitude,
+      village_map_iframe,
       village_map_label,
-      logo_url
+      logo_url,
+      jumbotron_animation
     } = req.body;
 
     if (logo_url !== undefined) {
@@ -49,10 +49,10 @@ router.put('/profile-info', verifyToken, isAdmin, async (req, res) => {
           village_population = ?,
           village_rtrw = ?,
           village_area = ?,
-          village_latitude = ?,
-          village_longitude = ?,
+          village_map_iframe = ?,
           village_map_label = ?,
-          logo_url = ?
+          logo_url = ?,
+          jumbotron_animation = ?
         WHERE id = 1
       `, [
         about_title,
@@ -64,10 +64,10 @@ router.put('/profile-info', verifyToken, isAdmin, async (req, res) => {
         village_population,
         village_rtrw,
         village_area,
-        village_latitude,
-        village_longitude,
+        village_map_iframe,
         village_map_label,
-        logo_url
+        logo_url,
+        jumbotron_animation || 'fade'
       ]);
     } else {
       await pool.query(`
@@ -81,9 +81,9 @@ router.put('/profile-info', verifyToken, isAdmin, async (req, res) => {
           village_population = ?,
           village_rtrw = ?,
           village_area = ?,
-          village_latitude = ?,
-          village_longitude = ?,
-          village_map_label = ?
+          village_map_iframe = ?,
+          village_map_label = ?,
+          jumbotron_animation = ?
         WHERE id = 1
       `, [
         about_title,
@@ -95,9 +95,9 @@ router.put('/profile-info', verifyToken, isAdmin, async (req, res) => {
         village_population,
         village_rtrw,
         village_area,
-        village_latitude,
-        village_longitude,
-        village_map_label
+        village_map_iframe,
+        village_map_label,
+        jumbotron_animation || 'fade'
       ]);
     }
 

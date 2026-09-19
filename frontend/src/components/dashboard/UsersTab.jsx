@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { 
   ShieldCheck, 
   UserPlus, 
@@ -16,27 +17,269 @@ import {
 } from 'lucide-react';
 
 import CustomSelect from '../CustomSelect';
+import AddUserModal from './modals/AddUserModal';
+import EditAccountModal from './modals/EditAccountModal';
+import EditPermissionsModal from './modals/EditPermissionsModal';
 
 export default function UsersTab({
-  userList,
-  loadingUsers,
-  adminActionMsg,
-  setAdminActionMsg,
-  userSearchTerm,
-  setUserSearchTerm,
-  userRoleFilter,
-  setUserRoleFilter,
-  userStatusFilter,
-  setUserStatusFilter,
-  onUpdateUserStatus,
-  onUpdateUserRole,
-  onDeleteUser,
-  onOpenAddUserModal,
-  onOpenResetPasswordModal,
-  onOpenEditPermissionsModal,
-  onForceLogout,
-  currentUsername
+  isAdmin,
+  currentUsername,
+  showAlert,
+  setConfirmModal,
+  closeConfirmModal
 }) {
+  const [userList, setUserList] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [adminActionMsg, setAdminActionMsg] = useState({ type: '', message: '' });
+  
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const [userRoleFilter, setUserRoleFilter] = useState('all');
+  const [userStatusFilter, setUserStatusFilter] = useState('all');
+
+  // Modals state
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [newUserForm, setNewUserForm] = useState({ username: '', email: '', password: '', role: 'user' });
+  const [savingNewUser, setSavingNewUser] = useState(false);
+
+  const [editAccountModalUser, setEditAccountModalUser] = useState(null);
+
+  const [showEditPermissionsModal, setShowEditPermissionsModal] = useState(false);
+  const [editPermissionsUser, setEditPermissionsUser] = useState(null);
+  const [permissionsForm, setPermissionsForm] = useState({ can_upload_berita: false, can_upload_publikasi: false, can_upload_modul: false });
+  const [savingPermissions, setSavingPermissions] = useState(false);
+
+  // Fetch Users
+  const fetchUsers = async () => {
+    if (!isAdmin) return;
+    setLoadingUsers(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/api/admin/users', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUserList(response.data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, [isAdmin]);
+
+  // Handlers
+  const handleUpdateUserStatus = async (userId, targetStatus) => {
+    setAdminActionMsg({ type: '', message: '' });
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.patch(
+        `/api/admin/users/${userId}/status`,
+        { status: targetStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setAdminActionMsg({ type: 'success', message: response.data.message });
+      fetchUsers();
+    } catch (error) {
+      setAdminActionMsg({ 
+        type: 'error', 
+        message: error.response?.data?.error || 'Gagal mengubah status akun.' 
+      });
+    }
+  };
+
+  const handleUpdateUserRole = (userId, targetRole, targetUsername) => {
+    const isPromote = targetRole === 'admin';
+    setConfirmModal({
+      isOpen: true,
+      title: isPromote ? 'Jadikan Administrator' : 'Turunkan ke User',
+      message: isPromote 
+        ? `Apakah Anda yakin ingin MEMBERIKAN HAK AKSES ADMIN kepada akun '${targetUsername}'? Pengguna ini akan memiliki wewenang penuh mengelola konten dan pengguna website.`
+        : `Apakah Anda yakin ingin MENURUNKAN role akun '${targetUsername}' menjadi User (Anggota biasa)?`,
+      confirmText: isPromote ? 'Ya, Berikan Akses Admin' : 'Ya, Turunkan Role',
+      cancelText: 'Batal',
+      showCancel: true,
+      type: isPromote ? 'warning' : 'info',
+      onConfirm: async () => {
+        closeConfirmModal();
+        setAdminActionMsg({ type: '', message: '' });
+        try {
+          const token = localStorage.getItem('token');
+          const response = await axios.patch(
+            `/api/admin/users/${userId}/role`,
+            { role: targetRole },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          setAdminActionMsg({ type: 'success', message: response.data.message });
+          fetchUsers();
+        } catch (error) {
+          setAdminActionMsg({
+            type: 'error',
+            message: error.response?.data?.error || 'Gagal mengubah role pengguna.'
+          });
+        }
+      },
+      isLoading: false
+    });
+  };
+
+  const handleDeleteUser = (userId, targetUsername) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Hapus Akun Pengguna',
+      message: `PERINGATAN: Apakah Anda yakin ingin MENGHAPUS akun '${targetUsername}' secara permanen?\n\nSeluruh riwayat presensi yang terkait akun ini juga akan terhapus. Tindakan ini tidak dapat dibatalkan.`,
+      confirmText: 'Ya, Hapus Akun',
+      cancelText: 'Batal',
+      showCancel: true,
+      type: 'danger',
+      onConfirm: async () => {
+        closeConfirmModal();
+        setAdminActionMsg({ type: '', message: '' });
+        try {
+          const token = localStorage.getItem('token');
+          const response = await axios.delete(
+            `/api/admin/users/${userId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          setAdminActionMsg({ type: 'success', message: response.data.message });
+          fetchUsers();
+        } catch (error) {
+          setAdminActionMsg({
+            type: 'error',
+            message: error.response?.data?.error || 'Gagal menghapus akun pengguna.'
+          });
+        }
+      },
+      isLoading: false
+    });
+  };
+
+  const handleForceLogout = async (userId, targetUsername) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Logout Paksa Pengguna',
+      message: `Apakah Anda yakin ingin MELOGOUT PAKSA sesi pengguna '${targetUsername}'? Pengguna akan langsung dikeluarkan dari sistem.`,
+      confirmText: 'Ya, Logout Paksa',
+      cancelText: 'Batal',
+      showCancel: true,
+      type: 'danger',
+      onConfirm: async () => {
+        closeConfirmModal();
+        setAdminActionMsg({ type: '', message: '' });
+        try {
+          const token = localStorage.getItem('token');
+          const response = await axios.post(`/api/admin/users/${userId}/logout`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setAdminActionMsg({ type: 'success', message: response.data.message });
+          fetchUsers();
+        } catch (error) {
+          setAdminActionMsg({
+            type: 'error',
+            message: error.response?.data?.error || 'Gagal melogout paksa pengguna.'
+          });
+        }
+      },
+      isLoading: false
+    });
+  };
+
+  const handleCreateUserSubmit = async (e) => {
+    e.preventDefault();
+    if (newUserForm.username.trim().length < 3) {
+      showAlert('Username minimal 3 karakter!', 'Validasi Formulir');
+      return;
+    }
+    if (newUserForm.password.length < 6) {
+      showAlert('Password minimal 6 karakter!', 'Validasi Formulir');
+      return;
+    }
+
+    setSavingNewUser(true);
+    setAdminActionMsg({ type: '', message: '' });
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        '/api/admin/users',
+        newUserForm,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setAdminActionMsg({ type: 'success', message: response.data.message });
+      setShowAddUserModal(false);
+      setNewUserForm({ username: '', email: '', password: '', role: 'user' });
+      fetchUsers();
+    } catch (error) {
+      setAdminActionMsg({
+        type: 'error',
+        message: error.response?.data?.error || 'Gagal menambahkan akun baru.'
+      });
+    } finally {
+      setSavingNewUser(false);
+    }
+  };
+
+  const handleUpdateAccount = async (id, formData, isSelf) => {
+    setAdminActionMsg({ type: '', message: '' });
+    try {
+      const token = localStorage.getItem('token');
+      const url = isSelf ? '/api/users/me/account' : `/api/admin/users/${id}/account`;
+      
+      const response = await axios.patch(url, formData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setAdminActionMsg({ type: 'success', message: response.data?.message || 'Profil akun berhasil diperbarui!' });
+      setEditAccountModalUser(null);
+      fetchUsers();
+      
+      if (isSelf && formData.username && formData.username !== currentUsername) {
+        localStorage.setItem('username', formData.username);
+        window.location.reload();
+      }
+    } catch (error) {
+      setAdminActionMsg({
+        type: 'error',
+        message: error.response?.data?.error || 'Gagal memperbarui profil akun.'
+      });
+    }
+  };
+
+  const handleOpenEditPermissions = (user) => {
+    setEditPermissionsUser(user);
+    setPermissionsForm({
+      can_upload_berita: !!user.can_upload_berita,
+      can_upload_publikasi: !!user.can_upload_publikasi,
+      can_upload_modul: !!user.can_upload_modul
+    });
+    setShowEditPermissionsModal(true);
+  };
+
+  const handleSavePermissions = async (e) => {
+    e.preventDefault();
+    if (!editPermissionsUser) return;
+    setSavingPermissions(true);
+    setAdminActionMsg({ type: '', message: '' });
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.patch(
+        `/api/admin/users/${editPermissionsUser.id}/permissions`,
+        permissionsForm,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setAdminActionMsg({ type: 'success', message: response.data.message });
+      setShowEditPermissionsModal(false);
+      fetchUsers(); 
+    } catch (error) {
+      setAdminActionMsg({
+        type: 'error',
+        message: error.response?.data?.error || 'Gagal menyimpan izin upload.'
+      });
+    } finally {
+      setSavingPermissions(false);
+    }
+  };
+
   const filteredUsers = userList.filter((u) => {
     const matchesSearch = u.username.toLowerCase().includes(userSearchTerm.toLowerCase());
     const matchesRole = userRoleFilter === 'all' || u.role === userRoleFilter;
@@ -101,12 +344,12 @@ export default function UsersTab({
               <ShieldCheck size={22} /> Kelola Pengguna & Persetujuan (ACC)
             </h3>
             <p className="text-xs text-gray-500 font-medium mt-0.5">
-              Kelola status akun, penugasan hak Administrator, reset kata sandi, dan ACC akun pendaftar baru.
+              Kelola status akun, penugasan hak Administrator, edit profil akun, dan ACC akun pendaftar baru.
             </p>
           </div>
 
           <button
-            onClick={onOpenAddUserModal}
+            onClick={() => setShowAddUserModal(true)}
             className="inline-flex items-center gap-1.5 bg-gradient-yellow text-primary-dark font-black px-3.5 py-2 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase text-xs tracking-wider shrink-0"
           >
             <UserPlus size={15} /> + Tambah Akun Langsung
@@ -293,14 +536,14 @@ export default function UsersTab({
                           {usr.status === 'pending' && (
                             <>
                               <button
-                                onClick={() => onUpdateUserStatus(usr.id, 'approved')}
+                                onClick={() => handleUpdateUserStatus(usr.id, 'approved')}
                                 className="inline-flex items-center gap-1 bg-gradient-green text-white font-black px-2 py-1 border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase text-[10px]"
                                 title="Setujui pendaftaran (ACC)"
                               >
                                 <UserCheck size={11} /> ACC
                               </button>
                               <button
-                                onClick={() => onUpdateUserStatus(usr.id, 'rejected')}
+                                onClick={() => handleUpdateUserStatus(usr.id, 'rejected')}
                                 className="inline-flex items-center gap-1 bg-red-600 text-white font-black px-2 py-1 border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase text-[10px]"
                                 title="Tolak pendaftaran"
                               >
@@ -311,7 +554,7 @@ export default function UsersTab({
 
                           {usr.status === 'rejected' && (
                             <button
-                              onClick={() => onUpdateUserStatus(usr.id, 'approved')}
+                              onClick={() => handleUpdateUserStatus(usr.id, 'approved')}
                               className="inline-flex items-center gap-1 bg-gradient-green text-white font-black px-2 py-1 border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase text-[10px]"
                               title="Setujui kembali akun"
                             >
@@ -321,7 +564,7 @@ export default function UsersTab({
 
                           {usr.status === 'approved' && !isSelf && !isMainAdmin && (
                             <button
-                              onClick={() => onUpdateUserStatus(usr.id, 'rejected')}
+                              onClick={() => handleUpdateUserStatus(usr.id, 'rejected')}
                               className="inline-flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-2 py-1 border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase text-[10px]"
                               title="Bekukan / Non-aktifkan akun"
                             >
@@ -329,10 +572,10 @@ export default function UsersTab({
                             </button>
                           )}
 
-                          {/* EDIT PERMISSIONS BUTTON (Always visible for approved users) */}
+                          {/* EDIT PERMISSIONS BUTTON */}
                           {usr.status === 'approved' && !isMainAdmin && (
                             <button
-                              onClick={() => onOpenEditPermissionsModal(usr)}
+                              onClick={() => handleOpenEditPermissions(usr)}
                               className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-900 font-black px-2 py-1 border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase text-[10px]"
                               title="Atur Hak Akses Upload"
                             >
@@ -345,7 +588,7 @@ export default function UsersTab({
                             <>
                               {usr.role === 'user' ? (
                                 <button
-                                  onClick={() => onUpdateUserRole(usr.id, 'admin', usr.username)}
+                                  onClick={() => handleUpdateUserRole(usr.id, 'admin', usr.username)}
                                   className="inline-flex items-center gap-1 bg-gradient-yellow text-primary-dark font-black px-2 py-1 border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase text-[10px]"
                                   title="Beri hak akses Administrator ke akun ini"
                                 >
@@ -353,7 +596,7 @@ export default function UsersTab({
                                 </button>
                               ) : (
                                 <button
-                                  onClick={() => onUpdateUserRole(usr.id, 'user', usr.username)}
+                                  onClick={() => handleUpdateUserRole(usr.id, 'user', usr.username)}
                                   className="inline-flex items-center gap-1 bg-gray-200 text-primary-dark font-bold px-2 py-1 border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase text-[10px]"
                                   title="Turunkan hak akses ke User (Anggota)"
                                 >
@@ -363,21 +606,26 @@ export default function UsersTab({
                             </>
                           )}
 
-                          {/* RESET PASSWORD BUTTON */}
+                          {/* EDIT ACCOUNT BUTTON */}
                           {(!isMainAdmin || currentUsername === 'admin') && (
                             <button
-                              onClick={() => onOpenResetPasswordModal(usr)}
+                              onClick={() => setEditAccountModalUser({
+                                id: usr.id,
+                                username: usr.username,
+                                email: usr.email,
+                                isSelf: isSelf
+                              })}
                               className="inline-flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-primary-dark font-bold px-2 py-1 border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase text-[10px]"
-                              title="Reset password pengguna"
+                              title="Edit akun pengguna"
                             >
-                              <Key size={11} /> Sandi
+                              <Key size={11} /> Akun
                             </button>
                           )}
 
                           {/* FORCE LOGOUT BUTTON */}
                           {usr.status === 'approved' && !isSelf && (
                             <button
-                              onClick={() => onForceLogout(usr.id, usr.username)}
+                              onClick={() => handleForceLogout(usr.id, usr.username)}
                               className="inline-flex items-center gap-1 bg-red-600 text-white font-black px-2 py-1 border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase text-[10px]"
                               title="Logout Paksa"
                             >
@@ -388,7 +636,7 @@ export default function UsersTab({
                           {/* DELETE USER BUTTON */}
                           {!isMainAdmin && !isSelf && (
                             <button
-                              onClick={() => onDeleteUser(usr.id, usr.username)}
+                              onClick={() => handleDeleteUser(usr.id, usr.username)}
                               className="inline-flex items-center p-1 bg-red-100 hover:bg-red-200 text-red-700 border border-red-700 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all"
                               title="Hapus akun permanen"
                             >
@@ -409,6 +657,33 @@ export default function UsersTab({
           </table>
         </div>
       </div>
+
+      {/* MODALS */}
+      <AddUserModal
+        isOpen={showAddUserModal}
+        onClose={() => setShowAddUserModal(false)}
+        newUserForm={newUserForm}
+        setNewUserForm={setNewUserForm}
+        handleCreateUserSubmit={handleCreateUserSubmit}
+        savingNewUser={savingNewUser}
+      />
+
+      <EditAccountModal
+        isOpen={!!editAccountModalUser}
+        onClose={() => setEditAccountModalUser(null)}
+        user={editAccountModalUser}
+        onSave={handleUpdateAccount}
+      />
+
+      <EditPermissionsModal
+        isOpen={showEditPermissionsModal}
+        onClose={() => setShowEditPermissionsModal(false)}
+        user={editPermissionsUser}
+        permissionsForm={permissionsForm}
+        setPermissionsForm={setPermissionsForm}
+        onSubmit={handleSavePermissions}
+        isSaving={savingPermissions}
+      />
     </div>
   );
 }

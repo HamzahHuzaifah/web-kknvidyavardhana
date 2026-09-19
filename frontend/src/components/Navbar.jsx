@@ -4,13 +4,16 @@ import axios from 'axios';
 import api from '../services/api';
 import { Home, User, BookOpen, LayoutDashboard, Image as ImageIcon, LogIn, LogOut, UserCircle, Menu, X } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
+import EditAccountModal from './dashboard/modals/EditAccountModal';
 
 export default function Navbar() {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
+  const currentUsername = localStorage.getItem('username');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [logoUrl, setLogoUrl] = useState('');
+  const [editAccountModalUser, setEditAccountModalUser] = useState(null);
 
   useEffect(() => {
     const fetchLogo = async () => {
@@ -58,6 +61,22 @@ export default function Navbar() {
 
   const closeMenu = () => setIsMobileMenuOpen(false);
 
+  const handleUpdateAccount = async (id, formData, isSelf) => {
+    try {
+      const response = await axios.patch('/api/users/me/account', formData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert(response.data?.message || 'Profil akun berhasil diperbarui!');
+      setEditAccountModalUser(null);
+      if (formData.username && formData.username !== currentUsername) {
+        localStorage.setItem('username', formData.username);
+        window.location.reload();
+      }
+    } catch (error) {
+      alert(error.response?.data?.error || 'Gagal memperbarui profil akun.');
+    }
+  };
+
   return (
     <nav className="bg-primary-dark text-white sticky top-0 z-50 border-b-4 border-secondary-dark">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -103,9 +122,15 @@ export default function Navbar() {
             <Link to="/berita" className="flex items-center gap-2 hover:text-secondary-light hover:-translate-y-0.5 transition-transform font-medium text-sm">
               <BookOpen size={17} /> Berita
             </Link>
-            <Link to={token ? "/dashboard" : "/login"} className="flex items-center gap-2 hover:text-secondary-light hover:-translate-y-0.5 transition-transform font-medium text-sm">
-              <UserCircle size={17} /> Akun
-            </Link>
+            {token ? (
+              <button onClick={() => setEditAccountModalUser({ id: 'me', username: currentUsername, email: '', isSelf: true })} className="flex items-center gap-2 hover:text-secondary-light hover:-translate-y-0.5 transition-transform font-medium text-sm">
+                <UserCircle size={17} /> {currentUsername}
+              </button>
+            ) : (
+              <Link to="/login" className="flex items-center gap-2 hover:text-secondary-light hover:-translate-y-0.5 transition-transform font-medium text-sm">
+                <LogIn size={17} /> Login
+              </Link>
+            )}
 
             {token && (
               <div className="flex items-center gap-3 pl-2 border-l-2 border-primary-light">
@@ -137,9 +162,15 @@ export default function Navbar() {
             <Link to="/berita" onClick={closeMenu} className="flex items-center gap-3 px-3 py-3 rounded-md hover:bg-primary-light transition-colors font-medium text-sm">
               <BookOpen size={18} /> Berita
             </Link>
-            <Link to={token ? "/dashboard" : "/login"} onClick={closeMenu} className="flex items-center gap-3 px-3 py-3 rounded-md hover:bg-primary-light transition-colors font-medium text-sm">
-              <UserCircle size={18} /> Akun
-            </Link>
+            {token ? (
+              <button onClick={() => { setEditAccountModalUser({ id: 'me', username: currentUsername, email: '', isSelf: true }); closeMenu(); }} className="flex items-center gap-3 px-3 py-3 rounded-md hover:bg-primary-light transition-colors font-medium text-sm w-full text-left">
+                <UserCircle size={18} /> {currentUsername}
+              </button>
+            ) : (
+              <Link to="/login" onClick={closeMenu} className="flex items-center gap-3 px-3 py-3 rounded-md hover:bg-primary-light transition-colors font-medium text-sm">
+                <LogIn size={18} /> Login
+              </Link>
+            )}
             
             <div className="h-px bg-primary-light my-2"></div>
             
@@ -167,6 +198,14 @@ export default function Navbar() {
         type="warning"
         onConfirm={confirmLogout}
         onCancel={() => setShowLogoutModal(false)}
+      />
+
+      <EditAccountModal 
+        isOpen={!!editAccountModalUser}
+        onClose={() => setEditAccountModalUser(null)}
+        user={editAccountModalUser}
+        onSave={handleUpdateAccount}
+        isLoading={false}
       />
     </nav>
   );

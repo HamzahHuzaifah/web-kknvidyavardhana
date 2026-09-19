@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { FolderOpen, X, Folder, FileText } from 'lucide-react';
 import { API_BASE_URL } from '../../../services/api';
 
@@ -6,10 +7,25 @@ export default function MediaPickerModal({
   isOpen,
   onClose,
   target, // 'image' | 'document'
-  files,
   onSelectFile,
   formatFileSize
 }) {
+  const [files, setFiles] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      axios.get('/api/files?type=all&source=all', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(res => setFiles(res.data.files || []))
+      .catch(err => console.error('Error fetching files for MediaPicker:', err))
+      .finally(() => setLoading(false));
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const filteredFiles = files.filter((f) =>
@@ -42,7 +58,11 @@ export default function MediaPickerModal({
             Klik pada berkas yang ingin digunakan untuk artikel/publikasi ini. Berkas yang tampil di sini mencakup seluruh upload sebelumnya.
           </p>
 
-          {filteredFiles.length === 0 ? (
+          {loading ? (
+            <div className="py-12 text-center text-gray-500 space-y-2">
+              <p className="text-xs font-bold uppercase">Memuat Berkas...</p>
+            </div>
+          ) : filteredFiles.length === 0 ? (
             <div className="py-12 text-center text-gray-500 space-y-2">
               <Folder size={36} className="mx-auto text-gray-400" />
               <p className="text-xs font-bold uppercase">

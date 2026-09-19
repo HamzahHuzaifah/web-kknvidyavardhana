@@ -9,7 +9,8 @@ import {
   Users, 
   Pencil, 
   Trash2,
-  X
+  X,
+  MapPin
 } from 'lucide-react';
 
 export default function ProfileTab({ token, onConfirm }) {
@@ -24,8 +25,7 @@ export default function ProfileTab({ token, onConfirm }) {
     village_population: '',
     village_rtrw: '',
     village_area: '',
-    village_latitude: '',
-    village_longitude: '',
+    village_map_iframe: '',
     village_map_label: ''
   });
   const [profileSaveMsg, setProfileSaveMsg] = useState({ type: '', message: '' });
@@ -59,8 +59,7 @@ export default function ProfileTab({ token, onConfirm }) {
           village_population: profileRes.data.village_population || '',
           village_rtrw: profileRes.data.village_rtrw || '',
           village_area: profileRes.data.village_area || '',
-          village_latitude: profileRes.data.village_latitude || '',
-          village_longitude: profileRes.data.village_longitude || '',
+          village_map_iframe: profileRes.data.village_map_iframe || '',
           village_map_label: profileRes.data.village_map_label || ''
         });
       }
@@ -267,20 +266,39 @@ export default function ProfileTab({ token, onConfirm }) {
               <input type="text" name="village_area" value={profileForm.village_area} onChange={handleProfileChange} required
                 className="w-full border-2 border-primary-dark px-3 py-2 text-xs font-medium bg-gray-50 outline-none focus:bg-yellow-50" />
             </div>
-            <div>
-              <label className="block text-primary-dark font-black text-xs uppercase mb-1">Latitude</label>
-              <input type="text" name="village_latitude" value={profileForm.village_latitude} onChange={handleProfileChange} required
-                className="w-full border-2 border-primary-dark px-3 py-2 text-xs font-medium bg-gray-50 outline-none focus:bg-yellow-50" />
-            </div>
-            <div>
-              <label className="block text-primary-dark font-black text-xs uppercase mb-1">Longitude</label>
-              <input type="text" name="village_longitude" value={profileForm.village_longitude} onChange={handleProfileChange} required
-                className="w-full border-2 border-primary-dark px-3 py-2 text-xs font-medium bg-gray-50 outline-none focus:bg-yellow-50" />
-            </div>
-            <div>
-              <label className="block text-primary-dark font-black text-xs uppercase mb-1">Label Penanda (Marker)</label>
-              <input type="text" name="village_map_label" value={profileForm.village_map_label} onChange={handleProfileChange} required
-                className="w-full border-2 border-primary-dark px-3 py-2 text-xs font-medium bg-gray-50 outline-none focus:bg-yellow-50" />
+            <div className="bg-white border-2 border-primary-dark p-4 shadow-hard md:col-span-2">
+              <h3 className="font-black text-lg text-primary-dark mb-4 border-b-2 border-gray-200 pb-2 flex items-center gap-2">
+                <MapPin size={20} /> Pengaturan Peta (Google Maps)
+              </h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-primary-dark font-black text-xs uppercase mb-1">
+                    Google Maps Iframe / Embed Code
+                  </label>
+                  <textarea 
+                    name="village_map_iframe" 
+                    value={profileForm.village_map_iframe} 
+                    onChange={handleProfileChange} 
+                    rows="4"
+                    className="w-full border-2 border-primary-dark p-3 text-xs font-mono bg-gray-50 outline-none focus:bg-yellow-50"
+                    placeholder='Contoh: <iframe src="https://www.google.com/maps/embed?..." width="600" height="450" ...></iframe>'
+                  />
+                  <p className="text-[10px] text-gray-500 mt-1 italic">
+                    Cari lokasi di Google Maps &gt; Bagikan (Share) &gt; Sematkan peta (Embed a map) &gt; Salin HTML, lalu tempel di sini.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-primary-dark font-black text-xs uppercase mb-1">
+                    Label / Judul Titik Lokasi
+                  </label>
+                  <input type="text" name="village_map_label" value={profileForm.village_map_label} onChange={handleProfileChange} required
+                    className="w-full border-2 border-primary-dark px-3 py-2 text-xs font-medium bg-gray-50 outline-none focus:bg-yellow-50"
+                    placeholder="Contoh: Balai Desa Ciasihan"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 

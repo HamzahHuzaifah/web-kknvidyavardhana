@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
   FolderOpen, 
@@ -22,31 +23,169 @@ import {
   Download 
 } from 'lucide-react';
 import CustomSelect from '../CustomSelect';
+import PreviewMediaModal from './modals/PreviewMediaModal';
 
 export default function FileManagerTab({
-  fileList,
-  fileCounts,
-  loadingFiles,
-  fileTypeFilter,
-  setFileTypeFilter,
-  fileSourceFilter,
-  setFileSourceFilter,
-  fileSearchTerm,
-  setFileSearchTerm,
-  fetchMediaFiles,
-  fileUploading,
-  handleUploadMediaFiles,
-  fileActionMsg,
-  setFileActionMsg,
-  activeLogoUrl,
-  setActiveLogoUrl,
-  copiedUrl,
-  handleCopyFileUrl,
-  handleSetAsLogo,
-  handleDeleteMediaFile,
-  setPreviewMediaModal,
-  formatFileSize
+  isAdmin,
+  setConfirmModal,
+  closeConfirmModal,
+  showAlert
 }) {
+  const [fileList, setFileList] = useState([]);
+  const [fileCounts, setFileCounts] = useState({ total: 0, images: 0, videos: 0, documents: 0, others: 0 });
+  const [loadingFiles, setLoadingFiles] = useState(false);
+  const [fileTypeFilter, setFileTypeFilter] = useState('all');
+  const [fileSourceFilter, setFileSourceFilter] = useState('all');
+  const [fileSearchTerm, setFileSearchTerm] = useState('');
+  const [fileUploading, setFileUploading] = useState(false);
+  const [fileActionMsg, setFileActionMsg] = useState({ type: '', message: '' });
+  const [activeLogoUrl, setActiveLogoUrl] = useState('');
+  const [copiedUrl, setCopiedUrl] = useState('');
+  
+  const [previewMediaModal, setPreviewMediaModal] = useState(null);
+
+  const formatFileSize = (bytes) => {
+    if (!bytes || bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
+
+  const fetchMediaFiles = async () => {
+    if (!isAdmin) return;
+    setLoadingFiles(true);
+    try {
+      const token = localStorage.getItem('token');
+      let url = `/api/files?type=${fileTypeFilter}&source=${fileSourceFilter}`;
+      if (fileSearchTerm.trim()) {
+        url += `&q=${encodeURIComponent(fileSearchTerm.trim())}`;
+      }
+      const response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setFileList(response.data.files || []);
+      setFileCounts(response.data.counts || { total: 0, images: 0, videos: 0, documents: 0, others: 0 });
+    } catch (err) {
+      console.error('Error fetching media files:', err);
+    } finally {
+      setLoadingFiles(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMediaFiles();
+  }, [fileTypeFilter, fileSourceFilter, isAdmin]);
+
+  const handleUploadMediaFiles = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setFileUploading(true);
+    setFileActionMsg({ type: '', message: '' });
+
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+      formData.append('files', files[i]);
+    }
+    formData.append('source', 'direct_upload');
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.post('/api/files/upload', formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      setFileActionMsg({ type: 'success', message: res.data.message });
+      fetchMediaFiles();
+      e.target.value = '';
+    } catch (err) {
+      setFileActionMsg({
+        type: 'error',
+        message: err.response?.data?.error || 'Gagal mengunggah berkas ke Manajer Berkas.'
+      });
+    } finally {
+      setFileUploading(false);
+    }
+  };
+
+  const handleSetAsLogo = (fileUrl) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Pasang Sebagai Logo Website',
+      message: 'Apakah Anda yakin ingin memasang gambar ini sebagai Logo Resmi Website KKN Vidya Vardhana? Logo akan langsung diperbarui di bilah navigasi (Navbar).',
+      confirmText: 'Ya, Pasang Logo',
+      cancelText: 'Batal',
+      showCancel: true,
+      type: 'warning',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          const token = localStorage.getItem('token');
+          const res = await axios.put(
+            '/api/settings/logo',
+            { logo_url: fileUrl },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          setActiveLogoUrl(fileUrl);
+          setFileActionMsg({ type: 'success', message: res.data.message });
+          window.dispatchEvent(new CustomEvent('logoUpdated', { detail: { logo_url: fileUrl } }));
+        } catch (err) {
+          setFileActionMsg({
+            type: 'error',
+            message: err.response?.data?.error || 'Gagal memasang logo website.'
+          });
+        }
+      },
+      isLoading: false
+    });
+  };
+
+  const handleDeleteMediaFile = (file) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Hapus Berkas Permanen',
+      message: `Apakah Anda yakin ingin menghapus berkas "${file.original_name}" secara permanen? Berkas fisik akan dihapus dari server dan tidak dapat dipulihkan.`,
+      confirmText: 'Ya, Hapus Permanen',
+      cancelText: 'Batal',
+      showCancel: true,
+      type: 'danger',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          const token = localStorage.getItem('token');
+          const res = await axios.delete(`/api/files/${file.id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setFileActionMsg({ type: 'success', message: res.data.message });
+          if (activeLogoUrl === file.file_url) {
+            setActiveLogoUrl('');
+            window.dispatchEvent(new CustomEvent('logoUpdated', { detail: { logo_url: '' } }));
+          }
+          fetchMediaFiles();
+        } catch (err) {
+          setFileActionMsg({
+            type: 'error',
+            message: err.response?.data?.error || 'Gagal menghapus berkas.'
+          });
+        }
+      },
+      isLoading: false
+    });
+  };
+
+  const handleCopyFileUrl = (url) => {
+    const fullUrl = url.startsWith('http') ? url : `${url}`;
+    navigator.clipboard.writeText(fullUrl).then(() => {
+      setCopiedUrl(url);
+      setTimeout(() => setCopiedUrl(''), 2500);
+    }).catch(() => {
+      showAlert('Gagal menyalin link ke clipboard.');
+    });
+  };
+
   return (
     <div className="space-y-8">
       {/* Header & Logo Banner */}
@@ -518,6 +657,11 @@ export default function FileManagerTab({
           </div>
         )}
       </div>
+
+      <PreviewMediaModal
+        previewMediaModal={previewMediaModal}
+        onClose={() => setPreviewMediaModal(null)}
+      />
     </div>
   );
 }

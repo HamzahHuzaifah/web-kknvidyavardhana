@@ -110,19 +110,26 @@ const initDB = async (syncUploadsCallback) => {
         village_description TEXT,
         village_population VARCHAR(50),
         village_rtrw VARCHAR(50),
-        village_area VARCHAR(50),
-        village_latitude DECIMAL(10, 8),
-        village_longitude DECIMAL(11, 8),
+        village_area VARCHAR(255),
+        village_map_iframe TEXT,
         village_map_label VARCHAR(255),
         logo_url VARCHAR(255) DEFAULT NULL,
+        jumbotron_animation VARCHAR(50) DEFAULT 'fade',
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )
     `);
 
     // Ensure logo_url column exists in profile_info
     const [pCols] = await pool.query('SHOW COLUMNS FROM profile_info');
-    if (!pCols.some((c) => c.Field === 'logo_url')) {
-      await pool.query('ALTER TABLE profile_info ADD COLUMN logo_url VARCHAR(255) DEFAULT NULL');
+    const pColNames = pCols.map((c) => c.Field);
+    if (!pColNames.includes('village_map_iframe')) {
+      await pool.query("ALTER TABLE profile_info ADD COLUMN village_map_iframe TEXT");
+    }
+    if (!pColNames.includes('logo_url')) {
+      await pool.query("ALTER TABLE profile_info ADD COLUMN logo_url VARCHAR(500) NULL");
+    }
+    if (!pColNames.includes('jumbotron_animation')) {
+      await pool.query("ALTER TABLE profile_info ADD COLUMN jumbotron_animation VARCHAR(50) DEFAULT 'fade'");
     }
 
     // Seed profile_info if empty
@@ -132,7 +139,7 @@ const initDB = async (syncUploadsCallback) => {
         INSERT INTO profile_info (
           id, about_title, about_description, vision, mission, 
           village_name, village_description, village_population, 
-          village_rtrw, village_area, village_latitude, village_longitude, village_map_label
+          village_rtrw, village_area, village_map_iframe, village_map_label
         ) VALUES (
           1,
           'KKN Vidya Vardhana',
@@ -144,8 +151,7 @@ const initDB = async (syncUploadsCallback) => {
           '5,420 Jiwa',
           '12 RT / 04 RW',
           '3.2 km²',
-          -6.65780000,
-          106.66690000,
+          '',
           'Balai Desa Ciasihan, Pamijahan'
         )
       `);
@@ -329,7 +335,30 @@ const initDB = async (syncUploadsCallback) => {
       await syncUploadsCallback();
     }
 
-    console.log('Database initialized with all tables: users, attendance, profile, team, media, social, articles, and media_files.');
+    // 9. Create jumbotron_slides table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS jumbotron_slides (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        image_url VARCHAR(255) NOT NULL,
+        title VARCHAR(255),
+        subtitle TEXT,
+        display_order INT DEFAULT 0,
+        is_active TINYINT(1) DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Seed default jumbotron slide if empty
+    const [slideRows] = await pool.query('SELECT COUNT(*) as cnt FROM jumbotron_slides');
+    if (slideRows[0].cnt === 0) {
+      await pool.query(`
+        INSERT INTO jumbotron_slides (image_url, title, subtitle, display_order)
+        VALUES 
+        ('https://images.unsplash.com/photo-1596484552834-6a58f850d0a7?auto=format&fit=crop&q=80&w=1200', 'SELAMAT DATANG DI WEBSITE KKN VIDYA VARDHANA', 'Pusat informasi dan publikasi program kerja Kuliah Kerja Nyata. Bersama membangun desa, mewujudkan kemajuan berkelanjutan.', 1)
+      `);
+    }
+
+    console.log('Database initialized with all tables: users, attendance, profile, team, media, social, articles, media_files, jumbotron_slides.');
   } catch (error) {
     console.error('DB Init Error:', error);
   }

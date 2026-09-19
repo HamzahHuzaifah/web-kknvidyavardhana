@@ -1,4 +1,6 @@
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 import { 
   Share2, 
   Trash2, 
@@ -10,22 +12,194 @@ import {
 import CustomSelect from '../CustomSelect';
 
 export default function SocialMediaTab({
-  socialLinksList,
-  socialForm,
-  setSocialForm,
-  handleSaveSocialLink,
-  handleDeleteSocialLink,
-  socialActionMsg,
-  mediaList,
-  mediaForm,
-  handleMediaFormChange,
-  handleSaveMedia,
-  handleStartEditMedia,
-  editingMediaId,
-  savingMedia,
-  handleDeleteMedia,
-  mediaActionMsg
+  isAdmin,
+  setConfirmModal,
+  closeConfirmModal
 }) {
+  const [mediaList, setMediaList] = useState([]);
+  const [socialLinksList, setSocialLinksList] = useState([]);
+  const [loadingMedia, setLoadingMedia] = useState(false);
+  const [editingMediaId, setEditingMediaId] = useState(null);
+  
+  const [mediaForm, setMediaForm] = useState({
+    title: '',
+    platform: 'youtube',
+    url: '',
+    caption: '',
+    is_autoplay: 1,
+    display_order: 0
+  });
+  
+  const [socialForm, setSocialForm] = useState({
+    platform: 'instagram',
+    username_handle: '',
+    url: ''
+  });
+  
+  const [mediaActionMsg, setMediaActionMsg] = useState({ type: '', message: '' });
+  const [socialActionMsg, setSocialActionMsg] = useState({ type: '', message: '' });
+  const [savingMedia, setSavingMedia] = useState(false);
+
+  const fetchMediaAndSocial = async () => {
+    if (!isAdmin) return;
+    setLoadingMedia(true);
+    try {
+      const [mediaRes, socialRes] = await Promise.all([
+        axios.get('/api/media'),
+        axios.get('/api/social-links')
+      ]);
+      setMediaList(mediaRes.data || []);
+      setSocialLinksList(socialRes.data || []);
+    } catch (error) {
+      console.error('Error fetching media and social:', error);
+    } finally {
+      setLoadingMedia(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMediaAndSocial();
+  }, [isAdmin]);
+
+  const handleSaveSocialLink = async (e) => {
+    e.preventDefault();
+    setSocialActionMsg({ type: '', message: '' });
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post('/api/social-links', socialForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSocialActionMsg({ type: 'success', message: 'Akun medsos berhasil ditambahkan.' });
+      setSocialForm({ platform: 'instagram', username_handle: '', url: '' });
+      fetchMediaAndSocial();
+    } catch (error) {
+      setSocialActionMsg({
+        type: 'error',
+        message: error.response?.data?.error || 'Gagal menambahkan akun medsos.'
+      });
+    }
+  };
+
+  const handleDeleteSocialLink = async (id) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Hapus Akun Medsos',
+      message: 'Yakin ingin menghapus akun media sosial ini?',
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal',
+      showCancel: true,
+      type: 'danger',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          const token = localStorage.getItem('token');
+          await axios.delete(`/api/social-links/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setSocialActionMsg({ type: 'success', message: 'Akun medsos berhasil dihapus.' });
+          fetchMediaAndSocial();
+        } catch (error) {
+          setSocialActionMsg({
+            type: 'error',
+            message: error.response?.data?.error || 'Gagal menghapus akun medsos.'
+          });
+        }
+      }
+    });
+  };
+
+  const handleMediaFormChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setMediaForm(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? (checked ? 1 : 0) : value
+    }));
+  };
+
+  const handleSaveMedia = async (e) => {
+    e.preventDefault();
+    setSavingMedia(true);
+    setMediaActionMsg({ type: '', message: '' });
+    try {
+      const token = localStorage.getItem('token');
+      const payload = {
+        ...mediaForm,
+        is_autoplay: mediaForm.is_autoplay ? 1 : 0
+      };
+      
+      if (editingMediaId) {
+        await axios.put(`/api/media/${editingMediaId}`, payload, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setMediaActionMsg({ type: 'success', message: 'Video berhasil diperbarui.' });
+      } else {
+        await axios.post('/api/media', payload, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setMediaActionMsg({ type: 'success', message: 'Video berhasil ditambahkan.' });
+      }
+      
+      setMediaForm({
+        title: '',
+        platform: 'youtube',
+        url: '',
+        caption: '',
+        is_autoplay: 1,
+        display_order: 0
+      });
+      setEditingMediaId(null);
+      fetchMediaAndSocial();
+    } catch (error) {
+      setMediaActionMsg({
+        type: 'error',
+        message: error.response?.data?.error || 'Gagal menyimpan video.'
+      });
+    } finally {
+      setSavingMedia(false);
+    }
+  };
+
+  const handleStartEditMedia = (item) => {
+    setEditingMediaId(item.id);
+    setMediaForm({
+      title: item.title,
+      platform: item.platform,
+      url: item.url,
+      caption: item.caption || '',
+      is_autoplay: item.is_autoplay,
+      display_order: item.display_order || 0
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDeleteMedia = async (id) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Hapus Video Autoplay',
+      message: 'Yakin ingin menghapus video ini?',
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal',
+      showCancel: true,
+      type: 'danger',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          const token = localStorage.getItem('token');
+          await axios.delete(`/api/media/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setMediaActionMsg({ type: 'success', message: 'Video berhasil dihapus.' });
+          fetchMediaAndSocial();
+        } catch (error) {
+          setMediaActionMsg({
+            type: 'error',
+            message: error.response?.data?.error || 'Gagal menghapus video.'
+          });
+        }
+      }
+    });
+  };
+
   return (
     <div className="space-y-10">
       {/* Kelola Medsos Resmi */}

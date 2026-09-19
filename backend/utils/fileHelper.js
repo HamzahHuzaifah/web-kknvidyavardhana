@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
+const heicConvert = require('heic-convert');
 const { pool } = require('../config/db');
 
 // Ensure uploads folder exists
@@ -34,7 +35,7 @@ const detectFileType = (file) => {
 
   if (
     mime.startsWith('image/') ||
-    ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.ico', '.avif'].includes(ext)
+    ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.ico', '.avif', '.heic', '.heif'].includes(ext)
   ) {
     return 'image';
   }
@@ -72,27 +73,66 @@ const detectFileType = (file) => {
 const registerMediaFile = async (file, uploadedBy = 'Admin', source = 'direct_upload') => {
   if (!file) return null;
   try {
+    let fileExt = path.extname(file.originalname || file.filename || '').toLowerCase();
+    let isHeic = fileExt === '.heic' || fileExt === '.heif';
+    
+    let finalFilename = file.filename;
+    let finalOriginalName = file.originalname || file.filename;
+    let finalMimeType = file.mimetype || 'application/octet-stream';
+    let finalFileSize = file.size || 0;
+    
+    // HEIC Conversion
+    if (isHeic) {
+      try {
+        const inputBuffer = fs.readFileSync(file.path);
+        const outputBuffer = await heicConvert({
+          buffer: inputBuffer,
+          format: 'JPEG',
+          quality: 0.8
+        });
+        
+        finalFilename = file.filename.replace(/\.heic|\.heif/i, '.jpg');
+        finalOriginalName = finalOriginalName.replace(/\.heic|\.heif/i, '.jpg');
+        finalMimeType = 'image/jpeg';
+        
+        const newPath = path.join(uploadDir, finalFilename);
+        fs.writeFileSync(newPath, outputBuffer);
+        
+        // Delete original heic file
+        fs.unlinkSync(file.path);
+        
+        // Update stats
+        finalFileSize = outputBuffer.length;
+        
+        // Update file object so other functions using it know the new path
+        file.filename = finalFilename;
+        file.path = newPath;
+        file.mimetype = finalMimeType;
+        file.size = finalFileSize;
+      } catch (convErr) {
+        console.error('Failed to convert HEIC to JPEG:', convErr);
+        // Fallback to uploading as-is, though it won't preview in browsers
+      }
+    }
+
     const fileType = detectFileType(file);
-    const fileUrl = `/uploads/${file.filename}`;
-    const originalName = file.originalname || file.filename;
-    const mimeType = file.mimetype || 'application/octet-stream';
-    const fileSize = file.size || 0;
+    const fileUrl = `/uploads/${finalFilename}`;
 
     const [result] = await pool.query(
       `INSERT INTO media_files 
        (filename, original_name, file_url, file_type, mime_type, file_size, uploaded_by, source) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [file.filename, originalName, fileUrl, fileType, mimeType, fileSize, uploadedBy || 'Admin', source]
+      [finalFilename, finalOriginalName, fileUrl, fileType, finalMimeType, finalFileSize, uploadedBy || 'Admin', source]
     );
 
     return {
       id: result.insertId,
-      filename: file.filename,
-      original_name: originalName,
+      filename: finalFilename,
+      original_name: finalOriginalName,
       file_url: fileUrl,
       file_type: fileType,
-      mime_type: mimeType,
-      file_size: fileSize,
+      mime_type: finalMimeType,
+      file_size: finalFileSize,
       uploaded_by: uploadedBy || 'Admin',
       source
     };
