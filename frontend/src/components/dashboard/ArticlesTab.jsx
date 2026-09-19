@@ -436,20 +436,22 @@ export default function ArticlesTab({
                   </button>
                 </div>
               ) : (
-                <input
-                  type="file"
-                  accept="image/*,.heic,.heif"
-                  disabled={convertingArticleImage}
-                  onChange={async (e) => {
-                    let file = e.target.files[0] || null;
-                    if (file) file = await convertHeicToJpgIfNeeded(file, setConvertingArticleImage);
-                    setEditArticleImage(file);
-                  }}
-                  className="w-full border-2 border-primary-dark p-1 text-xs bg-white"
-                />
-                {convertingArticleImage && (
-                  <p className="text-[10px] font-bold text-secondary-dark uppercase animate-pulse mt-1">⏳ Mengonversi HEIC ke JPG...</p>
-                )}
+                <>
+                  <input
+                    type="file"
+                    accept="image/*,.heic,.heif"
+                    disabled={convertingArticleImage}
+                    onChange={async (e) => {
+                      let file = e.target.files[0] || null;
+                      if (file) file = await convertHeicToJpgIfNeeded(file, setConvertingArticleImage);
+                      setEditArticleImage(file);
+                    }}
+                    className="w-full border-2 border-primary-dark p-1 text-xs bg-white"
+                  />
+                  {convertingArticleImage && (
+                    <p className="text-[10px] font-bold text-secondary-dark uppercase animate-pulse mt-1">⏳ Mengonversi HEIC ke JPG...</p>
+                  )}
+                </>
               )}
             </div>
 

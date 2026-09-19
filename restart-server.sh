@@ -22,14 +22,19 @@ npm install
 cd ..
 
 # 3. Build Frontend
-echo "[3/3] Menginstall library & Build Frontend..."
+echo "[3/4] Menginstall library & Build Frontend..."
 cd frontend
 npm install
 npm run build
 cd ..
 
+# 4. Deploy hasil build ke public_html (agar tampil di web)
+echo "[4/4] Menyalin hasil build ke public_html..."
+cp -r frontend/dist/. /home/vidt4129/public_html/
+echo "✅ Frontend berhasil di-deploy ke public_html!"
+
 # Restart Server (Nohup Background Process)
-echo "Merestart Server Node.js di latar belakang..."
+echo "[5/5] Merestart Server Node.js di latar belakang..."
 cd backend
 
 # Matikan proses node lama yang berjalan dari direktori ini (jangan gunakan killall agar tidak mengganggu web lain)
