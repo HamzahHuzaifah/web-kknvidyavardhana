@@ -57,7 +57,7 @@ export default function UsersTab({
       const response = await axios.get('/api/admin/users', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setUserList(response.data);
+      setUserList(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
@@ -280,16 +280,17 @@ export default function UsersTab({
     }
   };
 
-  const filteredUsers = userList.filter((u) => {
-    const matchesSearch = u.username.toLowerCase().includes(userSearchTerm.toLowerCase());
+  const safeUsers = Array.isArray(userList) ? userList : [];
+  const filteredUsers = safeUsers.filter((u) => {
+    const matchesSearch = (u.username || '').toLowerCase().includes(userSearchTerm.toLowerCase());
     const matchesRole = userRoleFilter === 'all' || u.role === userRoleFilter;
     const matchesStatus = userStatusFilter === 'all' || u.status === userStatusFilter;
     return matchesSearch && matchesRole && matchesStatus;
   });
 
-  const pendingCount = userList.filter((u) => u.status === 'pending').length;
-  const approvedCount = userList.filter((u) => u.status === 'approved').length;
-  const rejectedCount = userList.filter((u) => u.status === 'rejected').length;
+  const pendingCount = safeUsers.filter((u) => u.status === 'pending').length;
+  const approvedCount = safeUsers.filter((u) => u.status === 'approved').length;
+  const rejectedCount = safeUsers.filter((u) => u.status === 'rejected').length;
 
   return (
     <div className="space-y-6">

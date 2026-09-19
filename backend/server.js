@@ -33,6 +33,11 @@ app.use('/api', profileRoutes);
 app.use('/api', mediaRoutes);
 app.use('/api/jumbotron', jumbotronRoutes);
 
+// Explicit 404 Handler untuk rute /api yang tidak terdaftar (Mencegah fallback ke index.html)
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'Endpoint API tidak ditemukan.' });
+});
+
 // Register Sitemap Route
 app.use('/', sitemapRoutes);
 

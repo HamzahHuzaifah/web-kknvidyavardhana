@@ -20,6 +20,7 @@ import ProfileTab from '../components/dashboard/ProfileTab';
 import SocialMediaTab from '../components/dashboard/SocialMediaTab';
 import JumbotronTab from '../components/dashboard/JumbotronTab';
 import EditAccountModal from '../components/dashboard/modals/EditAccountModal';
+import ErrorBoundary from '../components/ErrorBoundary';
 import axios from 'axios';
 
 export default function Dashboard() {
@@ -200,51 +201,53 @@ export default function Dashboard() {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
           >
-            {isAdmin && activeTab === 'users' && (
-              <UsersTab 
-                isAdmin={isAdmin}
-                currentUsername={username}
-                showAlert={showAlert}
-                setConfirmModal={setConfirmModal}
-                closeConfirmModal={closeConfirmModal}
-              />
-            )}
+            <ErrorBoundary key={activeTab} message="Gagal memuat tab ini. Pastikan server backend cPanel telah di-restart untuk memuat perubahan terbaru.">
+              {isAdmin && activeTab === 'users' && (
+                <UsersTab 
+                  isAdmin={isAdmin}
+                  currentUsername={username}
+                  showAlert={showAlert}
+                  setConfirmModal={setConfirmModal}
+                  closeConfirmModal={closeConfirmModal}
+                />
+              )}
 
-            {isAdmin && activeTab === 'articles' && (
-              <ArticlesTab 
-                setConfirmModal={setConfirmModal}
-                closeConfirmModal={closeConfirmModal}
-              />
-            )}
+              {isAdmin && activeTab === 'articles' && (
+                <ArticlesTab 
+                  setConfirmModal={setConfirmModal}
+                  closeConfirmModal={closeConfirmModal}
+                />
+              )}
 
-            {isAdmin && activeTab === 'files' && (
-              <FileManagerTab 
-                isAdmin={isAdmin}
-                setConfirmModal={setConfirmModal}
-                closeConfirmModal={closeConfirmModal}
-                showAlert={showAlert}
-              />
-            )}
+              {isAdmin && activeTab === 'files' && (
+                <FileManagerTab 
+                  isAdmin={isAdmin}
+                  setConfirmModal={setConfirmModal}
+                  closeConfirmModal={closeConfirmModal}
+                  showAlert={showAlert}
+                />
+              )}
 
-            {isAdmin && activeTab === 'profile' && (
-              <ProfileTab />
-            )}
+              {isAdmin && activeTab === 'profile' && (
+                <ProfileTab />
+              )}
 
-            {isAdmin && activeTab === 'social' && (
-              <SocialMediaTab 
-                isAdmin={isAdmin}
-                setConfirmModal={setConfirmModal}
-                closeConfirmModal={closeConfirmModal}
-              />
-            )}
+              {isAdmin && activeTab === 'social' && (
+                <SocialMediaTab 
+                  isAdmin={isAdmin}
+                  setConfirmModal={setConfirmModal}
+                  closeConfirmModal={closeConfirmModal}
+                />
+              )}
 
-            {isAdmin && activeTab === 'jumbotron' && (
-              <JumbotronTab 
-                showAlert={(msg, title) => showAlert(msg, title)}
-                setAdminActionMsg={() => {}} 
-                setConfirmModal={setConfirmModal}
-              />
-            )}
+              {isAdmin && activeTab === 'jumbotron' && (
+                <JumbotronTab 
+                  showAlert={(msg, title) => showAlert(msg, title)}
+                  setAdminActionMsg={() => {}} 
+                  setConfirmModal={setConfirmModal}
+                />
+              )}
+            </ErrorBoundary>
 
             {/* Welcome Tab for Standard User */}
             {!isAdmin && activeTab === 'welcome' && (

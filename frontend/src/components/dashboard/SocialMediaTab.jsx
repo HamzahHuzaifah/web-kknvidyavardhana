@@ -48,8 +48,8 @@ export default function SocialMediaTab({
         axios.get('/api/media'),
         axios.get('/api/social-links')
       ]);
-      setMediaList(mediaRes.data || []);
-      setSocialLinksList(socialRes.data || []);
+      setMediaList(Array.isArray(mediaRes.data) ? mediaRes.data : []);
+      setSocialLinksList(Array.isArray(socialRes.data) ? socialRes.data : []);
     } catch (error) {
       console.error('Error fetching media and social:', error);
     } finally {

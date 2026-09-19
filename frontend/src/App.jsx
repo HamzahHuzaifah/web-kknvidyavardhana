@@ -12,6 +12,7 @@ import Media from './pages/Media';
 import ArticlesPage from './pages/ArticlesPage';
 import ArticleDetailPage from './pages/ArticleDetailPage';
 import AnimatedPage from './components/AnimatedPage';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -76,7 +77,9 @@ function App() {
       <div className="min-h-screen flex flex-col font-sans">
         <Navbar />
         <main className="flex-grow">
-          <AnimatedRoutes />
+          <ErrorBoundary>
+            <AnimatedRoutes />
+          </ErrorBoundary>
         </main>
       </div>
     </Router>

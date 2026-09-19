@@ -63,7 +63,7 @@ export default function ArticlesTab({
         url += `?category=${articleCategoryFilter}`;
       }
       const response = await axios.get(url);
-      setArticlesList(response.data || []);
+      setArticlesList(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Error fetching articles for admin:', error);
     } finally {
@@ -562,7 +562,7 @@ export default function ArticlesTab({
               </tr>
             </thead>
             <tbody className="text-xs">
-              {articlesList.map((item) => (
+              {(Array.isArray(articlesList) ? articlesList : []).map((item) => (
                 <tr key={item.id} className="hover:bg-gray-50">
                   <td className="p-2.5 border-2 border-primary-dark">
                     <span className={`text-[10px] font-black uppercase px-2 py-0.5 border border-primary-dark ${

@@ -39,11 +39,11 @@ export default function JumbotronTab({ showAlert, setAdminActionMsg, setConfirmM
       const slideRes = await axios.get('/api/jumbotron/admin', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setSlides(slideRes.data);
+      setSlides(Array.isArray(slideRes.data) ? slideRes.data : []);
 
       // Fetch animation setting from profile info
       const profileRes = await axios.get('/api/profile-info');
-      if (profileRes.data && profileRes.data.jumbotron_animation) {
+      if (profileRes.data && typeof profileRes.data === 'object' && profileRes.data.jumbotron_animation) {
         setAnimationType(profileRes.data.jumbotron_animation);
       }
     } catch (error) {
@@ -360,7 +360,7 @@ export default function JumbotronTab({ showAlert, setAdminActionMsg, setConfirmM
       <div className="bg-white border-2 border-primary-dark shadow-hard overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-gray-500 font-bold animate-pulse">Memuat data jumbotron...</div>
-        ) : slides.length === 0 ? (
+        ) : !Array.isArray(slides) || slides.length === 0 ? (
           <div className="p-8 text-center border-b-2 border-primary-dark">
             <Layers size={40} className="mx-auto text-gray-400 mb-3" />
             <p className="text-gray-500 font-bold">Belum ada slide Jumbotron yang ditambahkan.</p>
@@ -378,7 +378,7 @@ export default function JumbotronTab({ showAlert, setAdminActionMsg, setConfirmM
                 </tr>
               </thead>
               <tbody className="text-sm font-medium text-gray-800">
-                {slides.map((slide) => (
+                {(Array.isArray(slides) ? slides : []).map((slide) => (
                   <tr key={slide.id} className="hover:bg-gray-50 border-b border-gray-200 transition-colors">
                     <td className="p-3 font-black text-center">{slide.display_order}</td>
                     <td className="p-3">

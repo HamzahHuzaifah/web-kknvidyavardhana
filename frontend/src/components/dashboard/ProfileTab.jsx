@@ -48,7 +48,7 @@ export default function ProfileTab({ token, onConfirm }) {
         axios.get('/api/profile-info'),
         axios.get('/api/team')
       ]);
-      if (profileRes.data) {
+      if (profileRes.data && typeof profileRes.data === 'object' && !Array.isArray(profileRes.data)) {
         setProfileForm({
           about_title: profileRes.data.about_title || '',
           about_description: profileRes.data.about_description || '',
@@ -63,7 +63,7 @@ export default function ProfileTab({ token, onConfirm }) {
           village_map_label: profileRes.data.village_map_label || ''
         });
       }
-      setTeamList(teamRes.data || []);
+      setTeamList(Array.isArray(teamRes.data) ? teamRes.data : []);
     } catch (err) {
       console.error('Error fetching profile & team:', err);
     } finally {

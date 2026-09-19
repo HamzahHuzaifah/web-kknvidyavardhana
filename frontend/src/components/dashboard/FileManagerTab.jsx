@@ -64,8 +64,8 @@ export default function FileManagerTab({
       const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setFileList(response.data.files || []);
-      setFileCounts(response.data.counts || { total: 0, images: 0, videos: 0, documents: 0, others: 0 });
+      setFileList(Array.isArray(response.data?.files) ? response.data.files : []);
+      setFileCounts(response.data?.counts && typeof response.data.counts === 'object' ? response.data.counts : { total: 0, images: 0, videos: 0, documents: 0, others: 0 });
     } catch (err) {
       console.error('Error fetching media files:', err);
     } finally {
