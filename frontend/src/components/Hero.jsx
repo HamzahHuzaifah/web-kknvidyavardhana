@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Hero({ location, slides, animationType = 'fade' }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [direction, setDirection] = useState(1);
 
   // Fallback slide if empty
   const defaultSlides = [
@@ -15,7 +16,7 @@ export default function Hero({ location, slides, animationType = 'fade' }) {
     }
   ];
 
-  const displaySlides = slides && slides.length > 0 ? slides : defaultSlides;
+  const displaySlides = Array.isArray(slides) && slides.length > 0 ? slides : defaultSlides;
 
   // Auto slide effect
   useEffect(() => {
@@ -65,15 +66,12 @@ export default function Hero({ location, slides, animationType = 'fade' }) {
     }
   };
 
-  // Direction state to determine slide direction
-  const [direction, setDirection] = useState(1);
-
   const changeSlide = (newIndex) => {
     setDirection(newIndex > currentIndex ? 1 : -1);
     setCurrentIndex(newIndex);
   };
 
-  const currentSlide = displaySlides[currentIndex];
+  const currentSlide = displaySlides[currentIndex] || defaultSlides[0];
 
   return (
     <section className="relative h-[85vh] min-h-[600px] bg-primary text-white border-b-8 border-accent overflow-hidden flex items-center group">

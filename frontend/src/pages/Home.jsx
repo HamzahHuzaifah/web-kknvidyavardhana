@@ -177,12 +177,12 @@ export default function Home() {
           axios.get('/api/jumbotron')
         ]);
 
-        setArticles(artRes.data || []);
-        setProfile(profRes.data || null);
-        setTeam(teamRes.data || []);
-        setMediaList(mediaRes.data || []);
-        setSocialLinks(socialRes.data || []);
-        setJumbotronSlides(jumboRes.data || []);
+        setArticles(Array.isArray(artRes.data) ? artRes.data : []);
+        setProfile(profRes.data && typeof profRes.data === 'object' && !Array.isArray(profRes.data) ? profRes.data : null);
+        setTeam(Array.isArray(teamRes.data) ? teamRes.data : []);
+        setMediaList(Array.isArray(mediaRes.data) ? mediaRes.data : []);
+        setSocialLinks(Array.isArray(socialRes.data) ? socialRes.data : []);
+        setJumbotronSlides(Array.isArray(jumboRes.data) ? jumboRes.data : []);
       } catch (error) {
         console.error('Error fetching home page data:', error);
       } finally {
@@ -196,7 +196,8 @@ export default function Home() {
   }, []);
 
   // Filtered Articles
-  const filteredArticles = articles.filter((art) => {
+  const safeArticles = Array.isArray(articles) ? articles : [];
+  const filteredArticles = safeArticles.filter((art) => {
     if (articleCategory === 'all') return true;
     return art.category === articleCategory;
   });
@@ -208,15 +209,17 @@ export default function Home() {
   );
 
   // Paginated Media
-  const totalMediaPages = Math.ceil(mediaList.length / mediaPerPage);
-  const paginatedMedia = mediaList.slice(
+  const safeMediaList = Array.isArray(mediaList) ? mediaList : [];
+  const totalMediaPages = Math.ceil(safeMediaList.length / mediaPerPage);
+  const paginatedMedia = safeMediaList.slice(
     (mediaPage - 1) * mediaPerPage,
     mediaPage * mediaPerPage
   );
 
   // Paginated Team
-  const totalTeamPages = Math.ceil(team.length / teamPerPage);
-  const paginatedTeam = team.slice(
+  const safeTeam = Array.isArray(team) ? team : [];
+  const totalTeamPages = Math.ceil(safeTeam.length / teamPerPage);
+  const paginatedTeam = safeTeam.slice(
     (teamPage - 1) * teamPerPage,
     teamPage * teamPerPage
   );
