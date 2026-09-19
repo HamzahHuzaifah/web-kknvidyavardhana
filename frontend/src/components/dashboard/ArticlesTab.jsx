@@ -18,7 +18,6 @@ import ReactQuill from 'react-quill-new';
 import CustomSelect from '../CustomSelect';
 import CustomDatePicker from '../CustomDatePicker';
 import 'react-quill-new/dist/quill.snow.css';
-import { convertHeicToJpgIfNeeded } from '../../utils/heicHelper';
 
 import MediaPickerModal from './modals/MediaPickerModal';
 
@@ -437,12 +436,8 @@ export default function ArticlesTab({
               ) : (
                 <input
                   type="file"
-                  accept="image/*"
-                  onChange={async (e) => {
-                    let file = e.target.files[0] || null;
-                    if (file) file = await convertHeicToJpgIfNeeded(file);
-                    setEditArticleImage(file);
-                  }}
+                  accept="image/*,.heic,.heif"
+                  onChange={(e) => setEditArticleImage(e.target.files[0] || null)}
                   className="w-full border-2 border-primary-dark p-1 text-xs bg-white"
                 />
               )}

@@ -80,8 +80,7 @@ const registerMediaFile = async (file, uploadedBy = 'Admin', source = 'direct_up
     let finalMimeType = file.mimetype || 'application/octet-stream';
     let finalFileSize = file.size || 0;
     
-    // Note: HEIC conversion is now handled on the frontend before upload.
-    // If a .heic file makes it here, it will be saved as-is.
+    // HEIC/HEIF and MOV are now accepted natively.
 
     const fileType = detectFileType(file);
     const fileUrl = `/uploads/${finalFilename}`;

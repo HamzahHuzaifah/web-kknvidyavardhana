@@ -25,7 +25,6 @@ import {
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import CustomDatePicker from '../components/CustomDatePicker';
-import { convertHeicToJpgIfNeeded } from '../utils/heicHelper';
 
 export default function UploadForm() {
   const [formData, setFormData] = useState({
@@ -108,10 +107,9 @@ export default function UploadForm() {
     setFormData(prev => ({ ...prev, content: value }));
   };
 
-  const handleFileChange = async (e) => {
-    let file = e.target.files[0];
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
     if (file) {
-      file = await convertHeicToJpgIfNeeded(file);
       setFormData(prev => ({ ...prev, image: file }));
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -585,7 +583,7 @@ export default function UploadForm() {
                   <input
                     id="image-upload"
                     type="file"
-                    accept="image/*"
+                    accept="image/*,.heic,.heif"
                     onChange={handleFileChange}
                     className="hidden"
                   />

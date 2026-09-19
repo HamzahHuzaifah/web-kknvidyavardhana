@@ -24,7 +24,6 @@ import {
 } from 'lucide-react';
 import CustomSelect from '../CustomSelect';
 import PreviewMediaModal from './modals/PreviewMediaModal';
-import { convertHeicToJpgIfNeeded, processFilesForHeic } from '../../utils/heicHelper';
 
 export default function FileManagerTab({
   isAdmin,
@@ -84,8 +83,6 @@ export default function FileManagerTab({
 
     setFileUploading(true);
     setFileActionMsg({ type: '', message: '' });
-
-    files = await processFilesForHeic(files);
 
     const formData = new FormData();
     for (let i = 0; i < files.length; i++) {
@@ -245,7 +242,7 @@ export default function FileManagerTab({
                     className="hidden"
                     onChange={async (e) => {
                       if (e.target.files && e.target.files[0]) {
-                        const f = await convertHeicToJpgIfNeeded(e.target.files[0]);
+                        const f = e.target.files[0];
                         const fd = new FormData();
                         fd.append('logo', f);
                         try {
@@ -351,7 +348,7 @@ export default function FileManagerTab({
           <input
             type="file"
             multiple
-            accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar"
+            accept="image/*,.heic,.heif,video/*,.mov,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar"
             onChange={handleUploadMediaFiles}
             disabled={fileUploading}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
@@ -372,7 +369,7 @@ export default function FileManagerTab({
                   Klik atau Tarik File ke Sini untuk Mengunggah
                 </p>
                 <p className="text-xs text-gray-600 font-medium max-w-md">
-                  Mendukung foto (JPG, PNG, WebP, SVG), video (MP4, WebM), dan dokumen (PDF, Word, Excel, Zip).
+                  Mendukung foto (JPG, PNG, WebP, HEIC), video (MP4, MOV, WebM), dan dokumen (PDF, Word, Excel, Zip).
                 </p>
                 <span className="bg-primary-dark text-white font-bold text-[11px] px-3 py-1.5 uppercase border border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] mt-2">
                   Pilih Berkas Dari Komputer

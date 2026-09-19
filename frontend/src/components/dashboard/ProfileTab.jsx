@@ -12,7 +12,6 @@ import {
   X,
   MapPin
 } from 'lucide-react';
-import { convertHeicToJpgIfNeeded } from '../../utils/heicHelper';
 
 export default function ProfileTab({ token, onConfirm }) {
   // ── Profile Form State ──────────────────────────────────
@@ -107,10 +106,9 @@ export default function ProfileTab({ token, onConfirm }) {
     setMemberForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleMemberImageChange = async (e) => {
+  const handleMemberImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      const file = await convertHeicToJpgIfNeeded(e.target.files[0]);
-      setMemberImage(file);
+      setMemberImage(e.target.files[0]);
     }
   };
 
@@ -362,7 +360,7 @@ export default function ProfileTab({ token, onConfirm }) {
               </div>
               <div className="sm:col-span-2 md:col-span-4">
                 <label className="block text-primary-dark font-bold text-[11px] uppercase mb-1">Foto Anggota</label>
-                <input type="file" accept="image/*" onChange={handleMemberImageChange}
+                <input type="file" accept="image/*,.heic,.heif" onChange={handleMemberImageChange}
                   className="w-full border-2 border-primary-dark p-1 text-xs bg-white" />
               </div>
             </div>
