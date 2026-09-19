@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
-const heicConvert = require('heic-convert');
 const { pool } = require('../config/db');
 
 // Ensure uploads folder exists
@@ -81,39 +80,8 @@ const registerMediaFile = async (file, uploadedBy = 'Admin', source = 'direct_up
     let finalMimeType = file.mimetype || 'application/octet-stream';
     let finalFileSize = file.size || 0;
     
-    // HEIC Conversion
-    if (isHeic) {
-      try {
-        const inputBuffer = fs.readFileSync(file.path);
-        const outputBuffer = await heicConvert({
-          buffer: inputBuffer,
-          format: 'JPEG',
-          quality: 0.8
-        });
-        
-        finalFilename = file.filename.replace(/\.heic|\.heif/i, '.jpg');
-        finalOriginalName = finalOriginalName.replace(/\.heic|\.heif/i, '.jpg');
-        finalMimeType = 'image/jpeg';
-        
-        const newPath = path.join(uploadDir, finalFilename);
-        fs.writeFileSync(newPath, outputBuffer);
-        
-        // Delete original heic file
-        fs.unlinkSync(file.path);
-        
-        // Update stats
-        finalFileSize = outputBuffer.length;
-        
-        // Update file object so other functions using it know the new path
-        file.filename = finalFilename;
-        file.path = newPath;
-        file.mimetype = finalMimeType;
-        file.size = finalFileSize;
-      } catch (convErr) {
-        console.error('Failed to convert HEIC to JPEG:', convErr);
-        // Fallback to uploading as-is, though it won't preview in browsers
-      }
-    }
+    // Note: HEIC conversion is now handled on the frontend before upload.
+    // If a .heic file makes it here, it will be saved as-is.
 
     const fileType = detectFileType(file);
     const fileUrl = `/uploads/${finalFilename}`;

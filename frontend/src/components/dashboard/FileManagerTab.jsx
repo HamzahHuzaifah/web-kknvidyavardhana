@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import CustomSelect from '../CustomSelect';
 import PreviewMediaModal from './modals/PreviewMediaModal';
+import { convertHeicToJpgIfNeeded, processFilesForHeic } from '../../utils/heicHelper';
 
 export default function FileManagerTab({
   isAdmin,
@@ -78,11 +79,13 @@ export default function FileManagerTab({
   }, [fileTypeFilter, fileSourceFilter, isAdmin]);
 
   const handleUploadMediaFiles = async (e) => {
-    const files = e.target.files;
+    let files = e.target.files;
     if (!files || files.length === 0) return;
 
     setFileUploading(true);
     setFileActionMsg({ type: '', message: '' });
+
+    files = await processFilesForHeic(files);
 
     const formData = new FormData();
     for (let i = 0; i < files.length; i++) {
@@ -242,7 +245,7 @@ export default function FileManagerTab({
                     className="hidden"
                     onChange={async (e) => {
                       if (e.target.files && e.target.files[0]) {
-                        const f = e.target.files[0];
+                        const f = await convertHeicToJpgIfNeeded(e.target.files[0]);
                         const fd = new FormData();
                         fd.append('logo', f);
                         try {
