@@ -65,7 +65,7 @@ export default function Dashboard() {
   const handleUpdateAccount = async (id, formData, isSelf) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.patch('/api/users/me/account', formData, {
+      const response = await axios.post('/api/users/me/account/update', formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

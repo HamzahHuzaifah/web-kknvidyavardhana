@@ -162,7 +162,7 @@ router.post('/articles', verifyToken, uploadFields, async (req, res) => {
 });
 
 // API: Update article (Admin Only)
-router.put('/articles/:id', verifyToken, isAdmin, uploadFields, async (req, res) => {
+router.post('/articles/:id/edit', verifyToken, isAdmin, uploadFields, async (req, res) => {
   try {
     const { id } = req.params;
     const { 
@@ -246,7 +246,7 @@ router.put('/articles/:id', verifyToken, isAdmin, uploadFields, async (req, res)
 });
 
 // API: Delete article (Admin Only)
-router.delete('/articles/:id', verifyToken, isAdmin, async (req, res) => {
+router.post('/articles/:id/delete', verifyToken, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query('DELETE FROM articles WHERE id = ?', [id]);

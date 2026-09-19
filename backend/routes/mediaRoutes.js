@@ -47,7 +47,7 @@ router.post('/media', verifyToken, isAdmin, async (req, res) => {
 });
 
 // API: Update Media Item (Admin Only)
-router.put('/media/:id', verifyToken, isAdmin, async (req, res) => {
+router.post('/media/:id/edit', verifyToken, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, platform, url, caption, is_autoplay, display_order } = req.body;
@@ -72,7 +72,7 @@ router.put('/media/:id', verifyToken, isAdmin, async (req, res) => {
 });
 
 // API: Delete Media Item (Admin Only)
-router.delete('/media/:id', verifyToken, isAdmin, async (req, res) => {
+router.post('/media/:id/delete', verifyToken, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query('DELETE FROM media_items WHERE id = ?', [id]);
@@ -121,7 +121,7 @@ router.post('/social-links', verifyToken, isAdmin, async (req, res) => {
 });
 
 // API: Delete Social Link (Admin Only)
-router.delete('/social-links/:id', verifyToken, isAdmin, async (req, res) => {
+router.post('/social-links/:id/delete', verifyToken, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query('DELETE FROM social_links WHERE id = ?', [id]);

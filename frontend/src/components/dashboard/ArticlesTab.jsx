@@ -157,7 +157,7 @@ export default function ArticlesTab({
         formData.append('file_url', editArticleForm.file_url);
       }
 
-      await axios.put(`/api/articles/${editingArticle.id}`, formData, {
+      await axios.post(`/api/articles/${editingArticle.id}/edit`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -190,7 +190,7 @@ export default function ArticlesTab({
         closeConfirmModal();
         try {
           const token = localStorage.getItem('token');
-          await axios.delete(`/api/articles/${id}`, {
+          await axios.post(`/api/articles/${id}/delete`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           setArticleActionMsg({ type: 'success', message: 'Konten berhasil dihapus oleh Admin.' });

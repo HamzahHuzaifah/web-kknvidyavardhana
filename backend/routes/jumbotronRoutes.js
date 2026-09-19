@@ -48,7 +48,7 @@ router.post('/admin', verifyToken, isAdmin, async (req, res) => {
 });
 
 // API: Update Slide
-router.put('/admin/:id', verifyToken, isAdmin, async (req, res) => {
+router.post('/admin/:id/edit', verifyToken, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { image_url, title, subtitle, display_order, is_active } = req.body;
@@ -70,7 +70,7 @@ router.put('/admin/:id', verifyToken, isAdmin, async (req, res) => {
 });
 
 // API: Delete Slide
-router.delete('/admin/:id', verifyToken, isAdmin, async (req, res) => {
+router.post('/admin/:id/delete', verifyToken, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query('DELETE FROM jumbotron_slides WHERE id = ?', [id]);

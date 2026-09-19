@@ -88,7 +88,7 @@ export default function ProfileTab({ token, onConfirm }) {
     setSavingProfile(true);
     setProfileSaveMsg({ type: '', message: '' });
     try {
-      const response = await axios.put('/api/profile-info', profileForm, {
+      const response = await axios.post('/api/profile-info/edit', profileForm, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setProfileSaveMsg({ type: 'success', message: response.data.message });
@@ -148,7 +148,7 @@ export default function ProfileTab({ token, onConfirm }) {
       if (memberImage) formData.append('image', memberImage);
 
       if (editingMemberId) {
-        await axios.put(`/api/team/${editingMemberId}`, formData, {
+        await axios.post(`/api/team/${editingMemberId}/edit`, formData, {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
         });
         setTeamActionMsg({ type: 'success', message: 'Data anggota tim berhasil diperbarui!' });
@@ -178,7 +178,7 @@ export default function ProfileTab({ token, onConfirm }) {
       type: 'danger',
       onConfirm: async () => {
         try {
-          await axios.delete(`/api/team/${id}`, {
+          await axios.post(`/api/team/${id}/delete`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           setTeamActionMsg({ type: 'success', message: 'Anggota tim berhasil dihapus.' });

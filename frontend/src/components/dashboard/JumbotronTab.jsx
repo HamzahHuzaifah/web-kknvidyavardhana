@@ -57,7 +57,7 @@ export default function JumbotronTab({ showAlert, setAdminActionMsg, setConfirmM
   const handleSaveAnimation = async () => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put('/api/profile-info', { jumbotron_animation: animationType }, {
+      await axios.post('/api/profile-info/edit', { jumbotron_animation: animationType }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setAdminActionMsg({ type: 'success', message: 'Tipe animasi jumbotron berhasil disimpan.' });
@@ -102,7 +102,7 @@ export default function JumbotronTab({ showAlert, setAdminActionMsg, setConfirmM
     try {
       const token = localStorage.getItem('token');
       if (editingId) {
-        await axios.put(`/api/jumbotron/admin/${editingId}`, formData, {
+        await axios.post(`/api/jumbotron/admin/${editingId}/edit`, formData, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setAdminActionMsg({ type: 'success', message: 'Slide berhasil diperbarui!' });
@@ -131,7 +131,7 @@ export default function JumbotronTab({ showAlert, setAdminActionMsg, setConfirmM
         setConfirmModal((prev) => ({ ...prev, isLoading: true }));
         try {
           const token = localStorage.getItem('token');
-          await axios.delete(`/api/jumbotron/admin/${id}`, {
+          await axios.post(`/api/jumbotron/admin/${id}/delete`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           setAdminActionMsg({ type: 'success', message: 'Slide berhasil dihapus.' });

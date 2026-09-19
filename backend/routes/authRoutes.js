@@ -175,7 +175,7 @@ router.get('/users/me/permissions', verifyToken, async (req, res) => {
 });
 
 // API: Update User Upload Permissions (Admin Only)
-router.patch('/admin/users/:id/permissions', verifyToken, isAdmin, async (req, res) => {
+router.post('/admin/users/:id/permissions/update', verifyToken, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { can_upload_berita, can_upload_publikasi, can_upload_modul } = req.body;
@@ -192,7 +192,7 @@ router.patch('/admin/users/:id/permissions', verifyToken, isAdmin, async (req, r
 });
 
 // API: Update User Status - ACC or Reject (Admin Only)
-router.patch('/admin/users/:id/status', verifyToken, isAdmin, async (req, res) => {
+router.post('/admin/users/:id/status/update', verifyToken, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -236,7 +236,7 @@ router.patch('/admin/users/:id/status', verifyToken, isAdmin, async (req, res) =
 });
 
 // API: Update User Role - Promote or Demote (Admin Only)
-router.patch('/admin/users/:id/role', verifyToken, isAdmin, async (req, res) => {
+router.post('/admin/users/:id/role/update', verifyToken, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { role } = req.body;
@@ -258,7 +258,7 @@ router.patch('/admin/users/:id/role', verifyToken, isAdmin, async (req, res) => 
 });
 
 // API: Delete User (Admin Only)
-router.delete('/admin/users/:id', verifyToken, isAdmin, async (req, res) => {
+router.post('/admin/users/:id/delete', verifyToken, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -288,7 +288,7 @@ router.delete('/admin/users/:id', verifyToken, isAdmin, async (req, res) => {
 });
 
 // API: Reset Password User (Admin Only)
-router.patch('/admin/users/:id/reset-password', verifyToken, isAdmin, async (req, res) => {
+router.post('/admin/users/:id/reset-password/update', verifyToken, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { new_password } = req.body;
@@ -357,7 +357,7 @@ router.post('/admin/users', verifyToken, isAdmin, async (req, res) => {
 });
 
 // API: Update Own Account Details (Username, Email, Password)
-router.patch('/users/me/account', verifyToken, async (req, res) => {
+router.post('/users/me/account/update', verifyToken, async (req, res) => {
   try {
     const id = req.userId;
     const { username, email, new_password } = req.body;
@@ -404,7 +404,7 @@ router.patch('/users/me/account', verifyToken, async (req, res) => {
 });
 
 // API: Update Any User Account Details (Admin Only)
-router.patch('/admin/users/:id/account', verifyToken, isAdmin, async (req, res) => {
+router.post('/admin/users/:id/account/update', verifyToken, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { username, email, new_password } = req.body;

@@ -63,7 +63,7 @@ export default function Navbar() {
 
   const handleUpdateAccount = async (id, formData, isSelf) => {
     try {
-      const response = await axios.patch('/api/users/me/account', formData, {
+      const response = await axios.post('/api/users/me/account/update', formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert(response.data?.message || 'Profil akun berhasil diperbarui!');

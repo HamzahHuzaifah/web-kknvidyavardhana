@@ -19,7 +19,7 @@ router.get('/profile-info', async (req, res) => {
 });
 
 // API: Update Profile Info (Admin Only)
-router.put('/profile-info', verifyToken, isAdmin, async (req, res) => {
+router.post('/profile-info/edit', verifyToken, isAdmin, async (req, res) => {
   try {
     const {
       about_title,
@@ -155,7 +155,7 @@ router.post('/team', verifyToken, isAdmin, upload.single('image'), async (req, r
 });
 
 // API: Update Team Member (Admin Only)
-router.put('/team/:id', verifyToken, isAdmin, upload.single('image'), async (req, res) => {
+router.post('/team/:id/edit', verifyToken, isAdmin, upload.single('image'), async (req, res) => {
   try {
     const { id } = req.params;
     const { name, role, major, display_order } = req.body;
@@ -188,7 +188,7 @@ router.put('/team/:id', verifyToken, isAdmin, upload.single('image'), async (req
 });
 
 // API: Delete Team Member (Admin Only)
-router.delete('/team/:id', verifyToken, isAdmin, async (req, res) => {
+router.post('/team/:id/delete', verifyToken, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query('DELETE FROM team_members WHERE id = ?', [id]);

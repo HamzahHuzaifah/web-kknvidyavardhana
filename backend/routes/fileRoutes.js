@@ -89,7 +89,7 @@ router.post('/files/upload', verifyToken, upload.array('files', 20), async (req,
 });
 
 // API: Delete file from Media Library (Admin Only)
-router.delete('/files/:id', verifyToken, isAdmin, async (req, res) => {
+router.post('/files/:id/delete', verifyToken, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const [rows] = await pool.query('SELECT * FROM media_files WHERE id = ?', [id]);
@@ -120,7 +120,7 @@ router.delete('/files/:id', verifyToken, isAdmin, async (req, res) => {
 });
 
 // API: Set or Update Website Logo (Admin Only)
-router.put('/settings/logo', verifyToken, isAdmin, upload.single('logo'), async (req, res) => {
+router.post('/settings/logo/edit', verifyToken, isAdmin, upload.single('logo'), async (req, res) => {
   try {
     let logoUrl = req.body.logo_url;
 

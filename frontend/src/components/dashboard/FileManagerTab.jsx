@@ -161,7 +161,7 @@ export default function FileManagerTab({
         closeConfirmModal();
         try {
           const token = localStorage.getItem('token');
-          const res = await axios.delete(`/api/files/${file.id}`, {
+          const res = await axios.post(`/api/files/${file.id}/delete`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           setFileActionMsg({ type: 'success', message: res.data.message });
@@ -252,7 +252,7 @@ export default function FileManagerTab({
                         fd.append('logo', f);
                         try {
                           const token = localStorage.getItem('token');
-                          const res = await axios.put('/api/settings/logo', fd, {
+                          const res = await axios.post('/api/settings/logo/edit', fd, {
                             headers: {
                               Authorization: `Bearer ${token}`,
                               'Content-Type': 'multipart/form-data'

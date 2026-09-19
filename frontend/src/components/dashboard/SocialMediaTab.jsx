@@ -93,7 +93,7 @@ export default function SocialMediaTab({
         closeConfirmModal();
         try {
           const token = localStorage.getItem('token');
-          await axios.delete(`/api/social-links/${id}`, {
+          await axios.post(`/api/social-links/${id}/delete`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           setSocialActionMsg({ type: 'success', message: 'Akun medsos berhasil dihapus.' });
@@ -128,7 +128,7 @@ export default function SocialMediaTab({
       };
       
       if (editingMediaId) {
-        await axios.put(`/api/media/${editingMediaId}`, payload, {
+        await axios.post(`/api/media/${editingMediaId}/edit`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setMediaActionMsg({ type: 'success', message: 'Video berhasil diperbarui.' });
@@ -185,7 +185,7 @@ export default function SocialMediaTab({
         closeConfirmModal();
         try {
           const token = localStorage.getItem('token');
-          await axios.delete(`/api/media/${id}`, {
+          await axios.post(`/api/media/${id}/delete`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           setMediaActionMsg({ type: 'success', message: 'Video berhasil dihapus.' });
