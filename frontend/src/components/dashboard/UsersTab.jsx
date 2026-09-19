@@ -680,9 +680,9 @@ export default function UsersTab({
       <EditPermissionsModal
         isOpen={showEditPermissionsModal}
         onClose={() => setShowEditPermissionsModal(false)}
-        user={editPermissionsUser}
-        permissionsForm={permissionsForm}
-        setPermissionsForm={setPermissionsForm}
+        targetUser={editPermissionsUser}
+        form={permissionsForm}
+        setForm={setPermissionsForm}
         onSubmit={handleSavePermissions}
         isSaving={savingPermissions}
       />
