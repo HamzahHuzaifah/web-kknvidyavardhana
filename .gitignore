@@ -7,8 +7,9 @@ backend/node_modules/
 .env
 backend/.env
 
-# Build output (di-generate otomatis oleh restart-server.sh di cPanel)
-frontend/dist/
+# Build output
+# frontend/dist/ - SENGAJA TIDAK DI-IGNORE agar bisa di-deploy dari GitHub ke cPanel
+# Jalankan 'npm run build' di lokal sebelum commit jika ada perubahan frontend.
 
 # Logs
 *.log

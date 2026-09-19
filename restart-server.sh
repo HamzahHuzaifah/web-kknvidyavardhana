@@ -2,9 +2,12 @@
 # =============================================================
 # SCRIPT DEPLOY OTOMATIS - KKN VIDYA VARDHANA
 # Cara pakai: bash restart-server.sh
+#
+# Catatan: Frontend (dist/) sudah di-build di lokal dan disimpan
+# di GitHub. Script ini HANYA perlu menarik kode & deploy ke server.
 # =============================================================
 
-# Mengaktifkan Node.js Virtual Environment cPanel (untuk backend)
+# Mengaktifkan Node.js Virtual Environment cPanel
 source /home/vidt4129/nodevenv/repositories/web-kknvidyavardhana/backend/22/bin/activate
 
 echo "========================================================"
@@ -13,49 +16,28 @@ echo "========================================================"
 
 # 1. Menarik kode terbaru dari GitHub (paksa ikut GitHub)
 echo ""
-echo "[1/5] ⬇️  Menarik kode terbaru dari GitHub..."
+echo "[1/4] ⬇️  Menarik kode terbaru dari GitHub..."
 git fetch origin
 git reset --hard origin/main
 echo "✅ Kode berhasil diperbarui dari GitHub."
 
 # 2. Update dependencies Backend
 echo ""
-echo "[2/5] 📦 Menginstall/Update library Backend..."
+echo "[2/4] 📦 Menginstall/Update library Backend..."
 cd backend
 npm install
 cd ..
 echo "✅ Backend dependencies selesai."
 
-# 3. Build Frontend
-# PENTING: Dijalankan di subshell ( ) agar tidak terpengaruh nodevenv backend.
-# PATH eksplisit ke node_modules/.bin agar vite ditemukan.
+# 3. Deploy Frontend ke public_html (dari dist/ yang sudah ada di repo)
 echo ""
-echo "[3/5] 🔨 Build Frontend (React + Vite)..."
-(
-  cd frontend
-  npm install
-  PATH="./node_modules/.bin:$PATH" npm run build
-)
-BUILD_STATUS=$?
-
-if [ $BUILD_STATUS -ne 0 ]; then
-  echo ""
-  echo "❌ ERROR: Frontend build GAGAL! Cek log di atas."
-  echo "   Pastikan node_modules/frontend sudah terinstall dengan benar."
-  echo "   Web lama masih berjalan (tidak ada perubahan diterapkan)."
-  exit 1
-fi
-echo "✅ Frontend berhasil di-build."
-
-# 4. Deploy hasil build ke public_html
-echo ""
-echo "[4/5] 🚀 Menyalin hasil build ke public_html..."
+echo "[3/4] 🚀 Menyalin Frontend ke public_html..."
 cp -r frontend/dist/. /home/vidt4129/public_html/
 echo "✅ Frontend berhasil di-deploy ke public_html!"
 
-# 5. Restart Backend Node.js
+# 4. Restart Backend Node.js
 echo ""
-echo "[5/5] 🔄 Merestart Server Node.js..."
+echo "[4/4] 🔄 Merestart Server Node.js..."
 cd backend
 
 # Matikan proses node lama
