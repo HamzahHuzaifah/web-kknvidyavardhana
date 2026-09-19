@@ -276,6 +276,7 @@ export default function Dashboard() {
       <ConfirmModal
         isOpen={confirmModal.isOpen}
         onClose={closeConfirmModal}
+        onCancel={closeConfirmModal}
         title={confirmModal.title}
         message={confirmModal.message}
         confirmText={confirmModal.confirmText}
