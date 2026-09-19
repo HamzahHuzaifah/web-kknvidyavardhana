@@ -275,7 +275,7 @@ export default function Profile() {
 
               <div className="p-2 text-right">
                 <span className="text-[11px] text-gray-500 font-medium">
-                  Koordinat: {position[0]}, {position[1]}
+                  {profile?.village_map_label || 'Pusat Kegiatan Desa'}
                 </span>
               </div>
             </div>
