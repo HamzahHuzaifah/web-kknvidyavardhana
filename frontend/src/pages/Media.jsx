@@ -214,6 +214,18 @@ export default function Media() {
               {mediaList.map((item) => {
                 const embedUrl = formatEmbedUrl(item.url, item.platform, item.is_autoplay);
                 const isInstagram = item.platform === 'instagram' || item.url.includes('instagram.com');
+                const isTiktok = item.platform === 'tiktok' || item.url.includes('tiktok.com');
+                const isYtShort = item.platform === 'youtube' && item.url.includes('/shorts/');
+                const isVertical = isTiktok || isYtShort;
+
+                let frameClass = '';
+                if (isVertical) {
+                  frameClass = 'aspect-[9/16] w-full max-w-[320px] mx-auto';
+                } else if (isInstagram) {
+                  frameClass = 'h-[500px] w-full max-w-[400px] mx-auto';
+                } else {
+                  frameClass = 'aspect-video w-full';
+                }
 
                 return (
                   <div 
@@ -245,9 +257,7 @@ export default function Media() {
                     </div>
 
                     {/* Media Frame */}
-                    <div className={`w-full bg-black border-2 border-primary-dark shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden ${
-                      isInstagram ? 'h-[500px]' : 'aspect-video'
-                    }`}>
+                    <div className={`bg-black border-2 border-primary-dark shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden ${frameClass}`}>
                       {embedUrl ? (
                         <iframe
                           src={embedUrl}
