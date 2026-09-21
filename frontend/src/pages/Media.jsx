@@ -210,7 +210,7 @@ export default function Media() {
               Belum ada video atau konten media yang ditambahkan.
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="columns-1 lg:columns-2 gap-8">
               {mediaList.map((item) => {
                 const embedUrl = formatEmbedUrl(item.url, item.platform, item.is_autoplay);
                 const isInstagram = item.platform === 'instagram' || item.url.includes('instagram.com');
@@ -230,7 +230,7 @@ export default function Media() {
                 return (
                   <div 
                     key={item.id}
-                    className="bg-white border-2 border-primary-dark shadow-hard p-6 flex flex-col justify-between relative overflow-hidden"
+                    className="break-inside-avoid mb-8 bg-white border-2 border-primary-dark shadow-hard p-6 flex flex-col justify-between relative overflow-hidden"
                   >
                     {/* Decor tag */}
                     <div className="flex items-center justify-between gap-2 mb-4">

@@ -615,7 +615,7 @@ export default function Home() {
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <div className="columns-1 lg:columns-2 gap-8">
                     {paginatedMedia.map((item) => {
                       const embedUrl = formatEmbedUrl(item.url, item.platform, item.is_autoplay);
                       const isInstagram = item.platform === 'instagram' || item.url.includes('instagram.com');
@@ -635,7 +635,7 @@ export default function Home() {
                       return (
                         <div 
                           key={item.id}
-                          className="bg-white border-2 border-primary-dark shadow-hard p-6 flex flex-col justify-between"
+                          className="break-inside-avoid mb-8 bg-white border-2 border-primary-dark shadow-hard p-6 flex flex-col justify-between"
                         >
                           <div className="flex items-center justify-between gap-2 mb-3">
                             <div className="flex items-center gap-2">
