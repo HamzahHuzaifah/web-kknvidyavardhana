@@ -21,11 +21,12 @@ import ProfileTab from '../components/dashboard/ProfileTab';
 import SocialMediaTab from '../components/dashboard/SocialMediaTab';
 import JumbotronTab from '../components/dashboard/JumbotronTab';
 import FooterTab from '../components/dashboard/FooterTab';
+import WelcomeAudioTab from '../components/dashboard/WelcomeAudioTab';
 import EditAccountModal from '../components/dashboard/modals/EditAccountModal';
 import MyProfileTab from '../components/dashboard/MyProfileTab';
 import ErrorBoundary from '../components/ErrorBoundary';
 import axios from 'axios';
-import { UserCircle } from 'lucide-react';
+import { UserCircle, Music } from 'lucide-react';
 
 export default function Dashboard() {
   const username = localStorage.getItem('username') || 'Pengguna';
@@ -220,6 +221,17 @@ export default function Dashboard() {
             </button>
 
             <button
+              onClick={() => setActiveTab('audio')}
+              className={`px-3.5 py-2 font-black text-xs uppercase border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-1.5 ${
+                activeTab === 'audio'
+                  ? 'bg-gradient-yellow text-primary-dark translate-y-0.5 shadow-none'
+                  : 'bg-white text-primary-dark hover:bg-gray-100'
+              }`}
+            >
+              <Music size={15} /> Musik & Sambutan
+            </button>
+
+            <button
               onClick={() => setActiveTab('my-profile')}
               className={`px-3.5 py-2 font-black text-xs uppercase border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-1.5 ${
                 activeTab === 'my-profile'
@@ -296,6 +308,12 @@ export default function Dashboard() {
                 <FooterTab 
                   showAlert={showAlert}
                   setConfirmModal={setConfirmModal}
+                />
+              )}
+
+              {isAdmin && activeTab === 'audio' && (
+                <WelcomeAudioTab 
+                  token={localStorage.getItem('token')}
                 />
               )}
             </ErrorBoundary>

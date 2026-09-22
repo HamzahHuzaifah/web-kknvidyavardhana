@@ -15,6 +15,9 @@ import PortfolioDetail from './pages/PortfolioDetail';
 import ArticleDetailPage from './pages/ArticleDetailPage';
 import AnimatedPage from './components/AnimatedPage';
 import ErrorBoundary from './components/ErrorBoundary';
+import { AudioProvider } from './context/AudioContext';
+import WelcomeAudioModal from './components/WelcomeAudioModal';
+import FloatingMusicPlayer from './components/FloatingMusicPlayer';
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -79,17 +82,23 @@ function AnimatedRoutes() {
 function App() {
   return (
     <Router basename={import.meta.env.BASE_URL}>
-      <div className="min-h-screen flex flex-col font-sans">
-        <Navbar />
-        <main className="flex-grow">
-          <ErrorBoundary>
-            <AnimatedRoutes />
+      <AudioProvider>
+        <div className="min-h-screen flex flex-col font-sans">
+          <Navbar />
+          <main className="flex-grow">
+            <ErrorBoundary>
+              <AnimatedRoutes />
+            </ErrorBoundary>
+          </main>
+          <ErrorBoundary message="Gagal memuat bagian footer website.">
+            <Footer />
           </ErrorBoundary>
-        </main>
-        <ErrorBoundary message="Gagal memuat bagian footer website.">
-          <Footer />
-        </ErrorBoundary>
-      </div>
+
+          {/* Welcome Audio Splash Modal & Floating Music Player */}
+          <WelcomeAudioModal />
+          <FloatingMusicPlayer />
+        </div>
+      </AudioProvider>
     </Router>
   );
 }

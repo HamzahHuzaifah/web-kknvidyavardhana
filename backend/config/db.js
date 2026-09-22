@@ -524,7 +524,50 @@ const initDB = async (syncUploadsCallback) => {
       `, [defaultQuickLinks]);
     }
 
-    console.log('Database initialized with all tables: users, attendance, profile, team, media, social, articles, media_files, jumbotron_slides, footer_info.');
+    // 11. Create welcome_audio_settings table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS welcome_audio_settings (
+        id INT PRIMARY KEY,
+        is_enabled TINYINT(1) DEFAULT 1,
+        title VARCHAR(255) DEFAULT 'Selamat Datang di Website Resmi',
+        subtitle TEXT,
+        button_text VARCHAR(100) DEFAULT 'Buka Website & Putar Musik 🎵',
+        source_type ENUM('upload', 'youtube', 'url') DEFAULT 'url',
+        audio_url TEXT,
+        audio_title VARCHAR(255) DEFAULT 'Instrumen Musik Sambutan',
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Ensure columns exist if table was previously created
+    const [audioCols] = await pool.query('SHOW COLUMNS FROM welcome_audio_settings');
+    const audioColNames = audioCols.map((c) => c.Field);
+    if (!audioColNames.includes('source_type')) {
+      await pool.query("ALTER TABLE welcome_audio_settings ADD COLUMN source_type ENUM('upload', 'youtube', 'url') DEFAULT 'url'");
+    }
+    if (!audioColNames.includes('audio_title')) {
+      await pool.query("ALTER TABLE welcome_audio_settings ADD COLUMN audio_title VARCHAR(255) DEFAULT 'Instrumen Musik Sambutan'");
+    }
+
+    const [audioRows] = await pool.query('SELECT * FROM welcome_audio_settings WHERE id = 1');
+    if (audioRows.length === 0) {
+      await pool.query(`
+        INSERT INTO welcome_audio_settings (
+          id, is_enabled, title, subtitle, button_text, source_type, audio_url, audio_title
+        ) VALUES (
+          1,
+          1,
+          'Selamat Datang di Website Resmi',
+          'KKN Vidya Vardhana Desa Ciasihan',
+          'Buka Website & Putar Musik 🎵',
+          'url',
+          'https://actions.google.com/sounds/v1/ambiences/outdoor_festival_ambience.ogg',
+          'Instrumen Musik Sambutan'
+        )
+      `);
+    }
+
+    console.log('Database initialized with all tables: users, attendance, profile, team, media, social, articles, media_files, jumbotron_slides, footer_info, welcome_audio_settings.');
   } catch (error) {
     console.error('DB Init Error:', error);
   }
