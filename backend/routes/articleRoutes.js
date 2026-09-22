@@ -114,6 +114,11 @@ router.post('/articles', verifyToken, uploadFields, async (req, res) => {
 
     const validCategory = ['berita', 'publikasi', 'modul'].includes(category) ? category : 'berita';
 
+    // Normalize &nbsp; and \u00a0 into regular spaces to ensure natural text wrapping
+    const cleanContent = (content || '')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/\u00a0/g, ' ');
+
     // Fetch user permissions
     const [userRows] = await pool.query('SELECT role, can_upload_berita, can_upload_publikasi, can_upload_modul FROM users WHERE id = ?', [req.userId]);
     const user = userRows[0];
@@ -147,7 +152,7 @@ router.post('/articles', verifyToken, uploadFields, async (req, res) => {
         title, 
         slug, 
         validCategory, 
-        content, 
+        cleanContent, 
         imageUrl, 
         fileUrl, 
         req.userId, 
@@ -218,6 +223,11 @@ router.post('/articles/:id/edit', verifyToken, uploadFields, async (req, res) =>
 
     const validCategory = ['berita', 'publikasi', 'modul'].includes(category) ? category : 'berita';
 
+    // Normalize &nbsp; and \u00a0 into regular spaces to ensure natural text wrapping
+    const cleanContent = (content || '')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/\u00a0/g, ' ');
+
     let query = `UPDATE articles SET 
       title = ?, 
       category = ?, 
@@ -234,7 +244,7 @@ router.post('/articles/:id/edit', verifyToken, uploadFields, async (req, res) =>
     let params = [
       title, 
       validCategory, 
-      content, 
+      cleanContent, 
       abstract || null, 
       keywords || null, 
       authors_meta || null, 

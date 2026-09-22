@@ -435,6 +435,13 @@ const initDB = async (syncUploadsCallback) => {
       } catch (slugMigrateErr) {
         console.warn('[DB] Slug shortening migration warning:', slugMigrateErr.message);
       }
+
+      // Auto-sanitize non-breaking spaces (&nbsp; and character 160) in existing articles
+      try {
+        await pool.query(`UPDATE articles SET content = REPLACE(content, '&nbsp;', ' ') WHERE content LIKE '%&nbsp;%'`);
+      } catch (nbspErr) {
+        console.warn('[DB] &nbsp; cleanup warning:', nbspErr.message);
+      }
     } catch (err) {
       console.error('Error initializing articles table:', err);
     }

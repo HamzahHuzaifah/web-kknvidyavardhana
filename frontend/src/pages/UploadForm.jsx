@@ -236,13 +236,13 @@ export default function UploadForm() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-            <button
+            {/* <button
               type="button"
               onClick={handleFillDummyData}
               className="inline-flex items-center gap-1.5 text-xs font-black uppercase text-white bg-gradient-blue border-2 border-primary-dark px-3.5 py-2 shadow-hard hover:translate-y-0.5 hover:shadow-none transition-all"
             >
               <Sparkles size={14} /> Isi Dummy Data (Test)
-            </button>
+            </button> */}
             <Link
               to="/berita"
               className="inline-flex items-center gap-1.5 text-xs font-black uppercase text-primary-dark border-2 border-primary-dark bg-white px-3.5 py-2 shadow-hard hover:translate-y-0.5 hover:shadow-none transition-all"

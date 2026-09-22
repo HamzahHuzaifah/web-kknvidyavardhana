@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import DOMPurify from 'dompurify';
@@ -238,6 +238,15 @@ export default function ArticleDetailPage() {
   const currentUrl = encodeURIComponent(window.location.href);
   const currentTitle = encodeURIComponent(article.title);
 
+  // Normalize non-breaking spaces (&nbsp; / \u00A0) into regular spaces so browser wraps lines at true word boundaries
+  const sanitizedContent = useMemo(() => {
+    if (!article?.content) return '';
+    const normalized = article.content
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/\u00a0/g, ' ');
+    return DOMPurify.sanitize(normalized);
+  }, [article?.content]);
+
   return (
     <div className="bg-[#f9fafb] min-h-screen py-6 md:py-10 px-4 sm:px-6">
       <div className="max-w-6xl mx-auto">
@@ -384,8 +393,8 @@ export default function ArticleDetailPage() {
               {/* POST CONTENT / BODY (Editorial News Prose) */}
               <div className="pt-2">
                 <div
-                  className="prose max-w-none text-gray-800 text-sm sm:text-base leading-relaxed break-words font-normal space-y-4 [&>p]:leading-loose [&>blockquote]:border-l-4 [&>blockquote]:border-primary-dark [&>blockquote]:pl-4 [&>blockquote]:italic [&>blockquote]:bg-yellow-50/50 [&>blockquote]:py-2"
-                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.content) }}
+                  className="prose max-w-none text-gray-800 text-sm sm:text-base leading-relaxed font-normal space-y-4 [&>p]:leading-loose [&>blockquote]:border-l-4 [&>blockquote]:border-primary-dark [&>blockquote]:pl-4 [&>blockquote]:italic [&>blockquote]:bg-yellow-50/50 [&>blockquote]:py-2"
+                  dangerouslySetInnerHTML={{ __html: sanitizedContent }}
                 />
               </div>
 

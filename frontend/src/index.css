@@ -104,3 +104,28 @@
   padding: 14px 16px !important;
 }
 
+/* === Quill Alignment & Clean Typography in Public Article Pages === */
+.ql-align-justify, .prose .ql-align-justify {
+  text-align: justify !important;
+  text-justify: inter-word !important;
+}
+
+.ql-align-center, .prose .ql-align-center {
+  text-align: center !important;
+}
+
+.ql-align-right, .prose .ql-align-right {
+  text-align: right !important;
+}
+
+.ql-align-left, .prose .ql-align-left {
+  text-align: left !important;
+}
+
+.prose p, .prose span, .prose h1, .prose h2, .prose h3, .prose div {
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+  hyphens: none !important;
+}
+
+
