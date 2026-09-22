@@ -10,7 +10,10 @@ import {
   MessageSquare,
   Image as ImageIcon,
   Plus,
-  Trash2
+  Trash2,
+  Copy,
+  Check,
+  ExternalLink
 } from 'lucide-react';
 import { convertHeicToJpgIfNeeded } from '../../utils/heicHelper';
 
@@ -27,6 +30,8 @@ export default function MyProfileTab({ token }) {
   
   const [profileImage, setProfileImage] = useState(null);
   const [currentImageUrl, setCurrentImageUrl] = useState(null);
+  const [mySlug, setMySlug] = useState('');
+  const [copiedLink, setCopiedLink] = useState(false);
   const [actionMsg, setActionMsg] = useState({ type: '', message: '' });
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -65,6 +70,7 @@ export default function MyProfileTab({ token }) {
         testimonials: safeJsonParse(data.testimonials, [])
       });
       setCurrentImageUrl(data.image_url);
+      setMySlug(data.slug || (data.name ? data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') : ''));
     } catch (err) {
       if (err.response?.status === 404) {
         setActionMsg({
@@ -221,6 +227,46 @@ export default function MyProfileTab({ token }) {
           <Save size={16} /> {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
         </button>
       </div>
+
+      {/* Public Profile Link Bar */}
+      {mySlug && (
+        <div className="bg-yellow-50 border-2 border-primary-dark p-3.5 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2 min-w-0">
+            <span className="text-[11px] font-black uppercase text-primary-dark shrink-0">🔗 Link Portofolio Publik:</span>
+            <a 
+              href={`/portofolio/${mySlug}`} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-xs font-mono font-bold text-blue-700 hover:text-blue-900 truncate underline"
+            >
+              {`${window.location.origin}/portofolio/${mySlug}`}
+            </a>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/portofolio/${mySlug}`);
+                setCopiedLink(true);
+                setTimeout(() => setCopiedLink(false), 2000);
+              }}
+              className="px-3 py-1.5 bg-white border-2 border-primary-dark text-xs font-black uppercase hover:bg-gray-50 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all flex items-center gap-1.5"
+            >
+              {copiedLink ? <Check size={14} className="text-accent-dark" /> : <Copy size={14} />}
+              <span>{copiedLink ? 'Tersalin!' : 'Salin Link'}</span>
+            </button>
+            <a
+              href={`/portofolio/${mySlug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-1.5 bg-primary-dark text-white border-2 border-primary-dark text-xs font-black uppercase hover:bg-accent-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all flex items-center gap-1.5"
+            >
+              <span>Buka Profil</span>
+              <ExternalLink size={13} />
+            </a>
+          </div>
+        </div>
+      )}
 
       {actionMsg.message && (
         <div className={`p-3 border-2 text-xs font-bold shadow-hard flex items-center gap-2 ${

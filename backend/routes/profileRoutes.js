@@ -323,11 +323,42 @@ router.post('/team/:id/delete', verifyToken, isAdmin, async (req, res) => {
 router.get('/team/:slug/portfolio', async (req, res) => {
   try {
     const { slug } = req.params;
-    const [rows] = await pool.query('SELECT * FROM team_members WHERE slug = ? OR id = ?', [slug, slug]);
+    let [rows] = await pool.query('SELECT * FROM team_members WHERE slug = ? OR id = ?', [slug, slug]);
+    
+    if (rows.length === 0) {
+      // Fallback: match by normalized slug of name
+      const [allMembers] = await pool.query('SELECT * FROM team_members');
+      const matched = allMembers.find(m => generateSlug(m.name || '') === slug);
+      if (matched) {
+        rows = [matched];
+      }
+    }
+
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Profil anggota tidak ditemukan.' });
     }
-    res.json(rows[0]);
+
+    const member = rows[0];
+    if (!member.slug) {
+      let baseSlug = generateSlug(member.name || 'anggota');
+      if (!baseSlug) baseSlug = `anggota-${member.id}`;
+      let candidateSlug = baseSlug;
+      let counter = 1;
+      let isUnique = false;
+      while (!isUnique) {
+        const [existing] = await pool.query('SELECT id FROM team_members WHERE slug = ? AND id != ?', [candidateSlug, member.id]);
+        if (existing.length === 0) {
+          isUnique = true;
+        } else {
+          candidateSlug = `${baseSlug}-${counter}`;
+          counter++;
+        }
+      }
+      await pool.query('UPDATE team_members SET slug = ? WHERE id = ?', [candidateSlug, member.id]);
+      member.slug = candidateSlug;
+    }
+
+    res.json(member);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Gagal memuat profil anggota.' });

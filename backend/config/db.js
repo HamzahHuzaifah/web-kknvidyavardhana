@@ -196,6 +196,30 @@ const initDB = async (syncUploadsCallback) => {
     if (!tmColNames.includes('slug')) {
       await pool.query("ALTER TABLE team_members ADD COLUMN slug VARCHAR(255) UNIQUE NULL");
     }
+
+    // Auto-generate slug for existing members with NULL or empty slug
+    const [nullSlugMembers] = await pool.query("SELECT id, name FROM team_members WHERE slug IS NULL OR slug = ''");
+    for (const mem of nullSlugMembers) {
+      let baseSlug = (mem.name || 'anggota')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)+/g, '');
+      if (!baseSlug) baseSlug = `anggota-${mem.id}`;
+      
+      let candidateSlug = baseSlug;
+      let counter = 1;
+      let isUnique = false;
+      while (!isUnique) {
+        const [existing] = await pool.query("SELECT id FROM team_members WHERE slug = ? AND id != ?", [candidateSlug, mem.id]);
+        if (existing.length === 0) {
+          isUnique = true;
+        } else {
+          candidateSlug = `${baseSlug}-${counter}`;
+          counter++;
+        }
+      }
+      await pool.query("UPDATE team_members SET slug = ? WHERE id = ?", [candidateSlug, mem.id]);
+    }
     
     // Ensure new portfolio columns exist
     const portfolioCols = [
