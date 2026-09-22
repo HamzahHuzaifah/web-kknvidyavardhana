@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import api from '../services/api';
 import { Home, User, BookOpen, LayoutDashboard, Image as ImageIcon, LogIn, LogOut, UserCircle, Menu, X } from 'lucide-react';
@@ -8,12 +8,42 @@ import EditAccountModal from './dashboard/modals/EditAccountModal';
 
 export default function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const pathname = location.pathname;
   const token = localStorage.getItem('token');
   const currentUsername = localStorage.getItem('username');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [logoUrl, setLogoUrl] = useState('');
   const [editAccountModalUser, setEditAccountModalUser] = useState(null);
+
+  const isNavActive = (path) => {
+    if (path === '/') return pathname === '/';
+    if (path === '/profile') return pathname === '/profile' || pathname.startsWith('/portofolio') || pathname.startsWith('/portfolio') || pathname.startsWith('/profil');
+    if (path === '/media') return pathname.startsWith('/media');
+    if (path === '/berita') return pathname.startsWith('/berita');
+    if (path === '/dashboard') return pathname.startsWith('/dashboard');
+    if (path === '/login') return pathname === '/login' || pathname === '/register';
+    return pathname === path;
+  };
+
+  const getDesktopNavLinkClass = (path) => {
+    const active = isNavActive(path);
+    return `flex items-center gap-1.5 px-3 py-1.5 rounded transition-all text-xs uppercase tracking-wider font-bold ${
+      active
+        ? 'bg-gradient-yellow text-primary-dark font-black border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] -translate-y-0.5'
+        : 'text-gray-100 hover:text-secondary-light hover:-translate-y-0.5'
+    }`;
+  };
+
+  const getMobileNavLinkClass = (path) => {
+    const active = isNavActive(path);
+    return `flex items-center gap-3 px-3.5 py-3 rounded-md transition-all text-sm font-bold ${
+      active
+        ? 'bg-gradient-yellow text-primary-dark font-black border-2 border-primary-dark shadow-[3px_3px_0px_0px_rgba(255,255,255,0.9)] translate-x-1'
+        : 'text-white hover:bg-primary-light/30 hover:text-secondary-light font-medium'
+    }`;
+  };
 
   useEffect(() => {
     const fetchLogo = async () => {
@@ -109,35 +139,42 @@ export default function Navbar() {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex sm:items-center sm:space-x-5">
-            <Link to="/" className="flex items-center gap-2 hover:text-secondary-light hover:-translate-y-0.5 transition-transform font-medium text-sm">
-              <Home size={17} /> Beranda
+          <div className="hidden lg:flex sm:items-center sm:space-x-3">
+            <Link to="/" className={getDesktopNavLinkClass('/')}>
+              <Home size={16} /> Beranda
             </Link>
-            <Link to="/profile" className="flex items-center gap-2 hover:text-secondary-light hover:-translate-y-0.5 transition-transform font-medium text-sm">
-              <User size={17} /> Profil
+            <Link to="/profile" className={getDesktopNavLinkClass('/profile')}>
+              <User size={16} /> Profil
             </Link>
-            <Link to="/media" className="flex items-center gap-2 hover:text-secondary-light hover:-translate-y-0.5 transition-transform font-medium text-sm">
-              <ImageIcon size={17} /> Media
+            <Link to="/media" className={getDesktopNavLinkClass('/media')}>
+              <ImageIcon size={16} /> Media
             </Link>
-            <Link to="/berita" className="flex items-center gap-2 hover:text-secondary-light hover:-translate-y-0.5 transition-transform font-medium text-sm">
-              <BookOpen size={17} /> Berita
+            <Link to="/berita" className={getDesktopNavLinkClass('/berita')}>
+              <BookOpen size={16} /> Berita
             </Link>
             {token ? (
-              <button onClick={() => setEditAccountModalUser({ id: 'me', username: currentUsername, email: '', isSelf: true })} className="flex items-center gap-2 hover:text-secondary-light hover:-translate-y-0.5 transition-transform font-medium text-sm">
-                <UserCircle size={17} /> {currentUsername}
+              <button onClick={() => setEditAccountModalUser({ id: 'me', username: currentUsername, email: '', isSelf: true })} className="flex items-center gap-1.5 px-3 py-1.5 text-xs uppercase tracking-wider font-bold text-gray-100 hover:text-secondary-light hover:-translate-y-0.5 transition-all">
+                <UserCircle size={16} /> {currentUsername}
               </button>
             ) : (
-              <Link to="/login" className="flex items-center gap-2 hover:text-secondary-light hover:-translate-y-0.5 transition-transform font-medium text-sm">
-                <LogIn size={17} /> Login
+              <Link to="/login" className={getDesktopNavLinkClass('/login')}>
+                <LogIn size={16} /> Login
               </Link>
             )}
 
             {token && (
-              <div className="flex items-center gap-3 pl-2 border-l-2 border-primary-light">
-                <Link to="/dashboard" className="flex items-center gap-1.5 text-xs font-bold hover:text-secondary-light">
-                  <LayoutDashboard size={15} /> Dashboard
+              <div className="flex items-center gap-2 pl-2 border-l-2 border-primary-light">
+                <Link 
+                  to="/dashboard" 
+                  className={`flex items-center gap-1.5 text-xs font-black uppercase px-3 py-1.5 border transition-all ${
+                    isNavActive('/dashboard')
+                      ? 'bg-secondary-light text-primary-dark border-white shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]'
+                      : 'text-secondary-light border-secondary-light/60 hover:bg-secondary-light hover:text-primary-dark'
+                  }`}
+                >
+                  <LayoutDashboard size={14} /> Dashboard
                 </Link>
-                <button onClick={handleLogout} className="flex items-center gap-1 bg-red-600 text-white px-3 py-1 border border-primary-dark text-xs font-bold uppercase hover:bg-red-700">
+                <button onClick={handleLogout} className="flex items-center gap-1 bg-red-600 text-white px-3 py-1.5 border border-primary-dark text-xs font-black uppercase hover:bg-red-700 transition-colors shadow-sm">
                   <LogOut size={13} /> Keluar
                 </button>
               </div>
@@ -149,37 +186,45 @@ export default function Navbar() {
       {/* Mobile Navigation Dropdown */}
       {isMobileMenuOpen && (
         <div className="lg:hidden border-t-2 border-secondary-dark bg-primary-dark">
-          <div className="px-4 pt-2 pb-4 space-y-2 flex flex-col">
-            <Link to="/" onClick={closeMenu} className="flex items-center gap-3 px-3 py-3 rounded-md hover:bg-primary-light transition-colors font-medium text-sm">
+          <div className="px-4 pt-3 pb-5 space-y-2 flex flex-col">
+            <Link to="/" onClick={closeMenu} className={getMobileNavLinkClass('/')}>
               <Home size={18} /> Beranda
             </Link>
-            <Link to="/profile" onClick={closeMenu} className="flex items-center gap-3 px-3 py-3 rounded-md hover:bg-primary-light transition-colors font-medium text-sm">
+            <Link to="/profile" onClick={closeMenu} className={getMobileNavLinkClass('/profile')}>
               <User size={18} /> Profil
             </Link>
-            <Link to="/media" onClick={closeMenu} className="flex items-center gap-3 px-3 py-3 rounded-md hover:bg-primary-light transition-colors font-medium text-sm">
+            <Link to="/media" onClick={closeMenu} className={getMobileNavLinkClass('/media')}>
               <ImageIcon size={18} /> Media
             </Link>
-            <Link to="/berita" onClick={closeMenu} className="flex items-center gap-3 px-3 py-3 rounded-md hover:bg-primary-light transition-colors font-medium text-sm">
+            <Link to="/berita" onClick={closeMenu} className={getMobileNavLinkClass('/berita')}>
               <BookOpen size={18} /> Berita
             </Link>
             {token ? (
-              <button onClick={() => { setEditAccountModalUser({ id: 'me', username: currentUsername, email: '', isSelf: true }); closeMenu(); }} className="flex items-center gap-3 px-3 py-3 rounded-md hover:bg-primary-light transition-colors font-medium text-sm w-full text-left">
+              <button onClick={() => { setEditAccountModalUser({ id: 'me', username: currentUsername, email: '', isSelf: true }); closeMenu(); }} className="flex items-center gap-3 px-3.5 py-3 rounded-md text-white hover:bg-primary-light/30 transition-colors font-medium text-sm w-full text-left">
                 <UserCircle size={18} /> {currentUsername}
               </button>
             ) : (
-              <Link to="/login" onClick={closeMenu} className="flex items-center gap-3 px-3 py-3 rounded-md hover:bg-primary-light transition-colors font-medium text-sm">
+              <Link to="/login" onClick={closeMenu} className={getMobileNavLinkClass('/login')}>
                 <LogIn size={18} /> Login
               </Link>
             )}
             
-            <div className="h-px bg-primary-light my-2"></div>
+            <div className="h-px bg-primary-light/40 my-2"></div>
             
             {token && (
               <>
-                <Link to="/dashboard" onClick={closeMenu} className="flex items-center gap-3 px-3 py-3 rounded-md hover:bg-primary-light transition-colors font-bold text-sm text-secondary-light">
+                <Link 
+                  to="/dashboard" 
+                  onClick={closeMenu} 
+                  className={`flex items-center gap-3 px-3.5 py-3 rounded-md transition-all text-sm font-black uppercase ${
+                    isNavActive('/dashboard')
+                      ? 'bg-gradient-yellow text-primary-dark border-2 border-primary-dark shadow-[3px_3px_0px_0px_rgba(255,255,255,0.9)] translate-x-1'
+                      : 'text-secondary-light hover:bg-primary-light/30'
+                  }`}
+                >
                   <LayoutDashboard size={18} /> Dashboard
                 </Link>
-                <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-3 mt-1 rounded-md bg-red-600 hover:bg-red-700 transition-colors font-bold text-sm text-left w-full">
+                <button onClick={handleLogout} className="flex items-center gap-3 px-3.5 py-3 mt-1 rounded-md bg-red-600 hover:bg-red-700 transition-colors font-bold text-sm text-left w-full text-white shadow-sm">
                   <LogOut size={18} /> Keluar
                 </button>
               </>
