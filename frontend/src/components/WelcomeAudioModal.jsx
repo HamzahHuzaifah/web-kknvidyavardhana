@@ -9,8 +9,7 @@ import {
   FileText, 
   Music, 
   ArrowRight,
-  MapPin,
-  CheckCircle2
+  MapPin
 } from 'lucide-react';
 
 export default function WelcomeAudioModal() {
@@ -30,122 +29,148 @@ export default function WelcomeAudioModal() {
     setShowModal(false);
   };
 
+  const buttonLabel = settings.button_text && settings.button_text !== 'Buka Website & Putar Musik 🎵'
+    ? settings.button_text
+    : 'Mulai Eksplorasi Website 🎵';
+
   return (
     <div 
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 backdrop-blur-md animate-fade-in"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-primary-dark/85 backdrop-blur-sm animate-fade-in"
       onClick={handleDismissWithoutMusic}
     >
-      {/* Modal Card (Stop propagation so clicking inside does not dismiss) */}
+      {/* Modal Card with KKN Neo-Brutalist Border & Hard Shadow */}
       <div 
-        className="bg-white rounded-2xl shadow-2xl border border-slate-200/80 max-w-lg w-full overflow-hidden relative transition-all transform animate-scale-up"
+        className="bg-[#FFFDF5] border-4 border-primary-dark shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] max-w-lg w-full overflow-hidden relative text-left transition-all animate-scale-up"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Subtle Top Decorative Gradient Bar */}
-        <div className="h-2 w-full bg-gradient-to-r from-amber-400 via-primary to-yellow-400"></div>
-
-        {/* Close Button (X) */}
-        <button
-          type="button"
-          onClick={handleDismissWithoutMusic}
-          className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors z-20"
-          title="Tutup & Masuk Langsung"
-        >
-          <X size={18} />
-        </button>
-
-        <div className="p-6 sm:p-8 space-y-6">
-          {/* Header & Logo */}
-          <div className="flex items-start gap-4">
+        {/* Top Header Bar with KKN Primary Dark */}
+        <div className="bg-primary-dark text-white p-3.5 sm:p-4 flex items-center justify-between border-b-4 border-primary-dark">
+          <div className="flex items-center gap-3 min-w-0">
             {logoUrl ? (
               <img 
                 src={logoUrl} 
                 alt="Logo KKN" 
-                className="w-13 h-13 object-contain shrink-0 rounded-xl p-1 bg-slate-50 border border-slate-200 shadow-sm"
+                className="w-9 h-9 object-contain shrink-0 p-0.5 bg-white border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,0.4)]"
               />
             ) : (
-              <div className="w-13 h-13 rounded-xl bg-gradient-yellow text-primary-dark font-black text-xl flex items-center justify-center shrink-0 border border-amber-300 shadow-sm">
+              <div className="w-9 h-9 bg-gradient-yellow text-primary-dark font-black text-sm flex items-center justify-center shrink-0 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,0.4)]">
                 KV
               </div>
             )}
 
-            <div className="space-y-1">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200/70 text-[11px] font-bold">
-                <Sparkles size={12} className="text-amber-600" />
-                <span>Portal Resmi KKN Kelompok 07</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-snug">
-                {settings.title || 'KKN Vidya Vardhana UNUSIA'}
-              </h2>
-              <p className="text-xs text-slate-500 font-medium flex items-center gap-1">
-                <MapPin size={12} className="text-rose-500 shrink-0" />
-                <span>Desa Ciasihan, Kec. Pamijahan, Kab. Bogor</span>
-              </p>
+            <div className="min-w-0">
+              <span className="text-[10px] font-black uppercase text-secondary tracking-widest flex items-center gap-1">
+                <Sparkles size={11} className="text-secondary" /> POSKO KKN KELOMPOK 07
+              </span>
+              <h3 className="text-sm sm:text-base font-black uppercase text-white tracking-wide truncate">
+                KKN VIDYA VARDHANA UNUSIA
+              </h3>
             </div>
           </div>
 
-          {/* Informative Highlights Section */}
-          <div className="bg-slate-50/80 rounded-xl p-4 border border-slate-200/80 space-y-3">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
-              Apa yang dapat Anda temukan di website ini:
+          {/* Close Button (X) */}
+          <button
+            type="button"
+            onClick={handleDismissWithoutMusic}
+            className="p-1.5 bg-red-600 hover:bg-red-700 text-white border-2 border-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all shrink-0 ml-2"
+            title="Tutup & Masuk Langsung"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Modal Body */}
+        <div className="p-5 sm:p-7 space-y-5">
+          {/* Greeting Headline */}
+          <div className="space-y-1.5">
+            <span className="bg-gradient-yellow text-primary-dark text-[10px] font-black px-2.5 py-0.5 border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] uppercase tracking-wider inline-block">
+              Portal Resmi Desa Ciasihan
+            </span>
+            <h2 className="text-xl sm:text-2xl font-black text-primary-dark uppercase tracking-tight leading-snug">
+              {settings.title || 'Selamat Datang di Portal KKN Vidya Vardhana'}
+            </h2>
+            <p className="text-xs text-gray-700 font-medium leading-relaxed flex items-center gap-1.5 pt-0.5">
+              <MapPin size={13} className="text-red-600 shrink-0" />
+              <span>Desa Ciasihan, Kecamatan Pamijahan, Kabupaten Bogor, Jawa Barat.</span>
+            </p>
+          </div>
+
+          {/* 3 Informative Highlights Cards (KKN Theme) */}
+          <div className="space-y-2.5">
+            <span className="text-[11px] font-black uppercase tracking-wider text-primary-dark block">
+              Jelajahi Konten & Informasi Posko:
             </span>
 
-            <div className="grid grid-cols-1 gap-2.5 text-xs">
-              <div className="flex items-start gap-2.5">
-                <div className="p-1 rounded-md bg-blue-100 text-blue-700 shrink-0 mt-0.5">
-                  <Newspaper size={14} />
-                </div>
-                <div>
-                  <strong className="text-slate-800">Kabar & Berita Posko:</strong>
-                  <p className="text-slate-600 text-[11px]">Liputan pengobatan gratis, renovasi fasilitas, dan kegiatan sosial warga.</p>
-                </div>
+            {/* Item 1: Berita */}
+            <div className="bg-white border-2 border-primary-dark shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] p-3 flex items-start gap-3">
+              <div className="w-8 h-8 bg-gradient-blue text-white border-2 border-primary-dark flex items-center justify-center shrink-0 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]">
+                <Newspaper size={16} />
               </div>
-
-              <div className="flex items-start gap-2.5">
-                <div className="p-1 rounded-md bg-emerald-100 text-emerald-700 shrink-0 mt-0.5">
-                  <FileText size={14} />
-                </div>
-                <div>
-                  <strong className="text-slate-800">Publikasi Riset & Pengabdian:</strong>
-                  <p className="text-slate-600 text-[11px]">Karya ilmiah dan dokumentasi akademis terindeks yang dapat disitasi.</p>
-                </div>
+              <div className="min-w-0">
+                <h4 className="text-xs font-black uppercase text-primary-dark">
+                  Kabar & Berita Posko
+                </h4>
+                <p className="text-[11px] text-gray-600 font-medium leading-snug mt-0.5">
+                  Liputan pengobatan gratis LAZNAS, renovasi fasilitas, dan kegiatan sosial warga desa.
+                </p>
               </div>
+            </div>
 
-              <div className="flex items-start gap-2.5">
-                <div className="p-1 rounded-md bg-amber-100 text-amber-800 shrink-0 mt-0.5">
-                  <BookOpen size={14} />
-                </div>
-                <div>
-                  <strong className="text-slate-800">Modul Pembelajaran & Dokumen:</strong>
-                  <p className="text-slate-600 text-[11px]">Bahan ajar dan buku saku Kurikulum Merdeka gratis format PDF.</p>
-                </div>
+            {/* Item 2: Publikasi */}
+            <div className="bg-white border-2 border-primary-dark shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] p-3 flex items-start gap-3">
+              <div className="w-8 h-8 bg-gradient-green text-white border-2 border-primary-dark flex items-center justify-center shrink-0 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]">
+                <FileText size={16} />
+              </div>
+              <div className="min-w-0">
+                <h4 className="text-xs font-black uppercase text-primary-dark">
+                  Publikasi Riset & Pengabdian
+                </h4>
+                <p className="text-[11px] text-gray-600 font-medium leading-snug mt-0.5">
+                  Karya ilmiah terindeks Google Scholar yang dapat diunduh dan disitasi secara terbuka.
+                </p>
+              </div>
+            </div>
+
+            {/* Item 3: Modul */}
+            <div className="bg-white border-2 border-primary-dark shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] p-3 flex items-start gap-3">
+              <div className="w-8 h-8 bg-gradient-yellow text-primary-dark border-2 border-primary-dark flex items-center justify-center shrink-0 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]">
+                <BookOpen size={16} />
+              </div>
+              <div className="min-w-0">
+                <h4 className="text-xs font-black uppercase text-primary-dark">
+                  Modul Ajar & Buku Saku
+                </h4>
+                <p className="text-[11px] text-gray-600 font-medium leading-snug mt-0.5">
+                  Buku saku dan modul Kurikulum Merdeka bebas unduh dengan pembaca dokumen interaktif.
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Audio Track Info Pill (Subtle, informative) */}
+          {/* Audio Track Info Pill (KKN Theme) */}
           {settings.audio_title && (
-            <div className="flex items-center justify-between text-xs px-3.5 py-2 rounded-lg bg-amber-50/70 border border-amber-200/60 text-slate-700">
+            <div className="bg-yellow-50/90 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] p-2.5 flex items-center justify-between gap-2 text-xs">
               <div className="flex items-center gap-2 truncate">
-                <Music size={14} className="text-amber-600 shrink-0 animate-pulse" />
-                <span className="truncate text-[11px] text-slate-600">
-                  Lagu Sambutan: <strong className="text-slate-900 font-semibold">{settings.audio_title}</strong>
+                <Music size={15} className="text-secondary-dark shrink-0 animate-pulse" />
+                <span className="truncate text-[11px] text-gray-700 font-medium">
+                  Instrumen Sambutan: <strong className="text-primary-dark">{settings.audio_title}</strong>
                 </span>
               </div>
-              <span className="text-[10px] text-amber-800 bg-amber-200/60 px-1.5 py-0.5 rounded font-medium shrink-0 ml-2">
-                Audio Latar
+              <span className="bg-primary-dark text-secondary text-[9px] font-black uppercase px-2 py-0.5 border border-primary-dark shrink-0 shadow-sm">
+                Audio Aktif
               </span>
             </div>
           )}
 
-          {/* SINGLE ACTION BUTTON (Clean, direct, informative) */}
+          {/* SINGLE ACTION BUTTON (KKN Signature Neo-Brutalist Button) */}
           <div className="pt-1">
             <button
               type="button"
               onClick={startWelcomeMusic}
-              className="w-full bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-slate-900 font-black text-sm uppercase py-3.5 px-6 rounded-xl border border-amber-400/80 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 group tracking-wide"
+              className="w-full bg-gradient-yellow text-primary-dark font-black text-sm uppercase py-3.5 px-6 border-3 border-primary-dark shadow-hard hover:translate-y-1 hover:shadow-none active:translate-y-1.5 transition-all flex items-center justify-center gap-2 group tracking-wider"
             >
-              <span>{settings.button_text && settings.button_text !== 'Buka Website & Putar Musik 🎵' ? settings.button_text : 'Mulai Eksplorasi Website 🎵'}</span>
-              <ArrowRight size={17} className="group-hover:translate-x-1 transition-transform" />
+              <span>{buttonLabel}</span>
+              <ArrowRight size={18} className="group-hover:translate-x-1.5 transition-transform" />
             </button>
           </div>
         </div>
