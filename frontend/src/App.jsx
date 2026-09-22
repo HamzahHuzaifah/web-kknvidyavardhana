@@ -56,6 +56,9 @@ function AnimatedRoutes() {
         <Route path="/profil/:slug" element={<PortfolioDetail />} />
         <Route path="/berita" element={<AnimatedPage><ArticlesPage /></AnimatedPage>} />
         <Route path="/berita/:slug" element={<AnimatedPage><ArticleDetailPage /></AnimatedPage>} />
+        <Route path="/publikasi/:slug" element={<AnimatedPage><ArticleDetailPage /></AnimatedPage>} />
+        <Route path="/jurnal/:slug" element={<AnimatedPage><ArticleDetailPage /></AnimatedPage>} />
+        <Route path="/modul/:slug" element={<AnimatedPage><ArticleDetailPage /></AnimatedPage>} />
         <Route path="/login" element={<AnimatedPage><Login /></AnimatedPage>} />
         <Route path="/register" element={<AnimatedPage><Register /></AnimatedPage>} />
         <Route 

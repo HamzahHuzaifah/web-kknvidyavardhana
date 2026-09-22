@@ -39,12 +39,17 @@ export default function ArticleCard({ article, baseUrl = '' }) {
           )}
         </div>
         <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 leading-snug">
-          {article.title}
+          <Link to={article.slug ? `/berita/${article.slug}` : '/berita'} className="hover:text-secondary-dark transition-colors">
+            {article.title}
+          </Link>
         </h3>
         <p className="text-gray-600 mb-6 line-clamp-3 font-medium text-xs leading-relaxed flex-grow">
           {previewText}
         </p>
-        <Link to="/berita" className="inline-flex items-center font-bold text-primary-dark hover:text-secondary-dark transition-colors mt-auto text-xs uppercase tracking-wider group">
+        <Link 
+          to={article.slug ? `/berita/${article.slug}` : '/berita'} 
+          className="inline-flex items-center font-bold text-primary-dark hover:text-secondary-dark transition-colors mt-auto text-xs uppercase tracking-wider group"
+        >
           Baca Selengkapnya 
           <ArrowRight size={14} className="ml-1 group-hover:translate-x-1 transition-transform" />
         </Link>

@@ -141,9 +141,19 @@ const syncExistingUploads = async () => {
   }
 };
 
-// Helper to generate slug
-const generateSlug = (title) => {
-  return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+// Helper to generate clean, short slug (max 5-6 words, max 50 chars)
+const generateSlug = (title, maxWords = 5) => {
+  if (!title) return 'post-' + Math.random().toString(36).substring(2, 6);
+  const clean = title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .trim();
+  const words = clean.split(/\s+/).filter(Boolean).slice(0, maxWords);
+  let slug = words.join('-');
+  if (slug.length > 50) {
+    slug = slug.substring(0, 50).replace(/-[^-]*$/, '');
+  }
+  return slug || 'berita';
 };
 
 module.exports = {

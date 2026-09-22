@@ -26,11 +26,29 @@ router.get('/articles', async (req, res) => {
   }
 });
 
-// API: Get single article by slug
+// API: Get single article by slug (supports exact match, ID suffix match, or short prefix match)
 router.get('/articles/:slug', async (req, res) => {
   try {
     const { slug } = req.params;
-    const [rows] = await pool.query('SELECT * FROM articles WHERE slug = ?', [slug]);
+    let [rows] = await pool.query('SELECT * FROM articles WHERE slug = ?', [slug]);
+    
+    // Fallback 1: match by 4+ digit suffix if URL is old or shortened (e.g. -2195)
+    if (rows.length === 0) {
+      const parts = slug.split('-');
+      const lastPart = parts[parts.length - 1];
+      if (/^\d{4,}$/.test(lastPart)) {
+        [rows] = await pool.query('SELECT * FROM articles WHERE slug LIKE ?', [`%-${lastPart}`]);
+      }
+    }
+
+    // Fallback 2: match by slug prefix
+    if (rows.length === 0) {
+      const prefixWords = slug.split('-').slice(0, 3).join('-');
+      if (prefixWords && prefixWords.length >= 6) {
+        [rows] = await pool.query('SELECT * FROM articles WHERE slug LIKE ? LIMIT 1', [`${prefixWords}%`]);
+      }
+    }
+
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Artikel atau publikasi tidak ditemukan.' });
     }
@@ -101,7 +119,8 @@ router.post('/articles', verifyToken, uploadFields, async (req, res) => {
        if (validCategory === 'modul' && !user.can_upload_modul) return res.status(403).json({ error: 'Anda tidak memiliki hak akses untuk mengupload Modul.' });
     }
 
-    const slug = generateSlug(title) + '-' + Date.now().toString().slice(-4);
+    const shortSuffix = Math.floor(1000 + Math.random() * 9000);
+    const slug = `${generateSlug(title, 5)}-${shortSuffix}`;
 
     let imageUrl = req.files && req.files['image'] ? `/uploads/${req.files['image'][0].filename}` : (req.body.image_url || null);
     let fileUrl = req.files && req.files['document'] ? `/uploads/${req.files['document'][0].filename}` : (req.body.file_url || null);

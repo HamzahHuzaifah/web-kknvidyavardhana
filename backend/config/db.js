@@ -407,6 +407,34 @@ const initDB = async (syncUploadsCallback) => {
       if (!artColNames.includes('published_date')) {
         await pool.query('ALTER TABLE articles ADD COLUMN published_date DATE DEFAULT NULL');
       }
+
+      // Auto-migrate ultra-long slugs to concise slugs (max 5 words + suffix)
+      try {
+        const [longArticles] = await pool.query('SELECT id, title, slug FROM articles WHERE CHAR_LENGTH(slug) > 55');
+        for (const art of longArticles) {
+          const parts = (art.slug || '').split('-');
+          const lastPart = parts[parts.length - 1];
+          const suffix = /^\d{4,}$/.test(lastPart) ? lastPart : Math.floor(1000 + Math.random() * 9000);
+          
+          const cleanTitle = (art.title || '')
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, ' ')
+            .trim();
+          const words = cleanTitle.split(/\s+/).filter(Boolean).slice(0, 5);
+          let newSlug = `${words.join('-')}-${suffix}`;
+          if (newSlug.length > 55) {
+            newSlug = `${words.slice(0, 4).join('-')}-${suffix}`;
+          }
+
+          const [exists] = await pool.query('SELECT id FROM articles WHERE slug = ? AND id != ?', [newSlug, art.id]);
+          if (exists.length === 0) {
+            await pool.query('UPDATE articles SET slug = ? WHERE id = ?', [newSlug, art.id]);
+            console.log(`[DB] Migrated long slug for article #${art.id}: "${art.slug}" -> "${newSlug}"`);
+          }
+        }
+      } catch (slugMigrateErr) {
+        console.warn('[DB] Slug shortening migration warning:', slugMigrateErr.message);
+      }
     } catch (err) {
       console.error('Error initializing articles table:', err);
     }
