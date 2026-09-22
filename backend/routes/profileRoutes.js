@@ -154,51 +154,6 @@ router.post('/team', verifyToken, isAdmin, upload.single('image'), async (req, r
   }
 });
 
-// API: Update Team Member (Admin Only)
-router.post('/team/:id/edit', verifyToken, isAdmin, upload.single('image'), async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { user_id, name, role, major, display_order } = req.body;
-
-    if (!user_id || !name || !role) {
-      return res.status(400).json({ error: 'Akun terdaftar, Nama, dan Jabatan wajib diisi.' });
-    }
-
-    const orderNum = parseInt(display_order) || 0;
-
-    if (req.file) {
-      const imageUrl = `/uploads/${req.file.filename}`;
-      await registerMediaFile(req.file, req.username || 'Admin', 'team');
-      await pool.query(
-        'UPDATE team_members SET user_id = ?, name = ?, role = ?, major = ?, image_url = ?, display_order = ? WHERE id = ?',
-        [user_id, name, role, major || '', imageUrl, orderNum, id]
-      );
-    } else {
-      await pool.query(
-        'UPDATE team_members SET user_id = ?, name = ?, role = ?, major = ?, display_order = ? WHERE id = ?',
-        [user_id, name, role, major || '', orderNum, id]
-      );
-    }
-
-    res.json({ message: 'Data anggota tim berhasil diperbarui!' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Gagal memperbarui anggota tim.' });
-  }
-});
-
-// API: Delete Team Member (Admin Only)
-router.post('/team/:id/delete', verifyToken, isAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    await pool.query('DELETE FROM team_members WHERE id = ?', [id]);
-    res.json({ message: 'Anggota tim berhasil dihapus.' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Gagal menghapus anggota tim.' });
-  }
-});
-
 // API: Get Own Profile (User)
 router.get('/team/me', verifyToken, async (req, res) => {
   try {
@@ -278,6 +233,52 @@ router.post('/team/me/edit', verifyToken, upload.single('image'), async (req, re
     res.status(500).json({ error: 'Gagal memperbarui profil tim Anda.' });
   }
 });
+
+// API: Update Team Member (Admin Only)
+router.post('/team/:id/edit', verifyToken, isAdmin, upload.single('image'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_id, name, role, major, display_order } = req.body;
+
+    if (!user_id || !name || !role) {
+      return res.status(400).json({ error: 'Akun terdaftar, Nama, dan Jabatan wajib diisi.' });
+    }
+
+    const orderNum = parseInt(display_order) || 0;
+
+    if (req.file) {
+      const imageUrl = `/uploads/${req.file.filename}`;
+      await registerMediaFile(req.file, req.username || 'Admin', 'team');
+      await pool.query(
+        'UPDATE team_members SET user_id = ?, name = ?, role = ?, major = ?, image_url = ?, display_order = ? WHERE id = ?',
+        [user_id, name, role, major || '', imageUrl, orderNum, id]
+      );
+    } else {
+      await pool.query(
+        'UPDATE team_members SET user_id = ?, name = ?, role = ?, major = ?, display_order = ? WHERE id = ?',
+        [user_id, name, role, major || '', orderNum, id]
+      );
+    }
+
+    res.json({ message: 'Data anggota tim berhasil diperbarui!' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Gagal memperbarui anggota tim.' });
+  }
+});
+
+// API: Delete Team Member (Admin Only)
+router.post('/team/:id/delete', verifyToken, isAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('DELETE FROM team_members WHERE id = ?', [id]);
+    res.json({ message: 'Anggota tim berhasil dihapus.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Gagal menghapus anggota tim.' });
+  }
+});
+
 
 // API: Get Team Member Portfolio (Public)
 router.get('/team/:id/portfolio', async (req, res) => {
