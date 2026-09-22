@@ -161,7 +161,7 @@ export default function FileManagerTab({
         closeConfirmModal();
         try {
           const token = localStorage.getItem('token');
-          const res = await axios.post(`/api/files/${file.id}/delete`, {
+          const res = await axios.post(`/api/files/${file.id}/delete`, {}, {
             headers: { Authorization: `Bearer ${token}` }
           });
           setFileActionMsg({ type: 'success', message: res.data.message });

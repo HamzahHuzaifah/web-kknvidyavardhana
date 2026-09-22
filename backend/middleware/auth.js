@@ -4,10 +4,19 @@ const { pool } = require('../config/db');
 const JWT_SECRET = process.env.JWT_SECRET || 'kkn_vidyavardhana_secret_key_123';
 
 const verifyToken = async (req, res, next) => {
-  const token = req.headers['authorization'];
+  let token = req.headers['authorization'] || 
+              req.headers['x-access-token'] || 
+              req.headers['token'] ||
+              req.body?.headers?.Authorization || 
+              req.body?.headers?.authorization ||
+              req.body?.token || 
+              req.query?.token;
+
   if (!token) return res.status(403).json({ error: 'No token provided.' });
 
-  const bearerToken = token.split(' ')[1] || token;
+  const bearerToken = typeof token === 'string' && token.startsWith('Bearer ') 
+    ? token.split(' ')[1] 
+    : String(token).replace(/^Bearer\s+/i, '');
 
   try {
     const decoded = jwt.verify(bearerToken, JWT_SECRET);

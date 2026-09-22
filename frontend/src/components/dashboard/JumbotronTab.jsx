@@ -131,7 +131,7 @@ export default function JumbotronTab({ showAlert, setAdminActionMsg, setConfirmM
         setConfirmModal((prev) => ({ ...prev, isLoading: true }));
         try {
           const token = localStorage.getItem('token');
-          await axios.post(`/api/jumbotron/admin/${id}/delete`, {
+          await axios.post(`/api/jumbotron/admin/${id}/delete`, {}, {
             headers: { Authorization: `Bearer ${token}` }
           });
           setAdminActionMsg({ type: 'success', message: 'Slide berhasil dihapus.' });

@@ -93,7 +93,7 @@ export default function SocialMediaTab({
         closeConfirmModal();
         try {
           const token = localStorage.getItem('token');
-          await axios.post(`/api/social-links/${id}/delete`, {
+          await axios.post(`/api/social-links/${id}/delete`, {}, {
             headers: { Authorization: `Bearer ${token}` }
           });
           setSocialActionMsg({ type: 'success', message: 'Akun medsos berhasil dihapus.' });
@@ -185,7 +185,7 @@ export default function SocialMediaTab({
         closeConfirmModal();
         try {
           const token = localStorage.getItem('token');
-          await axios.post(`/api/media/${id}/delete`, {
+          await axios.post(`/api/media/${id}/delete`, {}, {
             headers: { Authorization: `Bearer ${token}` }
           });
           setMediaActionMsg({ type: 'success', message: 'Video berhasil dihapus.' });

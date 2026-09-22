@@ -190,7 +190,7 @@ export default function ArticlesTab({
         closeConfirmModal();
         try {
           const token = localStorage.getItem('token');
-          await axios.post(`/api/articles/${id}/delete`, {
+          await axios.post(`/api/articles/${id}/delete`, {}, {
             headers: { Authorization: `Bearer ${token}` }
           });
           setArticleActionMsg({ type: 'success', message: 'Konten berhasil dihapus oleh Admin.' });
