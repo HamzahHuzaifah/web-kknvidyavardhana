@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import Home from './pages/Home';
 import UploadForm from './pages/UploadForm';
 import Login from './pages/Login';
@@ -83,6 +84,9 @@ function App() {
             <AnimatedRoutes />
           </ErrorBoundary>
         </main>
+        <ErrorBoundary message="Gagal memuat bagian footer website.">
+          <Footer />
+        </ErrorBoundary>
       </div>
     </Router>
   );

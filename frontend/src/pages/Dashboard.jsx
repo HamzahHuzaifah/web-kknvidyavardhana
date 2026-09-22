@@ -8,7 +8,8 @@ import {
   Video, 
   BookOpen, 
   FolderOpen,
-  Layers
+  Layers,
+  PanelBottom
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -19,6 +20,7 @@ import FileManagerTab from '../components/dashboard/FileManagerTab';
 import ProfileTab from '../components/dashboard/ProfileTab';
 import SocialMediaTab from '../components/dashboard/SocialMediaTab';
 import JumbotronTab from '../components/dashboard/JumbotronTab';
+import FooterTab from '../components/dashboard/FooterTab';
 import EditAccountModal from '../components/dashboard/modals/EditAccountModal';
 import MyProfileTab from '../components/dashboard/MyProfileTab';
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -204,6 +206,17 @@ export default function Dashboard() {
             >
               <Compass size={15} /> Profil Tim & Desa
             </button>
+
+            <button
+              onClick={() => setActiveTab('footer')}
+              className={`px-3.5 py-2 font-black text-xs uppercase border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-1.5 ${
+                activeTab === 'footer'
+                  ? 'bg-gradient-blue text-white translate-y-0.5 shadow-none'
+                  : 'bg-white text-primary-dark hover:bg-gray-100'
+              }`}
+            >
+              <PanelBottom size={15} /> Kelola Footer
+            </button>
           </div>
         )}
 
@@ -263,6 +276,13 @@ export default function Dashboard() {
                 <JumbotronTab 
                   showAlert={(msg, title) => showAlert(msg, title)}
                   setAdminActionMsg={() => {}} 
+                  setConfirmModal={setConfirmModal}
+                />
+              )}
+
+              {isAdmin && activeTab === 'footer' && (
+                <FooterTab 
+                  showAlert={showAlert}
                   setConfirmModal={setConfirmModal}
                 />
               )}

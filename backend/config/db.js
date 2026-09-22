@@ -398,7 +398,86 @@ const initDB = async (syncUploadsCallback) => {
       `);
     }
 
-    console.log('Database initialized with all tables: users, attendance, profile, team, media, social, articles, media_files, jumbotron_slides.');
+    // 10. Create footer_info table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS footer_info (
+        id INT PRIMARY KEY,
+        brand_title VARCHAR(255) DEFAULT 'KKN Vidya Vardhana',
+        brand_tagline TEXT,
+        about_text TEXT,
+        address TEXT,
+        email VARCHAR(150),
+        phone VARCHAR(50),
+        operational_hours VARCHAR(150),
+        copyright_text VARCHAR(255),
+        quick_links LONGTEXT,
+        show_social_links TINYINT(1) DEFAULT 1,
+        show_map_link TINYINT(1) DEFAULT 1,
+        map_url TEXT,
+        bottom_bar_text VARCHAR(255),
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Ensure columns exist in footer_info
+    const [footerCols] = await pool.query('SHOW COLUMNS FROM footer_info');
+    const footerColNames = footerCols.map((c) => c.Field);
+    if (!footerColNames.includes('brand_tagline')) {
+      await pool.query('ALTER TABLE footer_info ADD COLUMN brand_tagline TEXT');
+    }
+    if (!footerColNames.includes('quick_links')) {
+      await pool.query('ALTER TABLE footer_info ADD COLUMN quick_links LONGTEXT');
+    }
+    if (!footerColNames.includes('show_social_links')) {
+      await pool.query('ALTER TABLE footer_info ADD COLUMN show_social_links TINYINT(1) DEFAULT 1');
+    }
+    if (!footerColNames.includes('show_map_link')) {
+      await pool.query('ALTER TABLE footer_info ADD COLUMN show_map_link TINYINT(1) DEFAULT 1');
+    }
+    if (!footerColNames.includes('map_url')) {
+      await pool.query('ALTER TABLE footer_info ADD COLUMN map_url TEXT');
+    }
+    if (!footerColNames.includes('bottom_bar_text')) {
+      await pool.query('ALTER TABLE footer_info ADD COLUMN bottom_bar_text VARCHAR(255)');
+    }
+
+    // Seed default footer_info if empty
+    const [footerRows] = await pool.query('SELECT * FROM footer_info WHERE id = 1');
+    if (footerRows.length === 0) {
+      const defaultQuickLinks = JSON.stringify([
+        { label: 'Beranda', url: '/' },
+        { label: 'Profil Desa & Tim', url: '/profile' },
+        { label: 'Media & Galeri', url: '/media' },
+        { label: 'Berita & Publikasi', url: '/berita' },
+        { label: 'Panel Akun', url: '/login' }
+      ]);
+
+      await pool.query(`
+        INSERT INTO footer_info (
+          id, brand_title, brand_tagline, about_text, 
+          address, email, phone, operational_hours, 
+          copyright_text, quick_links, show_social_links, 
+          show_map_link, map_url, bottom_bar_text
+        ) VALUES (
+          1,
+          'KKN Vidya Vardhana',
+          'Inisiatif Pengabdian Mahasiswa untuk Pemberdayaan Desa & Transformasi Digital.',
+          'KKN Vidya Vardhana berfokus pada dedikasi dan kontribusi nyata dalam pendidikan, teknologi informasi, serta penguatan potensi lokal masyarakat Desa Ciasihan.',
+          'Kantor Balai Desa Ciasihan, Kec. Pamijahan, Kabupaten Bogor, Jawa Barat 16810',
+          'kkn.vidyavardhana@gmail.com',
+          '+62 812-3456-7890',
+          'Senin - Sabtu: 08:00 - 17:00 WIB',
+          '© 2024-2026 KKN Vidya Vardhana. Seluruh Hak Cipta Dilindungi.',
+          ?,
+          1,
+          1,
+          'https://maps.google.com/?q=Balai+Desa+Ciasihan+Pamijahan',
+          'Bersama Mewujudkan Kemajuan Berkelanjutan di Desa Ciasihan'
+        )
+      `, [defaultQuickLinks]);
+    }
+
+    console.log('Database initialized with all tables: users, attendance, profile, team, media, social, articles, media_files, jumbotron_slides, footer_info.');
   } catch (error) {
     console.error('DB Init Error:', error);
   }

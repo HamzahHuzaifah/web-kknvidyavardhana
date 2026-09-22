@@ -353,6 +353,40 @@ ALTER TABLE `users`
 --
 ALTER TABLE `attendance`
   ADD CONSTRAINT `attendance_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `footer_info`
+--
+
+CREATE TABLE IF NOT EXISTS `footer_info` (
+  `id` int(11) NOT NULL,
+  `brand_title` varchar(255) DEFAULT 'KKN Vidya Vardhana',
+  `brand_tagline` text DEFAULT NULL,
+  `about_text` text DEFAULT NULL,
+  `address` text DEFAULT NULL,
+  `email` varchar(150) DEFAULT NULL,
+  `phone` varchar(50) DEFAULT NULL,
+  `operational_hours` varchar(150) DEFAULT NULL,
+  `copyright_text` varchar(255) DEFAULT NULL,
+  `quick_links` longtext DEFAULT NULL,
+  `show_social_links` tinyint(1) DEFAULT 1,
+  `show_map_link` tinyint(1) DEFAULT 1,
+  `map_url` text DEFAULT NULL,
+  `bottom_bar_text` varchar(255) DEFAULT NULL,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data untuk tabel `footer_info`
+--
+
+INSERT INTO `footer_info` (`id`, `brand_title`, `brand_tagline`, `about_text`, `address`, `email`, `phone`, `operational_hours`, `copyright_text`, `quick_links`, `show_social_links`, `show_map_link`, `map_url`, `bottom_bar_text`) VALUES
+(1, 'KKN Vidya Vardhana', 'Inisiatif Pengabdian Mahasiswa untuk Pemberdayaan Desa & Transformasi Digital.', 'KKN Vidya Vardhana berfokus pada dedikasi dan kontribusi nyata dalam pendidikan, teknologi informasi, serta penguatan potensi lokal masyarakat Desa Ciasihan.', 'Kantor Balai Desa Ciasihan, Kec. Pamijahan, Kabupaten Bogor, Jawa Barat 16810', 'kkn.vidyavardhana@gmail.com', '+62 812-3456-7890', 'Senin - Sabtu: 08:00 - 17:00 WIB', '© 2024-2026 KKN Vidya Vardhana. Seluruh Hak Cipta Dilindungi.', '[{\"label\":\"Beranda\",\"url\":\"/\"},{\"label\":\"Profil Desa & Tim\",\"url\":\"/profile\"},{\"label\":\"Media & Galeri\",\"url\":\"/media\"},{\"label\":\"Berita & Publikasi\",\"url\":\"/berita\"},{\"label\":\"Panel Akun\",\"url\":\"/login\"}]', 1, 1, 'https://maps.google.com/?q=Balai+Desa+Ciasihan+Pamijahan', 'Bersama Mewujudkan Kemajuan Berkelanjutan di Desa Ciasihan')
+ON DUPLICATE KEY UPDATE `id`=`id`;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

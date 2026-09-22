@@ -10,6 +10,7 @@ const fileRoutes = require('./routes/fileRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const mediaRoutes = require('./routes/mediaRoutes');
 const jumbotronRoutes = require('./routes/jumbotronRoutes');
+const footerRoutes = require('./routes/footerRoutes');
 const sitemapRoutes = require('./routes/sitemapRoutes');
 
 const app = express();
@@ -31,6 +32,7 @@ app.use('/api', articleRoutes);
 app.use('/api', fileRoutes);
 app.use('/api', profileRoutes);
 app.use('/api', mediaRoutes);
+app.use('/api', footerRoutes);
 app.use('/api/jumbotron', jumbotronRoutes);
 
 // Explicit 404 Handler untuk rute /api yang tidak terdaftar (Mencegah fallback ke index.html)
