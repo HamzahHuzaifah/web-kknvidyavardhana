@@ -128,4 +128,13 @@
   hyphens: none !important;
 }
 
+/* === Utility: Hide scrollbars on mobile horizontal swipe === */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 

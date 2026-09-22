@@ -40,7 +40,7 @@ export default function WelcomeAudioModal() {
     >
       {/* Modal Card with KKN Neo-Brutalist Border & Hard Shadow */}
       <div 
-        className="bg-[#FFFDF5] border-4 border-primary-dark shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] max-w-lg w-full overflow-hidden relative text-left transition-all animate-scale-up"
+        className="bg-[#FFFDF5] border-4 border-primary-dark shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] sm:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] max-w-lg w-full max-h-[92vh] overflow-y-auto relative text-left transition-all animate-scale-up"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Header Bar with KKN Primary Dark */}

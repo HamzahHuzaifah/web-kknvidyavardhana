@@ -402,7 +402,7 @@ export default function Profile() {
             </div>
 
             {/* Filter & Search Bar */}
-            <div className="bg-white border-3 border-primary-dark shadow-hard p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="bg-white border-4 border-primary-dark shadow-hard p-3.5 sm:p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4">
               
               {/* Search input */}
               <div className="relative w-full md:w-80">
@@ -663,7 +663,7 @@ export default function Profile() {
               </div>
 
               {/* Iframe Frame */}
-              <div className="w-full h-[460px] bg-gray-100 relative">
+              <div className="w-full h-[300px] sm:h-[400px] lg:h-[460px] bg-gray-100 relative">
                 {profile?.village_map_iframe && !mapSrc ? (
                   <div className="w-full h-full flex items-center justify-center p-6 text-center text-gray-600 font-bold text-sm">
                     Kode iframe Google Maps tidak dapat diparsing. Mohon cek pengaturan di dashboard.
