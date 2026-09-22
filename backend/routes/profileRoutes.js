@@ -37,6 +37,10 @@ router.post('/profile-info/edit', verifyToken, isAdmin, async (req, res) => {
       jumbotron_animation
     } = req.body;
 
+    if (!about_title || !about_title.trim() || !village_name || !village_name.trim()) {
+      return res.status(400).json({ error: 'Judul Tentang Kami dan Nama Desa wajib diisi dan tidak boleh kosong.' });
+    }
+
     if (logo_url !== undefined) {
       await pool.query(`
         UPDATE profile_info SET

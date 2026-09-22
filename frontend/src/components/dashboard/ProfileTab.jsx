@@ -47,30 +47,43 @@ export default function ProfileTab({ token, setConfirmModal, closeConfirmModal }
   const fetchAll = async () => {
     setLoadingTeam(true);
     try {
-      const [profileRes, teamRes, usersRes] = await Promise.all([
-        axios.get('/api/profile-info'),
-        axios.get('/api/team'),
-        axios.get('/api/admin/users', { headers: { Authorization: `Bearer ${token}` } })
-      ]);
-      if (profileRes.data && typeof profileRes.data === 'object' && !Array.isArray(profileRes.data)) {
-        setProfileForm({
-          about_title: profileRes.data.about_title || '',
-          about_description: profileRes.data.about_description || '',
-          vision: profileRes.data.vision || '',
-          mission: profileRes.data.mission || '',
-          village_name: profileRes.data.village_name || '',
-          village_description: profileRes.data.village_description || '',
-          village_population: profileRes.data.village_population || '',
-          village_rtrw: profileRes.data.village_rtrw || '',
-          village_area: profileRes.data.village_area || '',
-          village_map_iframe: profileRes.data.village_map_iframe || '',
-          village_map_label: profileRes.data.village_map_label || ''
-        });
+      // 1. Fetch Profile Info independently
+      try {
+        const profileRes = await axios.get('/api/profile-info');
+        if (profileRes.data && typeof profileRes.data === 'object' && !Array.isArray(profileRes.data)) {
+          setProfileForm({
+            about_title: profileRes.data.about_title || '',
+            about_description: profileRes.data.about_description || '',
+            vision: profileRes.data.vision || '',
+            mission: profileRes.data.mission || '',
+            village_name: profileRes.data.village_name || '',
+            village_description: profileRes.data.village_description || '',
+            village_population: profileRes.data.village_population || '',
+            village_rtrw: profileRes.data.village_rtrw || '',
+            village_area: profileRes.data.village_area || '',
+            village_map_iframe: profileRes.data.village_map_iframe || '',
+            village_map_label: profileRes.data.village_map_label || ''
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching profile info:', err);
       }
-      setTeamList(Array.isArray(teamRes.data) ? teamRes.data : []);
-      setUsersList(Array.isArray(usersRes.data) ? usersRes.data : []);
-    } catch (err) {
-      console.error('Error fetching profile & team:', err);
+
+      // 2. Fetch Team Members independently
+      try {
+        const teamRes = await axios.get('/api/team');
+        setTeamList(Array.isArray(teamRes.data) ? teamRes.data : []);
+      } catch (err) {
+        console.error('Error fetching team:', err);
+      }
+
+      // 3. Fetch Admin Users independently
+      try {
+        const usersRes = await axios.get('/api/admin/users', { headers: { Authorization: `Bearer ${token}` } });
+        setUsersList(Array.isArray(usersRes.data) ? usersRes.data : []);
+      } catch (err) {
+        console.error('Error fetching users for admin:', err);
+      }
     } finally {
       setLoadingTeam(false);
     }
@@ -88,6 +101,13 @@ export default function ProfileTab({ token, setConfirmModal, closeConfirmModal }
 
   const handleSaveProfile = async (e) => {
     e.preventDefault();
+    if (!profileForm.about_title?.trim() || !profileForm.village_name?.trim()) {
+      setProfileSaveMsg({
+        type: 'error',
+        message: 'Judul Tentang Kami dan Nama Desa tidak boleh kosong.'
+      });
+      return;
+    }
     setSavingProfile(true);
     setProfileSaveMsg({ type: '', message: '' });
     try {

@@ -137,7 +137,7 @@ const initDB = async (syncUploadsCallback) => {
       await pool.query("ALTER TABLE profile_info ADD COLUMN jumbotron_animation VARCHAR(50) DEFAULT 'fade'");
     }
 
-    // Seed profile_info if empty
+    // Seed or restore profile_info if empty or columns are null
     const [profileRows] = await pool.query('SELECT * FROM profile_info WHERE id = 1');
     if (profileRows.length === 0) {
       await pool.query(`
@@ -160,6 +160,24 @@ const initDB = async (syncUploadsCallback) => {
           'Balai Desa Ciasihan, Pamijahan'
         )
       `);
+    } else {
+      const p = profileRows[0];
+      if (!p.village_name || !p.about_title || !p.village_description) {
+        await pool.query(`
+          UPDATE profile_info SET
+            about_title = COALESCE(NULLIF(about_title, ''), 'KKN Vidya Vardhana'),
+            about_description = COALESCE(NULLIF(about_description, ''), 'KKN Vidya Vardhana adalah inisiatif pengabdian mahasiswa yang berfokus pada pemberdayaan pendidikan, teknologi informasi, dan pengembangan potensi lokal desa demi kemajuan masyarakat.'),
+            vision = COALESCE(NULLIF(vision, ''), 'Mewujudkan masyarakat desa yang berdaya saing, melek teknologi digital, dan mandiri secara ekonomi berlandaskan kearifan lokal.'),
+            mission = COALESCE(NULLIF(mission, ''), '1. Menyelenggarakan program edukasi dan literasi digital berkelanjutan.\\n2. Mendorong digitalisasi potensi UMKM dan pariwisata desa.\\n3. Menjalin sinergi harmonis antara akademisi, aparat desa, dan warga.'),
+            village_name = COALESCE(NULLIF(village_name, ''), 'Desa Ciasihan'),
+            village_description = COALESCE(NULLIF(village_description, ''), 'Desa Ciasihan terletak di kawasan perbukitan Kecamatan Pamijahan, Kabupaten Bogor. Dikelilingi udara sejuk, bentang alam hijau yang asri, serta warga yang ramah dan memegang teguh semangat gotong royong.'),
+            village_population = COALESCE(NULLIF(village_population, ''), '5,420 Jiwa'),
+            village_rtrw = COALESCE(NULLIF(village_rtrw, ''), '12 RT / 04 RW'),
+            village_area = COALESCE(NULLIF(village_area, ''), '3.2 km²'),
+            village_map_label = COALESCE(NULLIF(village_map_label, ''), 'Balai Desa Ciasihan, Pamijahan')
+          WHERE id = 1
+        `);
+      }
     }
 
     // 4. Create team_members table
