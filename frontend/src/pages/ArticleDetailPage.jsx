@@ -28,6 +28,7 @@ import {
   Newspaper
 } from 'lucide-react';
 import CustomSelect from '../components/CustomSelect';
+import ScribdDocumentViewer from '../components/ScribdDocumentViewer';
 
 export default function ArticleDetailPage() {
   const { slug } = useParams();
@@ -246,6 +247,18 @@ export default function ArticleDetailPage() {
 
   const currentUrl = encodeURIComponent(window.location.href);
   const currentTitle = encodeURIComponent(article.title);
+
+  // Dedicated Scribd-style Document & Book Reader layout for Modules
+  if (isModule) {
+    return (
+      <ScribdDocumentViewer
+        article={article}
+        sanitizedContent={sanitizedContent}
+        relatedArticles={recentArticles.filter((item) => item.category === 'modul')}
+        onDownload={handleDownload}
+      />
+    );
+  }
 
   return (
     <div className="bg-[#f9fafb] min-h-screen py-6 md:py-10 px-4 sm:px-6">

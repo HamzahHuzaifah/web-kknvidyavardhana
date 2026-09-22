@@ -78,6 +78,12 @@ export default function ArticlesPage() {
     }
   };
 
+  const getItemUrl = (item) => {
+    if (item.category === 'modul') return `/modul/${item.slug}`;
+    if (item.category === 'publikasi') return `/publikasi/${item.slug}`;
+    return `/berita/${item.slug}`;
+  };
+
   return (
     <div className="bg-gray-50 min-h-screen py-12 px-4 space-y-12">
       <div className="max-w-6xl mx-auto space-y-10">
@@ -232,7 +238,7 @@ export default function ArticlesPage() {
                     </div>
 
                     <h3 className="text-lg font-black text-primary-dark uppercase tracking-tight line-clamp-2 hover:text-secondary-dark transition-colors">
-                      <Link to={`/berita/${item.slug}`}>{item.title}</Link>
+                      <Link to={getItemUrl(item)}>{item.title}</Link>
                     </h3>
 
                     {/* Keywords if available */}
@@ -257,7 +263,7 @@ export default function ArticlesPage() {
                 {/* Actions */}
                 <div className="p-5 pt-0 border-t border-gray-100 mt-4 flex items-center justify-between gap-2">
                   <Link
-                    to={`/berita/${item.slug}`}
+                    to={getItemUrl(item)}
                     className="inline-flex items-center gap-1 bg-gradient-yellow text-primary-dark font-black text-xs uppercase px-3 py-2 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all"
                   >
                     {item.category === 'publikasi' ? 'Buka Jurnal' : item.category === 'modul' ? 'Buka Modul' : 'Baca Berita'} <ChevronRight size={14} />
