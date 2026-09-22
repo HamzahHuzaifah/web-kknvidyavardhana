@@ -4,16 +4,21 @@ const { pool } = require('../config/db');
 const { verifyToken, isAdmin } = require('../middleware/auth');
 const { uploadFields, generateSlug, registerMediaFile } = require('../utils/fileHelper');
 
-// API: Get all articles (supports category filter)
+// API: Get all articles (supports category and author_id filter)
 router.get('/articles', async (req, res) => {
   try {
-    const { category } = req.query;
-    let query = 'SELECT * FROM articles';
+    const { category, author_id } = req.query;
+    let query = 'SELECT * FROM articles WHERE 1=1';
     let params = [];
 
     if (category && category !== 'all') {
-      query += ' WHERE category = ?';
+      query += ' AND category = ?';
       params.push(category);
+    }
+
+    if (author_id) {
+      query += ' AND author_id = ?';
+      params.push(author_id);
     }
 
     query += ' ORDER BY created_at DESC';

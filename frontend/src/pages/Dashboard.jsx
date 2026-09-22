@@ -9,7 +9,8 @@ import {
   BookOpen, 
   FolderOpen,
   Layers,
-  PanelBottom
+  PanelBottom,
+  ArrowLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -152,9 +153,9 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* NAVIGATION TABS FOR ADMIN & USERS WITH PERMISSIONS */}
-        <div className="flex flex-wrap gap-2 border-b-2 border-primary-dark pb-2">
-          {isAdmin && (
+        {/* NAVIGATION TABS FOR ADMIN */}
+        {isAdmin && (
+          <div className="flex flex-wrap gap-2 border-b-2 border-primary-dark pb-2">
             <button
               onClick={() => setActiveTab('users')}
               className={`px-3.5 py-2 font-black text-xs uppercase border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-1.5 ${
@@ -165,9 +166,7 @@ export default function Dashboard() {
             >
               <ShieldCheck size={15} /> ACC & Kelola User
             </button>
-          )}
 
-          {(isAdmin || userPermissions?.can_upload_berita || userPermissions?.can_upload_publikasi || userPermissions?.can_upload_modul) && (
             <button
               onClick={() => setActiveTab('articles')}
               className={`px-3.5 py-2 font-black text-xs uppercase border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-1.5 ${
@@ -178,12 +177,9 @@ export default function Dashboard() {
             >
               <BookOpen size={15} /> Kelola Berita, Publikasi & Modul
             </button>
-          )}
 
-          {isAdmin && (
-            <>
-              <button
-                onClick={() => setActiveTab('files')}
+            <button
+              onClick={() => setActiveTab('files')}
                 className={`px-3.5 py-2 font-black text-xs uppercase border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-1.5 ${
                   activeTab === 'files'
                     ? 'bg-gradient-blue text-white translate-y-0.5 shadow-none'
@@ -248,19 +244,18 @@ export default function Dashboard() {
               <Music size={15} /> Musik & Sambutan
             </button>
 
-              <button
-                onClick={() => setActiveTab('my-profile')}
-                className={`px-3.5 py-2 font-black text-xs uppercase border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-1.5 ${
-                  activeTab === 'my-profile'
-                    ? 'bg-gradient-blue text-white translate-y-0.5 shadow-none'
-                    : 'bg-white text-primary-dark hover:bg-gray-100'
-                }`}
-              >
-                <UserCircle size={15} /> Kelola Profil Saya
-              </button>
-            </>
-          )}
-        </div>
+            <button
+              onClick={() => setActiveTab('my-profile')}
+              className={`px-3.5 py-2 font-black text-xs uppercase border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-1.5 ${
+                activeTab === 'my-profile'
+                  ? 'bg-gradient-blue text-white translate-y-0.5 shadow-none'
+                  : 'bg-white text-primary-dark hover:bg-gray-100'
+              }`}
+            >
+              <UserCircle size={15} /> Kelola Profil Saya
+            </button>
+          </div>
+        )}
 
         {/* TAB CONTENTS (ANIMATED) */}
         <AnimatePresence mode="wait">
@@ -288,6 +283,7 @@ export default function Dashboard() {
                   closeConfirmModal={closeConfirmModal}
                   isAdmin={isAdmin}
                   userId={userId}
+                  onBack={!isAdmin ? () => setActiveTab('welcome') : null}
                 />
               )}
 
@@ -348,19 +344,29 @@ export default function Dashboard() {
                 <p className="text-gray-600 font-medium max-w-lg mx-auto">
                   Anda masuk sebagai <strong>User (Anggota Biasa)</strong>. Saat ini akses Anda terbatas pada fitur publikasi artikel, berita, dan modul. Hubungi Ketua / Admin jika membutuhkan akses pengelolaan data profil atau persetujuan.
                 </p>
-                <div className="pt-6 flex justify-center gap-4">
+                <div className="pt-6 flex flex-wrap justify-center items-stretch gap-4">
                   <Link
                     to="/upload"
-                    className="inline-flex items-center gap-2 bg-gradient-yellow text-primary-dark font-black px-6 py-3 border-2 border-primary-dark shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all uppercase tracking-wider"
+                    className="flex-1 min-w-[220px] max-w-[280px] inline-flex items-center justify-center gap-2 bg-gradient-yellow text-primary-dark font-black px-5 py-3.5 border-2 border-primary-dark shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase tracking-wider text-xs sm:text-sm text-center"
                   >
-                    <UploadCloud size={20} /> Mulai Upload Berita
+                    <UploadCloud size={18} /> Mulai Upload Berita
                   </Link>
+
                   {userPermissions?.can_edit_profile && (
                     <button
                       onClick={() => setActiveTab('my-profile')}
-                      className="inline-flex items-center gap-2 bg-gradient-blue text-white font-black px-6 py-3 border-2 border-primary-dark shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all uppercase tracking-wider"
+                      className="flex-1 min-w-[220px] max-w-[280px] inline-flex items-center justify-center gap-2 bg-gradient-blue text-white font-black px-5 py-3.5 border-2 border-primary-dark shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase tracking-wider text-xs sm:text-sm text-center"
                     >
-                      <Compass size={20} /> Kelola Profil Saya
+                      <Compass size={18} /> Kelola Profil Saya
+                    </button>
+                  )}
+
+                  {(userPermissions?.can_upload_berita || userPermissions?.can_upload_publikasi || userPermissions?.can_upload_modul) && (
+                    <button
+                      onClick={() => setActiveTab('articles')}
+                      className="flex-1 min-w-[220px] max-w-[280px] inline-flex items-center justify-center gap-2 bg-white hover:bg-yellow-50 text-primary-dark font-black px-5 py-3.5 border-2 border-primary-dark shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase tracking-wider text-xs sm:text-sm text-center"
+                    >
+                      <BookOpen size={18} /> Kelola Berita, Publikasi & Modul
                     </button>
                   )}
                 </div>
@@ -368,7 +374,17 @@ export default function Dashboard() {
             )}
 
             {activeTab === 'my-profile' && (isAdmin || userPermissions?.can_edit_profile) && (
-              <MyProfileTab token={localStorage.getItem('token')} />
+              <div className="space-y-4">
+                {!isAdmin && (
+                  <button
+                    onClick={() => setActiveTab('welcome')}
+                    className="inline-flex items-center gap-1.5 bg-white text-primary-dark font-black text-xs uppercase px-4 py-2 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-gray-100 transition-all mb-2"
+                  >
+                    <ArrowLeft size={13} /> Kembali ke Menu Dashboard
+                  </button>
+                )}
+                <MyProfileTab token={localStorage.getItem('token')} />
+              </div>
             )}
           </motion.div>
 

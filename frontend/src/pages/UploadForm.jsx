@@ -22,8 +22,7 @@ import {
   Hash, 
   Sparkles 
 } from 'lucide-react';
-import ReactQuill from 'react-quill-new';
-import 'react-quill-new/dist/quill.snow.css';
+import RichTextEditor from '../components/RichTextEditor';
 import CustomDatePicker from '../components/CustomDatePicker';
 import { convertHeicToJpgIfNeeded } from '../utils/heicHelper';
 
@@ -215,16 +214,6 @@ export default function UploadForm() {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const modules = {
-    toolbar: [
-      [{ 'header': [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      ['link'],
-      ['clean']
-    ]
   };
 
   const isAcademic = formData.category === 'publikasi';
@@ -528,22 +517,18 @@ export default function UploadForm() {
             </div>
           )}
 
-          {/* ISI KONTEN LENGKAP (QUILL) */}
+          {/* ISI KONTEN LENGKAP (RICH TEXT EDITOR) */}
           <div>
             <label className="block text-primary-dark font-black text-xs uppercase tracking-wider mb-2 flex items-center justify-between">
               <span>{isAcademic ? 'Isi Naskah / Pembahasan Ilmiah Lengkap *' : 'Uraian Konten & Pembahasan *'}</span>
-              <span className="text-[10px] text-gray-500 font-bold">Mendukung format Rich Text Editor</span>
+              <span className="text-[10px] text-gray-500 font-bold">Mendukung format Rich Text Editor canggih</span>
             </label>
-            <div className="border-2 border-primary-dark bg-white">
-              <ReactQuill
-                theme="snow"
-                value={formData.content}
-                onChange={handleQuillChange}
-                modules={modules}
-                placeholder="Tuliskan naskah lengkap, dokumentasi terperinci, atau panduan modul di sini..."
-                className="min-h-[220px]"
-              />
-            </div>
+            <RichTextEditor
+              value={formData.content}
+              onChange={handleQuillChange}
+              placeholder="Tuliskan naskah lengkap, dokumentasi terperinci, atau panduan modul di sini..."
+              minHeight="240px"
+            />
           </div>
 
           {/* FILE UPLOAD SECTION */}

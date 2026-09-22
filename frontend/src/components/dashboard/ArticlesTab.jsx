@@ -12,12 +12,12 @@ import {
   FileText, 
   Save, 
   Download, 
-  Trash2 
+  Trash2,
+  ArrowLeft
 } from 'lucide-react';
-import ReactQuill from 'react-quill-new';
+import RichTextEditor from '../RichTextEditor';
 import CustomSelect from '../CustomSelect';
 import CustomDatePicker from '../CustomDatePicker';
-import 'react-quill-new/dist/quill.snow.css';
 import { convertHeicToJpgIfNeeded } from '../../utils/heicHelper';
 
 import MediaPickerModal from './modals/MediaPickerModal';
@@ -26,7 +26,8 @@ export default function ArticlesTab({
   setConfirmModal,
   closeConfirmModal,
   isAdmin,
-  userId
+  userId,
+  onBack
 }) {
   const [articlesList, setArticlesList] = useState([]);
   const [loadingArticles, setLoadingArticles] = useState(false);
@@ -62,14 +63,25 @@ export default function ArticlesTab({
   const fetchArticlesAdmin = async () => {
     setLoadingArticles(true);
     try {
-      let url = '/api/articles';
+      const params = new URLSearchParams();
       if (articleCategoryFilter !== 'all') {
-        url += `?category=${articleCategoryFilter}`;
+        params.append('category', articleCategoryFilter);
       }
+      if (!isAdmin && userId) {
+        params.append('author_id', userId);
+      }
+      const qs = params.toString();
+      const url = `/api/articles${qs ? `?${qs}` : ''}`;
+
       const response = await axios.get(url);
-      setArticlesList(Array.isArray(response.data) ? response.data : []);
+      let data = Array.isArray(response.data) ? response.data : [];
+      // Safety filter on frontend for non-admin
+      if (!isAdmin && userId) {
+        data = data.filter(item => Number(item.author_id) === Number(userId));
+      }
+      setArticlesList(data);
     } catch (error) {
-      console.error('Error fetching articles for admin:', error);
+      console.error('Error fetching articles:', error);
     } finally {
       setLoadingArticles(false);
     }
@@ -77,7 +89,7 @@ export default function ArticlesTab({
 
   useEffect(() => {
     fetchArticlesAdmin();
-  }, [articleCategoryFilter]);
+  }, [articleCategoryFilter, isAdmin, userId]);
 
   const handleStartEditArticle = (article) => {
     setEditingArticle(article);
@@ -213,14 +225,24 @@ export default function ArticlesTab({
       <div className="border-b-2 border-primary-dark pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-black text-primary-dark uppercase flex items-center gap-2">
-            <BookOpen size={22} /> Kelola Berita, Publikasi & Modul
+            <BookOpen size={22} /> {isAdmin ? 'Kelola Semua Berita, Publikasi & Modul' : 'Kelola Konten Unggahan Saya'}
           </h2>
           <p className="text-xs text-gray-600 font-medium">
-            Pengubahan (edit) dan penghapusan konten hanya dapat dilakukan oleh Admin atau Penulis asli.
+            {isAdmin 
+              ? 'Daftar semua publikasi di portal web. Admin dapat mengubah atau menghapus konten apa pun.'
+              : 'Daftar artikel, berita, atau modul yang telah Anda unggah ke website.'}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="inline-flex items-center gap-1.5 bg-white text-primary-dark font-black text-xs uppercase px-3 py-2 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-gray-100 transition-all"
+            >
+              <ArrowLeft size={13} /> Menu Utama
+            </button>
+          )}
           <Link
             to="/upload"
             className="bg-gradient-yellow text-primary-dark font-black text-xs uppercase px-3 py-2 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all flex items-center gap-1"
@@ -230,9 +252,9 @@ export default function ArticlesTab({
           <Link
             to="/berita"
             target="_blank"
-            className="text-xs font-bold text-primary-dark underline hover:text-secondary-dark"
+            className="text-xs font-bold text-primary-dark underline hover:text-secondary-dark hidden sm:inline"
           >
-            Lihat Berita Publik ↗
+            Buka Portal ↗
           </Link>
         </div>
       </div>
@@ -509,16 +531,14 @@ export default function ArticlesTab({
 
           <div>
             <label className="block text-primary-dark font-bold text-xs uppercase mb-1">
-              Isi Konten *
+              Isi Konten & Pembahasan *
             </label>
-            <div className="border-2 border-primary-dark bg-white">
-              <ReactQuill
-                theme="snow"
-                value={editArticleForm.content}
-                onChange={(val) => setEditArticleForm({ ...editArticleForm, content: val })}
-                className="min-h-[180px]"
-              />
-            </div>
+            <RichTextEditor
+              value={editArticleForm.content}
+              onChange={(val) => setEditArticleForm({ ...editArticleForm, content: val })}
+              placeholder="Edit uraian konten dan pembahasan di sini..."
+              minHeight="220px"
+            />
           </div>
 
           <div className="flex gap-2">
@@ -561,7 +581,25 @@ export default function ArticlesTab({
       {loadingArticles ? (
         <p className="text-xs font-bold text-gray-500">Memuat data artikel...</p>
       ) : articlesList.length === 0 ? (
-        <p className="text-xs font-medium text-gray-500 italic">Belum ada artikel pada kategori ini.</p>
+        !isAdmin ? (
+          <div className="bg-gray-50 border-2 border-dashed border-gray-300 p-8 text-center space-y-3">
+            <BookOpen size={40} className="mx-auto text-gray-400" />
+            <h4 className="text-sm font-black uppercase text-primary-dark">Belum Ada Konten yang Anda Unggah</h4>
+            <p className="text-xs text-gray-600 max-w-md mx-auto font-medium leading-relaxed">
+              Anda belum pernah mengunggah artikel, berita, atau modul apa pun ke website. Konten yang Anda unggah nantinya akan muncul di sini agar dapat Anda perbarui (edit) atau hapus sewaktu-waktu.
+            </p>
+            <div className="pt-2">
+              <Link
+                to="/upload"
+                className="inline-flex items-center gap-2 bg-gradient-yellow text-primary-dark font-black text-xs uppercase px-5 py-2.5 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all"
+              >
+                <PlusCircle size={15} /> Mulai Upload Sekarang
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <p className="text-xs font-medium text-gray-500 italic">Belum ada artikel pada kategori ini.</p>
+        )
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
