@@ -198,7 +198,7 @@ export default function Profile() {
                     </div>
                   )}
 
-                  <Link to={`/portofolio/${member.id}`} className="mt-auto pt-4 w-full">
+                  <Link to={`/portofolio/${member.slug || member.id}`} className="mt-auto pt-4 w-full">
                     <button className="w-full bg-white border-2 border-primary-dark text-primary-dark font-black text-[10px] uppercase py-2 hover:bg-primary-dark hover:text-white transition-colors">
                       Lihat Profil Lengkap ↗
                     </button>

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/db');
 const { verifyToken, isAdmin } = require('../middleware/auth');
-const { upload, registerMediaFile } = require('../utils/fileHelper');
+const { upload, registerMediaFile, generateSlug } = require('../utils/fileHelper');
 
 // API: Get Profile Info (Public)
 router.get('/profile-info', async (req, res) => {
@@ -134,9 +134,22 @@ router.post('/team', verifyToken, isAdmin, upload.single('image'), async (req, r
       await registerMediaFile(req.file, req.username || 'Admin', 'team');
     }
 
+    let slug = generateSlug(name);
+    let isUnique = false;
+    let counter = 1;
+    while (!isUnique) {
+      const [existing] = await pool.query('SELECT id FROM team_members WHERE slug = ?', [slug]);
+      if (existing.length === 0) {
+        isUnique = true;
+      } else {
+        slug = `${generateSlug(name)}-${counter}`;
+        counter++;
+      }
+    }
+
     const [result] = await pool.query(
-      'INSERT INTO team_members (user_id, name, role, major, image_url, display_order) VALUES (?, ?, ?, ?, ?, ?)',
-      [user_id, name, role, major || '', imageUrl, orderNum]
+      'INSERT INTO team_members (user_id, name, slug, role, major, image_url, display_order) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [user_id, name, slug, role, major || '', imageUrl, orderNum]
     );
 
     res.status(201).json({
@@ -173,7 +186,7 @@ router.post('/team/me/edit', verifyToken, upload.single('image'), async (req, re
   try {
     // Check permission
     const [userRows] = await pool.query('SELECT can_edit_profile FROM users WHERE id = ?', [req.userId]);
-    if (userRows.length === 0 || !userRows[0].can_edit_profile) {
+    if (userRows.length === 0 || (!userRows[0].can_edit_profile && req.userRole !== 'admin')) {
       return res.status(403).json({ error: 'Anda tidak memiliki izin untuk mengedit profil tim.' });
     }
 
@@ -196,8 +209,21 @@ router.post('/team/me/edit', verifyToken, upload.single('image'), async (req, re
 
     const teamId = teamRows[0].id;
 
+    let slug = generateSlug(name);
+    let isUnique = false;
+    let counter = 1;
+    while (!isUnique) {
+      const [existing] = await pool.query('SELECT id FROM team_members WHERE slug = ? AND id != ?', [slug, teamId]);
+      if (existing.length === 0) {
+        isUnique = true;
+      } else {
+        slug = `${generateSlug(name)}-${counter}`;
+        counter++;
+      }
+    }
+
     const queryParams = [
-      name, role, major || '', 
+      name, slug, role, major || '', 
       greeting || '', about_me || '', 
       portfolio_projects || '[]', skills_experience || '[]', testimonials || '[]',
       contact_email || '', contact_phone || '', social_links || '[]'
@@ -208,7 +234,7 @@ router.post('/team/me/edit', verifyToken, upload.single('image'), async (req, re
       await registerMediaFile(req.file, req.username || 'User', 'team');
       await pool.query(
         `UPDATE team_members SET 
-          name = ?, role = ?, major = ?, 
+          name = ?, slug = ?, role = ?, major = ?, 
           greeting = ?, about_me = ?, 
           portfolio_projects = ?, skills_experience = ?, testimonials = ?,
           contact_email = ?, contact_phone = ?, social_links = ?,
@@ -218,7 +244,7 @@ router.post('/team/me/edit', verifyToken, upload.single('image'), async (req, re
     } else {
       await pool.query(
         `UPDATE team_members SET 
-          name = ?, role = ?, major = ?, 
+          name = ?, slug = ?, role = ?, major = ?, 
           greeting = ?, about_me = ?, 
           portfolio_projects = ?, skills_experience = ?, testimonials = ?,
           contact_email = ?, contact_phone = ?, social_links = ?
@@ -246,17 +272,30 @@ router.post('/team/:id/edit', verifyToken, isAdmin, upload.single('image'), asyn
 
     const orderNum = parseInt(display_order) || 0;
 
+    let slug = generateSlug(name);
+    let isUnique = false;
+    let counter = 1;
+    while (!isUnique) {
+      const [existing] = await pool.query('SELECT id FROM team_members WHERE slug = ? AND id != ?', [slug, id]);
+      if (existing.length === 0) {
+        isUnique = true;
+      } else {
+        slug = `${generateSlug(name)}-${counter}`;
+        counter++;
+      }
+    }
+
     if (req.file) {
       const imageUrl = `/uploads/${req.file.filename}`;
       await registerMediaFile(req.file, req.username || 'Admin', 'team');
       await pool.query(
-        'UPDATE team_members SET user_id = ?, name = ?, role = ?, major = ?, image_url = ?, display_order = ? WHERE id = ?',
-        [user_id, name, role, major || '', imageUrl, orderNum, id]
+        'UPDATE team_members SET user_id = ?, name = ?, slug = ?, role = ?, major = ?, image_url = ?, display_order = ? WHERE id = ?',
+        [user_id, name, slug, role, major || '', imageUrl, orderNum, id]
       );
     } else {
       await pool.query(
-        'UPDATE team_members SET user_id = ?, name = ?, role = ?, major = ?, display_order = ? WHERE id = ?',
-        [user_id, name, role, major || '', orderNum, id]
+        'UPDATE team_members SET user_id = ?, name = ?, slug = ?, role = ?, major = ?, display_order = ? WHERE id = ?',
+        [user_id, name, slug, role, major || '', orderNum, id]
       );
     }
 
@@ -281,10 +320,10 @@ router.post('/team/:id/delete', verifyToken, isAdmin, async (req, res) => {
 
 
 // API: Get Team Member Portfolio (Public)
-router.get('/team/:id/portfolio', async (req, res) => {
+router.get('/team/:slug/portfolio', async (req, res) => {
   try {
-    const { id } = req.params;
-    const [rows] = await pool.query('SELECT * FROM team_members WHERE id = ?', [id]);
+    const { slug } = req.params;
+    const [rows] = await pool.query('SELECT * FROM team_members WHERE slug = ? OR id = ?', [slug, slug]);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Profil anggota tidak ditemukan.' });
     }

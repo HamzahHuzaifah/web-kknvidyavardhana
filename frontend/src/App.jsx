@@ -48,7 +48,7 @@ function AnimatedRoutes() {
         <Route path="/" element={<AnimatedPage><Home /></AnimatedPage>} />
         <Route path="/profile" element={<AnimatedPage><Profile /></AnimatedPage>} />
         <Route path="/media" element={<AnimatedPage><Media /></AnimatedPage>} />
-        <Route path="/portofolio/:id" element={<PortfolioDetail />} />
+        <Route path="/portofolio/:slug" element={<PortfolioDetail />} />
         <Route path="/berita" element={<AnimatedPage><ArticlesPage /></AnimatedPage>} />
         <Route path="/berita/:slug" element={<AnimatedPage><ArticleDetailPage /></AnimatedPage>} />
         <Route path="/login" element={<AnimatedPage><Login /></AnimatedPage>} />

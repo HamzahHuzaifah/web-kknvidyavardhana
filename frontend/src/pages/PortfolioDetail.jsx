@@ -12,17 +12,16 @@ import {
   ExternalLink,
   ChevronDown
 } from 'lucide-react';
-import Navbar from '../components/Navbar';
 
 export default function PortfolioDetail() {
-  const { id } = useParams();
+  const { slug } = useParams();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchProfile();
     window.scrollTo(0, 0);
-  }, [id]);
+  }, [slug]);
 
   const safeJsonParse = (str, fallback) => {
     if (!str) return fallback;
@@ -31,7 +30,7 @@ export default function PortfolioDetail() {
 
   const fetchProfile = async () => {
     try {
-      const response = await axios.get(`/api/team/${id}/portfolio`);
+      const response = await axios.get(`/api/team/${slug}/portfolio`);
       const data = response.data;
       
       data.social_links = safeJsonParse(data.social_links, {});
@@ -52,7 +51,6 @@ export default function PortfolioDetail() {
   if (!profile) {
     return (
       <div className="min-h-screen bg-[#FFFDF5] font-sans flex flex-col">
-        <Navbar />
         <div className="flex-grow flex items-center justify-center">
           <div className="text-center space-y-4">
             <h1 className="text-3xl font-black text-primary-dark">PROFIL TIDAK DITEMUKAN</h1>
@@ -79,7 +77,6 @@ export default function PortfolioDetail() {
 
   return (
     <div className="min-h-screen bg-[#FFFDF5] font-sans flex flex-col">
-      <Navbar />
 
       <main className="flex-grow pt-24 pb-20">
         <div className="container mx-auto px-4 max-w-6xl">
@@ -175,6 +172,11 @@ export default function PortfolioDetail() {
                           <h4 className="font-black text-primary-dark text-base uppercase leading-tight mb-1">{exp.role}</h4>
                           {exp.company && <p className="font-bold text-blue-600 text-sm">{exp.company}</p>}
                           {exp.year && <p className="text-xs font-bold text-gray-500 mt-1 bg-white inline-block px-2 py-0.5 border-2 border-gray-200">{exp.year}</p>}
+                          {exp.file_url && (
+                            <a href={exp.file_url} target="_blank" rel="noopener noreferrer" className="block mt-2 text-blue-600 font-bold text-[10px] uppercase hover:underline flex items-center gap-1">
+                              <ExternalLink size={12} /> Lihat Sertifikat/Dokumen
+                            </a>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -199,6 +201,13 @@ export default function PortfolioDetail() {
                               {testi.role && <p className="text-[10px] font-bold text-gray-500">{testi.role}</p>}
                             </div>
                           </div>
+                          {testi.file_url && (
+                            <div className="mt-3 pt-3 border-t border-gray-100">
+                              <a href={testi.file_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold text-[10px] uppercase hover:underline inline-flex items-center gap-1">
+                                <ExternalLink size={12} /> Lihat Lampiran
+                              </a>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -233,6 +242,13 @@ export default function PortfolioDetail() {
                           <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">
                             {proj.description}
                           </p>
+                          {proj.file_url && (
+                            <div className="mt-3">
+                              <a href={proj.file_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-blue-600 font-bold text-xs uppercase hover:underline">
+                                <ExternalLink size={14} /> Lihat Dokumen Lampiran
+                              </a>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}

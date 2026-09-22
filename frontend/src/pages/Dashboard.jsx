@@ -25,6 +25,7 @@ import EditAccountModal from '../components/dashboard/modals/EditAccountModal';
 import MyProfileTab from '../components/dashboard/MyProfileTab';
 import ErrorBoundary from '../components/ErrorBoundary';
 import axios from 'axios';
+import { UserCircle } from 'lucide-react';
 
 export default function Dashboard() {
   const username = localStorage.getItem('username') || 'Pengguna';
@@ -217,6 +218,17 @@ export default function Dashboard() {
             >
               <PanelBottom size={15} /> Kelola Footer
             </button>
+
+            <button
+              onClick={() => setActiveTab('my-profile')}
+              className={`px-3.5 py-2 font-black text-xs uppercase border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-1.5 ${
+                activeTab === 'my-profile'
+                  ? 'bg-gradient-blue text-white translate-y-0.5 shadow-none'
+                  : 'bg-white text-primary-dark hover:bg-gray-100'
+              }`}
+            >
+              <UserCircle size={15} /> Kelola Profil Saya
+            </button>
           </div>
         )}
 
@@ -317,10 +329,11 @@ export default function Dashboard() {
               </div>
             )}
 
-            {!isAdmin && activeTab === 'my-profile' && userPermissions?.can_edit_profile && (
+            {activeTab === 'my-profile' && (isAdmin || userPermissions?.can_edit_profile) && (
               <MyProfileTab token={localStorage.getItem('token')} />
             )}
           </motion.div>
+
         </AnimatePresence>
       </div>
 

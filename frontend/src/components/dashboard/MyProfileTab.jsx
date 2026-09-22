@@ -126,6 +126,36 @@ export default function MyProfileTab({ token }) {
     });
   };
 
+  const handleFileUpload = async (e, field, index) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Ukuran file melebihi batas maksimal 10MB.');
+      e.target.value = null;
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('files', file);
+    formData.append('source', 'team_portfolio');
+
+    try {
+      const response = await axios.post('/api/files/upload', formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      const uploadedUrl = response.data.files[0]?.file_url;
+      if (uploadedUrl) {
+        updateArrayItem(field, index, 'file_url', uploadedUrl);
+      }
+    } catch (error) {
+      alert('Gagal mengunggah file.');
+    }
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -334,10 +364,15 @@ export default function MyProfileTab({ token }) {
                     <textarea rows="2" value={proj.description} onChange={(e) => updateArrayItem('portfolio_projects', idx, 'description', e.target.value)}
                       className="w-full border-2 border-gray-300 p-2 text-xs outline-none focus:border-primary-dark" />
                   </div>
+                  <div className="md:col-span-2 border-t border-gray-200 pt-2 mt-2">
+                    <label className="block text-[10px] font-bold uppercase mb-1">Unggah Dokumen / Gambar (Maks 10MB)</label>
+                    <input type="file" onChange={(e) => handleFileUpload(e, 'portfolio_projects', idx)} className="w-full text-xs" />
+                    {proj.file_url && <a href={proj.file_url} target="_blank" rel="noreferrer" className="text-blue-500 font-bold text-[10px] underline mt-1 block">Lihat File Tersimpan</a>}
+                  </div>
                 </div>
               </div>
             ))}
-            <button onClick={() => addArrayItem('portfolio_projects', { title: '', description: '', link: '' })}
+            <button onClick={() => addArrayItem('portfolio_projects', { title: '', description: '', link: '', file_url: '' })}
               className="px-4 py-2 border-2 border-dashed border-primary-dark text-primary-dark font-bold text-xs uppercase flex items-center gap-2 hover:bg-gray-50 w-full justify-center">
               <Plus size={16} /> Tambah Proyek / Karya
             </button>
@@ -368,10 +403,15 @@ export default function MyProfileTab({ token }) {
                     <input type="text" value={exp.year} onChange={(e) => updateArrayItem('skills_experience', idx, 'year', e.target.value)}
                       className="w-full border-2 border-gray-300 px-2 py-1 text-xs outline-none focus:border-primary-dark" />
                   </div>
+                  <div className="md:col-span-2 border-t border-gray-200 pt-2 mt-2">
+                    <label className="block text-[10px] font-bold uppercase mb-1">Unggah Sertifikat / Dokumen (Maks 10MB)</label>
+                    <input type="file" onChange={(e) => handleFileUpload(e, 'skills_experience', idx)} className="w-full text-xs" />
+                    {exp.file_url && <a href={exp.file_url} target="_blank" rel="noreferrer" className="text-blue-500 font-bold text-[10px] underline mt-1 block">Lihat Dokumen Tersimpan</a>}
+                  </div>
                 </div>
               </div>
             ))}
-            <button onClick={() => addArrayItem('skills_experience', { role: '', company: '', year: '' })}
+            <button onClick={() => addArrayItem('skills_experience', { role: '', company: '', year: '', file_url: '' })}
               className="px-4 py-2 border-2 border-dashed border-primary-dark text-primary-dark font-bold text-xs uppercase flex items-center gap-2 hover:bg-gray-50 w-full justify-center">
               <Plus size={16} /> Tambah Pengalaman / Keahlian
             </button>
@@ -404,10 +444,15 @@ export default function MyProfileTab({ token }) {
                     <textarea rows="3" value={testi.content} onChange={(e) => updateArrayItem('testimonials', idx, 'content', e.target.value)}
                       className="w-full border-2 border-gray-300 p-2 text-xs outline-none focus:border-primary-dark" />
                   </div>
+                  <div className="border-t border-gray-200 pt-2 mt-2">
+                    <label className="block text-[10px] font-bold uppercase mb-1">Unggah Lampiran (Maks 10MB)</label>
+                    <input type="file" onChange={(e) => handleFileUpload(e, 'testimonials', idx)} className="w-full text-xs" />
+                    {testi.file_url && <a href={testi.file_url} target="_blank" rel="noreferrer" className="text-blue-500 font-bold text-[10px] underline mt-1 block">Lihat Lampiran Tersimpan</a>}
+                  </div>
                 </div>
               </div>
             ))}
-            <button onClick={() => addArrayItem('testimonials', { name: '', role: '', content: '' })}
+            <button onClick={() => addArrayItem('testimonials', { name: '', role: '', content: '', file_url: '' })}
               className="px-4 py-2 border-2 border-dashed border-primary-dark text-primary-dark font-bold text-xs uppercase flex items-center gap-2 hover:bg-gray-50 w-full justify-center">
               <Plus size={16} /> Tambah Testimoni
             </button>

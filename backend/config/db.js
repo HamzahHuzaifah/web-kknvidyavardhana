@@ -168,6 +168,7 @@ const initDB = async (syncUploadsCallback) => {
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT UNIQUE NULL,
         name VARCHAR(255) NOT NULL,
+        slug VARCHAR(255) UNIQUE,
         role VARCHAR(100) NOT NULL,
         major VARCHAR(100),
         image_url VARCHAR(255),
@@ -191,6 +192,9 @@ const initDB = async (syncUploadsCallback) => {
     if (!tmColNames.includes('user_id')) {
       await pool.query("ALTER TABLE team_members ADD COLUMN user_id INT UNIQUE NULL");
       await pool.query("ALTER TABLE team_members ADD CONSTRAINT fk_team_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL");
+    }
+    if (!tmColNames.includes('slug')) {
+      await pool.query("ALTER TABLE team_members ADD COLUMN slug VARCHAR(255) UNIQUE NULL");
     }
     
     // Ensure new portfolio columns exist
@@ -224,9 +228,10 @@ const initDB = async (syncUploadsCallback) => {
         ['Nabila Putri', 'Divisi Kesehatan & Lingkungan', 'Kesehatan Masyarakat', 8]
       ];
       for (const [name, role, major, order] of defaultTeam) {
+        const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
         await pool.query(
-          'INSERT INTO team_members (name, role, major, display_order) VALUES (?, ?, ?, ?)',
-          [name, role, major, order]
+          'INSERT INTO team_members (name, slug, role, major, display_order) VALUES (?, ?, ?, ?, ?)',
+          [name, slug, role, major, order]
         );
       }
     }
