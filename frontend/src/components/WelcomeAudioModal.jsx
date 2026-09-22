@@ -31,7 +31,7 @@ export default function WelcomeAudioModal() {
 
   const buttonLabel = settings.button_text && settings.button_text !== 'Buka Website & Putar Musik 🎵'
     ? settings.button_text
-    : 'Mulai Eksplorasi Website 🎵';
+    : 'Mulai Eksplorasi Website';
 
   return (
     <div 

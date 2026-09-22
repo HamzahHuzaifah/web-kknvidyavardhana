@@ -117,10 +117,10 @@ export default function Navbar() {
                 <img
                   src={`${logoUrl}`}
                   alt="Logo"
-                  className="w-8 h-8 object-contain bg-white border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] p-0.5"
+                  className="w-13 h-13 object-contain bg-white border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] p-0.5"
                 />
               ) : (
-                <div className="w-8 h-8 bg-gradient-yellow text-primary-dark font-bold flex items-center justify-center border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
+                <div className="w-13 h-13 bg-gradient-yellow text-primary-dark font-bold flex items-center justify-center border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]">
                   K
                 </div>
               )}
