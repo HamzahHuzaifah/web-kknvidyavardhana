@@ -2,19 +2,16 @@
 # =============================================================
 # SCRIPT DEPLOY OTOMATIS - KKN VIDYA VARDHANA
 # Cara pakai: bash restart-server.sh
-#
-# Catatan: Frontend (dist/) sudah di-build di lokal dan disimpan
-# di GitHub. Script ini HANYA perlu menarik kode & deploy ke server.
 # =============================================================
 
 # Mengaktifkan Node.js Virtual Environment cPanel
-source /home/vidt4129/nodevenv/repositories/web-kknvidyavardhana/backend/22/bin/activate
+source /home/vidt4129/nodevenv/repositories/web-kknvidyavadhana/backend/22/bin/activate 2>/dev/null || true
 
 echo "========================================================"
 echo "🚀 MEMULAI UPDATE & RESTART KKN VIDYA VARDHANA..."
 echo "========================================================"
 
-# 1. Menarik kode terbaru dari GitHub (paksa ikut GitHub)
+# 1. Menarik kode terbaru dari GitHub (paksa sinkron dengan GitHub)
 echo ""
 echo "[1/4] ⬇️  Menarik kode terbaru dari GitHub..."
 git fetch origin
@@ -25,36 +22,58 @@ echo "✅ Kode berhasil diperbarui dari GitHub."
 echo ""
 echo "[2/4] 📦 Menginstall/Update library Backend..."
 cd backend
-npm install
+npm install --production
 cd ..
 echo "✅ Backend dependencies selesai."
 
-# 3. Deploy Frontend ke public_html (dari dist/ yang sudah ada di repo)
+# 3. Deploy Frontend ke public_html (dari dist/ yang sudah di-build di repo)
 echo ""
 echo "[3/4] 🚀 Menyalin Frontend ke public_html..."
+mkdir -p /home/vidt4129/public_html/assets
+# Bersihkan asset JS/CSS lama agar browser tidak memuat bundle lawas
+rm -f /home/vidt4129/public_html/assets/index-*.js /home/vidt4129/public_html/assets/index-*.css 2>/dev/null || true
+# Salin seluruh isi dist termasuk .htaccess
 cp -r frontend/dist/. /home/vidt4129/public_html/
+chmod 644 /home/vidt4129/public_html/index.html 2>/dev/null || true
+chmod 644 /home/vidt4129/public_html/.htaccess 2>/dev/null || true
 echo "✅ Frontend berhasil di-deploy ke public_html!"
 
-# 4. Restart Backend Node.js
+# 4. Restart Backend Node.js (Anti-Zombie Kill & Start)
 echo ""
-echo "[4/4] 🔄 Merestart Server Node.js..."
+echo "[4/4] 🔄 Merestart Server Node.js pada port 5000..."
 cd backend
 
-# Matikan proses node lama
-pkill -f "node server.js" || true
+# Matikan proses node lama secara tuntas (Anti-Zombie)
+fuser -k 5000/tcp 2>/dev/null || true
+pkill -9 -f "node server.js" 2>/dev/null || true
+pkill -9 -f "server.js" 2>/dev/null || true
+ps ux | grep 'server.js' | grep -v grep | awk '{print $2}' | xargs -r kill -9 2>/dev/null || true
 
-# Tunggu sebentar agar port benar-benar tertutup
+# Tunggu agar port benar-benar tertutup
 sleep 2
 
 # Jalankan proses baru di background
-nohup node server.js > server.log 2>&1 &
+PORT=5000 nohup node server.js > server.log 2>&1 & disown
 cd ..
 
-# Trigger Phusion Passenger restart (jika dipakai)
+# Trigger Phusion Passenger restart (jika dipakai cPanel)
 mkdir -p backend/tmp && touch backend/tmp/restart.txt
+
+# Verifikasi apakah server hidup dan merespons
+sleep 3
+echo ""
+echo "🔍 Mengetes respons API server..."
+if curl -s http://127.0.0.1:5000/api/welcome-audio | grep -q "id"; then
+  echo "✅ Server Node.js AKTIF dan API Musik Sambutan berhasil merespons!"
+elif curl -s http://127.0.0.1:5000/api/articles | grep -q "id"; then
+  echo "✅ Server Node.js AKTIF dan API Artikel berhasil merespons!"
+else
+  echo "⚠️ PERINGATAN: Server belum merespons di port 5000. Menampilkan log server terbaru:"
+  tail -n 25 backend/server.log 2>/dev/null || true
+fi
 
 echo ""
 echo "========================================================"
 echo "✅ SUKSES! Web berhasil di-update dan server di-restart!"
-echo "   Lakukan hard-refresh (Ctrl+F5) di browser Anda."
+echo "   File .htaccess anti-cache sudah dipasang di public_html."
 echo "========================================================"
