@@ -25,6 +25,7 @@ import {
   Building2,
   Filter
 } from 'lucide-react';
+import AbstractGeometric from '../components/AbstractGeometric';
 
 export default function Profile() {
   const [profile, setProfile] = useState(null);
@@ -248,7 +249,8 @@ export default function Profile() {
               
               {/* Left Column (7 cols): Main Story & Philosophy */}
               <div className="lg:col-span-7 bg-white border-4 border-primary-dark shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden">
-                <div className="space-y-6">
+                <AbstractGeometric className="text-primary-dark" opacity="opacity-[0.04]" />
+                <div className="relative z-10 space-y-6">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-gradient-yellow text-primary-dark border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center shrink-0">
                       <Sparkles size={24} />
@@ -278,7 +280,7 @@ export default function Profile() {
                 </div>
 
                 {/* 3 Pillars Highlight at bottom of narrative */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-6 mt-6 border-t-2 border-primary-dark">
+                <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-3 pt-6 mt-6 border-t-2 border-primary-dark">
                   <div className="bg-gray-50 border-2 border-primary-dark p-3">
                     <div className="text-xs font-black text-primary-dark uppercase flex items-center gap-1.5 mb-1">
                       <CheckCircle2 size={14} className="text-accent-dark" /> Edukasi

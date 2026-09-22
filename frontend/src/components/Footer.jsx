@@ -14,6 +14,7 @@ import {
   Video
 } from 'lucide-react';
 import { DEFAULT_FOOTER_DATA } from '../utils/footerDefaults';
+import AbstractGeometric from './AbstractGeometric';
 
 const InstagramIcon = ({ size = 16, className = "" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -103,6 +104,7 @@ export default function Footer() {
   return (
     <footer className="bg-primary-dark text-white border-t-4 border-secondary-dark relative overflow-hidden mt-auto">
       {/* Subtle Background Accent Pattern */}
+      <AbstractGeometric className="text-white" opacity="opacity-[0.03]" />
       <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-yellow opacity-5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
       <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-500 opacity-5 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20"></div>
 

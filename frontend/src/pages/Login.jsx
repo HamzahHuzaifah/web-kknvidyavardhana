@@ -16,6 +16,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
+import AbstractGeometric from '../components/AbstractGeometric';
 
 export default function Login() {
   const [formData, setFormData] = useState({ identifier: '', password: '' });
@@ -87,21 +88,8 @@ export default function Login() {
       {/* ================= LEFT COLUMN: HERO & BRAND VISUAL (FULL-WIDTH 50%) ================= */}
       <div className="lg:col-span-6 xl:col-span-6 bg-gradient-to-br from-[#172554] via-[#1E3A8A] to-[#0f172a] text-white px-6 py-8 sm:px-12 sm:py-14 lg:py-16 xl:py-20 lg:pr-16 xl:pr-20 lg:pl-8 xl:pl-[calc(50vw-640px+32px)] flex flex-col justify-between relative overflow-hidden border-b-4 lg:border-b-0 lg:border-r-4 border-primary-dark">
         
-        {/* Subtle curved background lines (like reference image) */}
-        <div className="absolute inset-0 pointer-events-none opacity-20">
-          <svg 
-            className="w-full h-full object-cover" 
-            viewBox="0 0 500 500" 
-            fill="none" 
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <circle cx="480" cy="180" r="200" stroke="white" strokeWidth="1.5" />
-            <circle cx="480" cy="180" r="260" stroke="white" strokeWidth="1.5" />
-            <circle cx="480" cy="180" r="320" stroke="white" strokeWidth="1.5" />
-            <circle cx="480" cy="180" r="380" stroke="white" strokeWidth="1.5" />
-            <circle cx="480" cy="180" r="440" stroke="white" strokeWidth="1.5" />
-          </svg>
-        </div>
+        {/* Subtle curved background lines */}
+        <AbstractGeometric className="text-white" opacity="opacity-20" />
 
         {/* Top Brand Mark (Asterisk / Star Badge) */}
         <div className="relative z-10 flex items-center justify-between">

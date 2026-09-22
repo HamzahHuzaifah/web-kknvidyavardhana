@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Hero from '../components/Hero';
 import ArticleCard from '../components/ArticleCard';
+import AbstractGeometric from '../components/AbstractGeometric';
 import { 
   Compass, 
   Sparkles, 
@@ -315,6 +316,7 @@ export default function Home() {
               viewport={{ once: false, amount: 0.15 }}
               variants={scrollSpringVariant}
             >
+              <AbstractGeometric className="text-primary-dark" opacity="opacity-[0.04]" />
               <div className="absolute top-0 right-0 w-36 h-36 bg-gradient-yellow rounded-full mix-blend-multiply opacity-40 -mr-12 -mt-12 pointer-events-none"></div>
 
               <div className="relative z-10 space-y-6">

@@ -5,6 +5,7 @@ import api from '../services/api';
 import { Home, User, BookOpen, LayoutDashboard, Image as ImageIcon, LogIn, LogOut, UserCircle, Menu, X } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import EditAccountModal from './dashboard/modals/EditAccountModal';
+import AbstractGeometric from './AbstractGeometric';
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -108,8 +109,9 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-primary-dark text-white sticky top-0 z-50 border-b-4 border-secondary-dark">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className="bg-primary-dark text-white sticky top-0 z-50 border-b-4 border-secondary-dark relative">
+      <AbstractGeometric className="text-white" opacity="opacity-[0.04]" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" onClick={closeMenu} className="flex-shrink-0 flex items-center gap-2">
@@ -185,7 +187,7 @@ export default function Navbar() {
 
       {/* Mobile Navigation Dropdown */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden border-t-2 border-secondary-dark bg-primary-dark">
+        <div className="lg:hidden border-t-2 border-secondary-dark bg-primary-dark relative z-10">
           <div className="px-4 pt-3 pb-5 space-y-2 flex flex-col">
             <Link to="/" onClick={closeMenu} className={getMobileNavLinkClass('/')}>
               <Home size={18} /> Beranda
