@@ -37,6 +37,18 @@ export default function Dashboard() {
   const [editAccountModalUser, setEditAccountModalUser] = useState(null);
   const [userPermissions, setUserPermissions] = useState(null);
   
+  // Extract userId from token
+  const token = localStorage.getItem('token');
+  let userId = null;
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      userId = payload.id;
+    } catch (e) {
+      console.error("Failed to parse token", e);
+    }
+  }
+
   // Custom Pop-up / Confirm Dialog State
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
@@ -140,9 +152,9 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* NAVIGATION TABS FOR ADMIN */}
-        {isAdmin && (
-          <div className="flex flex-wrap gap-2 border-b-2 border-primary-dark pb-2">
+        {/* NAVIGATION TABS FOR ADMIN & USERS WITH PERMISSIONS */}
+        <div className="flex flex-wrap gap-2 border-b-2 border-primary-dark pb-2">
+          {isAdmin && (
             <button
               onClick={() => setActiveTab('users')}
               className={`px-3.5 py-2 font-black text-xs uppercase border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-1.5 ${
@@ -153,7 +165,9 @@ export default function Dashboard() {
             >
               <ShieldCheck size={15} /> ACC & Kelola User
             </button>
+          )}
 
+          {(isAdmin || userPermissions?.can_upload_berita || userPermissions?.can_upload_publikasi || userPermissions?.can_upload_modul) && (
             <button
               onClick={() => setActiveTab('articles')}
               className={`px-3.5 py-2 font-black text-xs uppercase border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-1.5 ${
@@ -164,17 +178,20 @@ export default function Dashboard() {
             >
               <BookOpen size={15} /> Kelola Berita, Publikasi & Modul
             </button>
+          )}
 
-            <button
-              onClick={() => setActiveTab('files')}
-              className={`px-3.5 py-2 font-black text-xs uppercase border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-1.5 ${
-                activeTab === 'files'
-                  ? 'bg-gradient-blue text-white translate-y-0.5 shadow-none'
-                  : 'bg-white text-primary-dark hover:bg-gray-100'
-              }`}
-            >
-              <FolderOpen size={15} /> Manajer Berkas & Media Terpadu
-            </button>
+          {isAdmin && (
+            <>
+              <button
+                onClick={() => setActiveTab('files')}
+                className={`px-3.5 py-2 font-black text-xs uppercase border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-1.5 ${
+                  activeTab === 'files'
+                    ? 'bg-gradient-blue text-white translate-y-0.5 shadow-none'
+                    : 'bg-white text-primary-dark hover:bg-gray-100'
+                }`}
+              >
+                <FolderOpen size={15} /> Manajer Berkas & Media Terpadu
+              </button>
 
             <button
               onClick={() => setActiveTab('social')}
@@ -231,18 +248,19 @@ export default function Dashboard() {
               <Music size={15} /> Musik & Sambutan
             </button>
 
-            <button
-              onClick={() => setActiveTab('my-profile')}
-              className={`px-3.5 py-2 font-black text-xs uppercase border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-1.5 ${
-                activeTab === 'my-profile'
-                  ? 'bg-gradient-blue text-white translate-y-0.5 shadow-none'
-                  : 'bg-white text-primary-dark hover:bg-gray-100'
-              }`}
-            >
-              <UserCircle size={15} /> Kelola Profil Saya
-            </button>
-          </div>
-        )}
+              <button
+                onClick={() => setActiveTab('my-profile')}
+                className={`px-3.5 py-2 font-black text-xs uppercase border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-1.5 ${
+                  activeTab === 'my-profile'
+                    ? 'bg-gradient-blue text-white translate-y-0.5 shadow-none'
+                    : 'bg-white text-primary-dark hover:bg-gray-100'
+                }`}
+              >
+                <UserCircle size={15} /> Kelola Profil Saya
+              </button>
+            </>
+          )}
+        </div>
 
         {/* TAB CONTENTS (ANIMATED) */}
         <AnimatePresence mode="wait">
@@ -264,10 +282,12 @@ export default function Dashboard() {
                 />
               )}
 
-              {isAdmin && activeTab === 'articles' && (
+              {(isAdmin || userPermissions?.can_upload_berita || userPermissions?.can_upload_publikasi || userPermissions?.can_upload_modul) && activeTab === 'articles' && (
                 <ArticlesTab 
                   setConfirmModal={setConfirmModal}
                   closeConfirmModal={closeConfirmModal}
+                  isAdmin={isAdmin}
+                  userId={userId}
                 />
               )}
 

@@ -24,7 +24,9 @@ import MediaPickerModal from './modals/MediaPickerModal';
 
 export default function ArticlesTab({
   setConfirmModal,
-  closeConfirmModal
+  closeConfirmModal,
+  isAdmin,
+  userId
 }) {
   const [articlesList, setArticlesList] = useState([]);
   const [loadingArticles, setLoadingArticles] = useState(false);
@@ -164,7 +166,7 @@ export default function ArticlesTab({
         }
       });
 
-      setArticleActionMsg({ type: 'success', message: 'Konten berhasil diperbarui oleh Admin!' });
+      setArticleActionMsg({ type: 'success', message: 'Konten berhasil diperbarui!' });
       handleCancelEditArticle();
       fetchArticlesAdmin();
     } catch (error) {
@@ -193,7 +195,7 @@ export default function ArticlesTab({
           await axios.post(`/api/articles/${id}/delete`, {}, {
             headers: { Authorization: `Bearer ${token}` }
           });
-          setArticleActionMsg({ type: 'success', message: 'Konten berhasil dihapus oleh Admin.' });
+          setArticleActionMsg({ type: 'success', message: 'Konten berhasil dihapus.' });
           fetchArticlesAdmin();
         } catch (error) {
           setArticleActionMsg({
@@ -214,7 +216,7 @@ export default function ArticlesTab({
             <BookOpen size={22} /> Kelola Berita, Publikasi & Modul
           </h2>
           <p className="text-xs text-gray-600 font-medium">
-            Pengubahan (edit) dan penghapusan konten hanya dapat dilakukan oleh Admin.
+            Pengubahan (edit) dan penghapusan konten hanya dapat dilakukan oleh Admin atau Penulis asli.
           </p>
         </div>
 
@@ -570,7 +572,7 @@ export default function ArticlesTab({
                 <th className="p-2.5 border-2 border-primary-dark">Penulis</th>
                 <th className="p-2.5 border-2 border-primary-dark">Waktu</th>
                 <th className="p-2.5 border-2 border-primary-dark text-center">Berkas</th>
-                <th className="p-2.5 border-2 border-primary-dark text-center">Aksi (Admin)</th>
+                <th className="p-2.5 border-2 border-primary-dark text-center">Aksi</th>
               </tr>
             </thead>
             <tbody className="text-xs">
@@ -611,22 +613,24 @@ export default function ArticlesTab({
                     )}
                   </td>
                   <td className="p-2.5 border-2 border-primary-dark text-center">
-                    <div className="flex items-center justify-center gap-1.5">
-                      <button
-                        onClick={() => handleStartEditArticle(item)}
-                        className="p-1.5 bg-yellow-400 hover:bg-yellow-500 border border-primary-dark text-primary-dark"
-                        title="Edit Konten (Hanya Admin)"
-                      >
-                        <Pencil size={12} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteArticle(item.id)}
-                        className="p-1.5 bg-red-600 hover:bg-red-700 text-white border border-primary-dark"
-                        title="Hapus Konten (Hanya Admin)"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
+                    {(isAdmin || item.author_id === userId) && (
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          onClick={() => handleStartEditArticle(item)}
+                          className="p-1.5 bg-yellow-400 hover:bg-yellow-500 border border-primary-dark text-primary-dark"
+                          title="Edit Konten"
+                        >
+                          <Pencil size={12} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteArticle(item.id)}
+                          className="p-1.5 bg-red-600 hover:bg-red-700 text-white border border-primary-dark"
+                          title="Hapus Konten"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}

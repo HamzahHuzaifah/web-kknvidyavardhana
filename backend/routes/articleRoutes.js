@@ -161,10 +161,18 @@ router.post('/articles', verifyToken, uploadFields, async (req, res) => {
   }
 });
 
-// API: Update article (Admin Only)
-router.post('/articles/:id/edit', verifyToken, isAdmin, uploadFields, async (req, res) => {
+// API: Update article (Admin or Author)
+router.post('/articles/:id/edit', verifyToken, uploadFields, async (req, res) => {
   try {
     const { id } = req.params;
+    
+    // Check ownership
+    const [articleRows] = await pool.query('SELECT author_id FROM articles WHERE id = ?', [id]);
+    if (articleRows.length === 0) return res.status(404).json({ error: 'Artikel tidak ditemukan.' });
+    if (req.userRole !== 'admin' && articleRows[0].author_id !== req.userId) {
+      return res.status(403).json({ error: 'Anda hanya dapat mengedit konten milik Anda sendiri.' });
+    }
+
     const { 
       title, 
       content, 
@@ -238,17 +246,25 @@ router.post('/articles/:id/edit', verifyToken, isAdmin, uploadFields, async (req
     params.push(id);
 
     await pool.query(query, params);
-    res.json({ message: 'Konten berhasil diperbarui oleh Admin!' });
+    res.json({ message: 'Konten berhasil diperbarui!' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Gagal memperbarui konten.' });
   }
 });
 
-// API: Delete article (Admin Only)
-router.post('/articles/:id/delete', verifyToken, isAdmin, async (req, res) => {
+// API: Delete article (Admin or Author)
+router.post('/articles/:id/delete', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
+    
+    // Check ownership
+    const [articleRows] = await pool.query('SELECT author_id FROM articles WHERE id = ?', [id]);
+    if (articleRows.length === 0) return res.status(404).json({ error: 'Artikel tidak ditemukan.' });
+    if (req.userRole !== 'admin' && articleRows[0].author_id !== req.userId) {
+      return res.status(403).json({ error: 'Anda hanya dapat menghapus konten milik Anda sendiri.' });
+    }
+
     await pool.query('DELETE FROM articles WHERE id = ?', [id]);
     res.json({ message: 'Konten berhasil dihapus.' });
   } catch (err) {
