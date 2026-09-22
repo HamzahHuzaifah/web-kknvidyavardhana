@@ -39,6 +39,15 @@ export default function ArticleDetailPage() {
   const [citationCopied, setCitationCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
+  // Normalize non-breaking spaces (&nbsp; / \u00A0) into regular spaces so browser wraps lines at true word boundaries
+  const sanitizedContent = useMemo(() => {
+    if (!article?.content) return '';
+    const normalized = article.content
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/\u00a0/g, ' ');
+    return DOMPurify.sanitize(normalized);
+  }, [article?.content]);
+
   useEffect(() => {
     fetchArticle();
     fetchAllArticles();
@@ -237,15 +246,6 @@ export default function ArticleDetailPage() {
 
   const currentUrl = encodeURIComponent(window.location.href);
   const currentTitle = encodeURIComponent(article.title);
-
-  // Normalize non-breaking spaces (&nbsp; / \u00A0) into regular spaces so browser wraps lines at true word boundaries
-  const sanitizedContent = useMemo(() => {
-    if (!article?.content) return '';
-    const normalized = article.content
-      .replace(/&nbsp;/gi, ' ')
-      .replace(/\u00a0/g, ' ');
-    return DOMPurify.sanitize(normalized);
-  }, [article?.content]);
 
   return (
     <div className="bg-[#f9fafb] min-h-screen py-6 md:py-10 px-4 sm:px-6">
