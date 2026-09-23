@@ -243,11 +243,12 @@ export default function FileManagerTab({
                   <Upload size={10} /> Upload Logo
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,image/heic,image/heif,image/heic-sequence,image/heif-sequence,.heic,.HEIC,.heif,.HEIF"
                     className="hidden"
                     onChange={async (e) => {
                       if (e.target.files && e.target.files[0]) {
-                        const f = e.target.files[0];
+                        let f = e.target.files[0];
+                        f = await convertHeicToJpgIfNeeded(f);
                         const fd = new FormData();
                         fd.append('logo', f);
                         try {
@@ -353,7 +354,7 @@ export default function FileManagerTab({
           <input
             type="file"
             multiple
-            accept="image/*,.heic,.heif,video/*,.mov,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar"
+            accept="image/*,image/heic,image/heif,image/heic-sequence,image/heif-sequence,.heic,.HEIC,.heif,.HEIF,video/*,.mov,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar"
             onChange={handleUploadMediaFiles}
             disabled={fileUploading || convertingHeic}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"

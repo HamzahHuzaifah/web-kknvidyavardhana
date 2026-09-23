@@ -463,7 +463,7 @@ export default function ArticlesTab({
                 <>
                   <input
                     type="file"
-                    accept="image/*,.heic,.heif"
+                    accept="image/*,image/heic,image/heif,image/heic-sequence,image/heif-sequence,.heic,.HEIC,.heif,.HEIF"
                     disabled={convertingArticleImage}
                     onChange={async (e) => {
                       let file = e.target.files[0] || null;

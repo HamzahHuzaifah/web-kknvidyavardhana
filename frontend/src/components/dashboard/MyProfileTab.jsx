@@ -133,7 +133,7 @@ export default function MyProfileTab({ token }) {
   };
 
   const handleFileUpload = async (e, field, index) => {
-    const file = e.target.files?.[0];
+    let file = e.target.files?.[0];
     if (!file) return;
 
     if (file.size > 10 * 1024 * 1024) {
@@ -141,6 +141,9 @@ export default function MyProfileTab({ token }) {
       e.target.value = null;
       return;
     }
+
+    // Convert HEIC if image
+    file = await convertHeicToJpgIfNeeded(file);
 
     const formData = new FormData();
     formData.append('files', file);
@@ -316,7 +319,7 @@ export default function MyProfileTab({ token }) {
               )}
               <input 
                 type="file" 
-                accept="image/*,.heic,.heif" 
+                accept="image/*,image/heic,image/heif,image/heic-sequence,image/heic-sequence,.heic,.HEIC,.heif,.HEIF" 
                 onChange={handleImageChange}
                 disabled={convertingImage}
                 className="w-full max-w-[200px] text-[10px] file:mr-2 file:py-1 file:px-2 file:border-0 file:text-[10px] file:font-bold file:bg-gray-100 hover:file:bg-gray-200 mt-2" 
@@ -412,7 +415,7 @@ export default function MyProfileTab({ token }) {
                   </div>
                   <div className="md:col-span-2 border-t border-gray-200 pt-2 mt-2">
                     <label className="block text-[10px] font-bold uppercase mb-1">Unggah Dokumen / Gambar (Maks 10MB)</label>
-                    <input type="file" onChange={(e) => handleFileUpload(e, 'portfolio_projects', idx)} className="w-full text-xs" />
+                    <input type="file" accept="image/*,image/heic,image/heif,image/heic-sequence,image/heif-sequence,.heic,.HEIC,.heif,.HEIF,.pdf,.doc,.docx" onChange={(e) => handleFileUpload(e, 'portfolio_projects', idx)} className="w-full text-xs" />
                     {proj.file_url && <a href={proj.file_url} target="_blank" rel="noreferrer" className="text-blue-500 font-bold text-[10px] underline mt-1 block">Lihat File Tersimpan</a>}
                   </div>
                 </div>
@@ -451,7 +454,7 @@ export default function MyProfileTab({ token }) {
                   </div>
                   <div className="md:col-span-2 border-t border-gray-200 pt-2 mt-2">
                     <label className="block text-[10px] font-bold uppercase mb-1">Unggah Sertifikat / Dokumen (Maks 10MB)</label>
-                    <input type="file" onChange={(e) => handleFileUpload(e, 'skills_experience', idx)} className="w-full text-xs" />
+                    <input type="file" accept="image/*,image/heic,image/heif,image/heic-sequence,image/heif-sequence,.heic,.HEIC,.heif,.HEIF,.pdf,.doc,.docx" onChange={(e) => handleFileUpload(e, 'skills_experience', idx)} className="w-full text-xs" />
                     {exp.file_url && <a href={exp.file_url} target="_blank" rel="noreferrer" className="text-blue-500 font-bold text-[10px] underline mt-1 block">Lihat Dokumen Tersimpan</a>}
                   </div>
                 </div>
@@ -492,7 +495,7 @@ export default function MyProfileTab({ token }) {
                   </div>
                   <div className="border-t border-gray-200 pt-2 mt-2">
                     <label className="block text-[10px] font-bold uppercase mb-1">Unggah Lampiran (Maks 10MB)</label>
-                    <input type="file" onChange={(e) => handleFileUpload(e, 'testimonials', idx)} className="w-full text-xs" />
+                    <input type="file" accept="image/*,image/heic,image/heif,image/heic-sequence,image/heif-sequence,.heic,.HEIC,.heif,.HEIF,.pdf,.doc,.docx" onChange={(e) => handleFileUpload(e, 'testimonials', idx)} className="w-full text-xs" />
                     {testi.file_url && <a href={testi.file_url} target="_blank" rel="noreferrer" className="text-blue-500 font-bold text-[10px] underline mt-1 block">Lihat Lampiran Tersimpan</a>}
                   </div>
                 </div>

@@ -407,7 +407,7 @@ export default function ProfileTab({ token, setConfirmModal, closeConfirmModal }
               </div>
               <div className="sm:col-span-2 md:col-span-4">
                 <label className="block text-primary-dark font-bold text-[11px] uppercase mb-1">Foto Anggota</label>
-                <input type="file" accept="image/*,.heic,.heif" onChange={handleMemberImageChange}
+                <input type="file" accept="image/*,image/heic,image/heif,image/heic-sequence,image/heif-sequence,.heic,.HEIC,.heif,.HEIF" onChange={handleMemberImageChange}
                   disabled={convertingMemberImage}
                   className="w-full border-2 border-primary-dark p-1 text-xs bg-white" />
                 {convertingMemberImage && (

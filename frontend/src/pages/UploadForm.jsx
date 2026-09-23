@@ -564,7 +564,7 @@ export default function UploadForm() {
                 <label className="border-2 border-dashed border-primary-dark p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-yellow-50/50 transition-colors text-center">
                   <UploadCloud size={28} className="text-gray-400 mb-1" />
                   <span className="text-xs font-black text-primary-dark uppercase">Pilih Gambar Sampul</span>
-                  <span className="text-[10px] text-gray-500 mt-0.5">JPG, PNG, WebP (Maks 10MB)</span>
+                  <span className="text-[10px] text-gray-500 mt-0.5">JPG, PNG, WebP, HEIC (Maks 10MB)</span>
                   {isConvertingImage && (
                     <p className="text-[10px] font-bold text-secondary-dark uppercase animate-pulse">
                       ⏳ Mengonversi HEIC ke JPG...
@@ -573,7 +573,7 @@ export default function UploadForm() {
                   <input
                     id="image-upload"
                     type="file"
-                    accept="image/*,.heic,.heif"
+                    accept="image/*,image/heic,image/heif,image/heic-sequence,image/heif-sequence,.heic,.HEIC,.heif,.HEIF"
                     onChange={handleFileChange}
                     disabled={isConvertingImage}
                     className="hidden"

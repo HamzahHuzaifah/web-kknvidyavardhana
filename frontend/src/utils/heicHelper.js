@@ -42,7 +42,10 @@ export const convertHeicToJpgIfNeeded = async (file, onConverting) => {
     const resultBlob = Array.isArray(blob) ? blob[0] : blob;
 
     // Build a new File with .jpg extension
-    const newName = file.name.replace(/\.(heic|heif)$/i, '.jpg');
+    let newName = file.name.replace(/\.(heic|heif)$/i, '.jpg');
+    if (!/\.(jpg|jpeg)$/i.test(newName)) {
+      newName = `${file.name.replace(/\.[^/.]+$/, '')}.jpg`;
+    }
     return new File([resultBlob], newName, {
       type: 'image/jpeg',
       lastModified: Date.now()
