@@ -177,16 +177,13 @@ function ResponsiveVideoEmbed({ item }) {
   );
 }
 
-// Custom hook to detect responsive column count for Pinterest Masonry layout
+// Custom hook to detect responsive column count for Pinterest Masonry layout (max 3 columns)
 function useWindowColCount() {
   const [colCount, setColCount] = useState(() => {
     if (typeof window !== 'undefined') {
       const w = window.innerWidth;
-      if (w >= 1360) return 6;
-      if (w >= 1100) return 5;
-      if (w >= 880) return 4;
-      if (w >= 640) return 3;
-      if (w >= 480) return 2;
+      if (w >= 880) return 3;
+      if (w >= 540) return 2;
       return 1;
     }
     return 3;
@@ -196,11 +193,8 @@ function useWindowColCount() {
     const handleResize = () => {
       const w = window.innerWidth;
       let count = 1;
-      if (w >= 1360) count = 6;
-      else if (w >= 1100) count = 5;
-      else if (w >= 880) count = 4;
-      else if (w >= 640) count = 3;
-      else if (w >= 480) count = 2;
+      if (w >= 880) count = 3;
+      else if (w >= 540) count = 2;
       setColCount(count);
     };
 
@@ -639,12 +633,12 @@ export default function Media() {
               {/* Items Per Page Selector */}
               <div className="flex items-center gap-1.5 pl-2 border-t sm:border-t-0 sm:border-l-2 border-gray-200 pt-2 sm:pt-0 w-full sm:w-auto justify-end">
                 <span className="text-[10px] font-black uppercase text-gray-500">Tampil:</span>
-                {[6, 12, 18, 24].map((num) => (
+                {[6, 9, 12, 18].map((num) => (
                   <button
                     key={num}
                     type="button"
                     onClick={() => setItemsPerPage(num)}
-                    className={`px-2 py-1 text-[10px] font-black border-2 border-primary-dark transition-all ${
+                    className={`px-2.5 py-1 text-[10px] font-black border-2 border-primary-dark transition-all ${
                       itemsPerPage === num
                         ? 'bg-primary-dark text-white shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]'
                         : 'bg-white text-gray-700 hover:bg-gray-100'
@@ -674,48 +668,48 @@ export default function Media() {
             </div>
           ) : (
             <>
-              {/* Pinterest Masonry Grid: columns without vertical gaps */}
+              {/* Pinterest Masonry Grid: 3 columns without vertical gaps */}
               <div 
-                className="grid gap-3 sm:gap-4 items-start w-full"
+                className="grid gap-6 sm:gap-8 items-start w-full"
                 style={{
                   gridTemplateColumns: `repeat(${columnsData.length}, minmax(0, 1fr))`
                 }}
               >
                 {columnsData.map((colItems, colIndex) => (
-                  <div key={colIndex} className="flex flex-col gap-3 sm:gap-4 min-w-0">
+                  <div key={colIndex} className="flex flex-col gap-6 sm:gap-8 min-w-0">
                     {colItems.map((item) => (
                       <div 
                         key={item.id}
-                        className="bg-white border-2 border-primary-dark shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 flex flex-col justify-between relative overflow-hidden transition-all duration-200 w-full"
+                        className="bg-white border-4 border-primary-dark shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 flex flex-col justify-between relative overflow-hidden transition-all duration-200 w-full"
                       >
                         {/* Top Console Bar */}
-                        <div className="bg-primary-dark text-white px-2.5 py-1.5 border-b-2 border-primary-dark flex items-center justify-between gap-1">
-                          <div className="flex items-center gap-1 min-w-0">
-                            <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 border border-primary-dark shadow-xs truncate ${getPlatformCardStyle(item.platform).badge}`}>
+                        <div className="bg-primary-dark text-white p-3 sm:p-3.5 border-b-4 border-primary-dark flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 border border-primary-dark shadow-xs truncate ${getPlatformCardStyle(item.platform).badge}`}>
                               {item.platform}
                             </span>
                             {item.is_autoplay === 1 && (
-                              <span className="bg-gradient-yellow text-primary-dark text-[7px] font-black px-1 py-0.5 border border-primary-dark uppercase flex items-center gap-0.5">
-                                <Sparkles size={8} /> Auto
+                              <span className="bg-gradient-yellow text-primary-dark text-[9px] font-black px-2 py-0.5 border border-primary-dark uppercase flex items-center gap-1 shadow-xs">
+                                <Sparkles size={10} /> Auto
                               </span>
                             )}
                           </div>
 
-                          <div className="flex items-center gap-1 shrink-0">
+                          <div className="flex items-center gap-2 shrink-0">
                             <button
                               type="button"
                               onClick={() => handleCopyVideoUrl(item.url, item.id)}
-                              className="bg-white/10 hover:bg-white text-white hover:text-primary-dark text-[8px] font-bold uppercase px-1.5 py-0.5 border border-white/30 transition-all flex items-center gap-0.5"
+                              className="bg-white/10 hover:bg-white text-white hover:text-primary-dark text-[10px] font-bold uppercase px-2.5 py-1 border border-white/30 transition-all flex items-center gap-1"
                               title="Salin Tautan Video"
                             >
                               {copiedId === item.id ? (
                                 <>
-                                  <Check size={9} className="text-secondary" />
-                                  <span className="text-secondary">Tersalin</span>
+                                  <Check size={11} className="text-secondary" />
+                                  <span className="text-secondary text-[10px]">Tersalin!</span>
                                 </>
                               ) : (
                                 <>
-                                  <Copy size={9} />
+                                  <Copy size={11} />
                                   <span>Bagikan</span>
                                 </>
                               )}
@@ -725,44 +719,44 @@ export default function Media() {
                               href={item.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="bg-gradient-yellow text-primary-dark text-[8px] font-black uppercase px-1.5 py-0.5 border border-primary-dark shadow-xs hover:translate-y-0.5 transition-all flex items-center gap-0.5"
+                              className="bg-gradient-yellow text-primary-dark text-[10px] font-black uppercase px-2.5 py-1 border border-primary-dark shadow-xs hover:translate-y-0.5 transition-all flex items-center gap-1"
                               title="Buka link asli di platform terkait"
                             >
                               <span>Sumber</span>
-                              <ExternalLink size={8} />
+                              <ExternalLink size={10} />
                             </a>
                           </div>
                         </div>
 
                         {/* Media Player Screen Container */}
-                        <div className="bg-black border-b-2 border-primary-dark w-full">
+                        <div className="bg-black border-b-4 border-primary-dark w-full">
                           <ResponsiveVideoEmbed item={item} />
                         </div>
 
                         {/* Video Info: Title & Caption */}
-                        <div className="p-2.5 sm:p-3 space-y-1.5 flex-grow flex flex-col justify-between bg-white">
-                          <div className="space-y-1">
-                            <h3 className="text-[11px] sm:text-xs font-black text-primary-dark uppercase tracking-tight leading-snug line-clamp-2" title={item.title}>
+                        <div className="p-5 space-y-2.5 flex-grow flex flex-col justify-between bg-white">
+                          <div className="space-y-1.5">
+                            <h3 className="text-base sm:text-lg font-black text-primary-dark uppercase tracking-tight leading-snug line-clamp-2" title={item.title}>
                               {item.title}
                             </h3>
 
                             {item.caption && (
-                              <p className="text-[9px] sm:text-[10px] text-gray-600 font-medium leading-relaxed whitespace-pre-line border-l-2 border-secondary-dark pl-2 line-clamp-2" title={item.caption}>
+                              <p className="text-xs sm:text-sm text-gray-700 font-medium leading-relaxed whitespace-pre-line border-l-3 border-secondary-dark pl-3 line-clamp-3" title={item.caption}>
                                 {item.caption}
                               </p>
                             )}
                           </div>
 
-                          <div className="pt-1.5 border-t border-gray-100 flex items-center justify-between text-[8px] sm:text-[9px] text-gray-500 font-bold uppercase">
+                          <div className="pt-3 border-t-2 border-gray-100 flex items-center justify-between text-[11px] text-gray-500 font-bold uppercase">
                             <span>Posko 07</span>
                             <a 
                               href={item.url} 
                               target="_blank" 
                               rel="noopener noreferrer" 
-                              className="text-primary-dark hover:text-secondary-dark flex items-center gap-0.5 transition-colors font-black"
+                              className="text-primary-dark hover:text-secondary-dark flex items-center gap-1 transition-colors font-black"
                             >
                               <span>Tonton</span>
-                              <ArrowRight size={10} />
+                              <ArrowRight size={12} />
                             </a>
                           </div>
                         </div>
