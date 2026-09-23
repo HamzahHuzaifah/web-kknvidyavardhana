@@ -68,6 +68,40 @@ function formatEmbedUrl(url, platform, isAutoplay) {
   return trimmed;
 }
 
+// Custom hook to detect responsive column count for Pinterest Masonry layout
+function useWindowColCount() {
+  const [colCount, setColCount] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const w = window.innerWidth;
+      if (w >= 1360) return 6;
+      if (w >= 1100) return 5;
+      if (w >= 880) return 4;
+      if (w >= 640) return 3;
+      if (w >= 480) return 2;
+      return 1;
+    }
+    return 3;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      const w = window.innerWidth;
+      let count = 1;
+      if (w >= 1360) count = 6;
+      else if (w >= 1100) count = 5;
+      else if (w >= 880) count = 4;
+      else if (w >= 640) count = 3;
+      else if (w >= 480) count = 2;
+      setColCount(count);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return colCount;
+}
+
 export default function Media() {
   const [mediaList, setMediaList] = useState([]);
   const [socialLinks, setSocialLinks] = useState([]);
@@ -78,7 +112,10 @@ export default function Media() {
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedId, setCopiedId] = useState(null);
 
-  // Pagination state (default 6 items per page for optimal rendering speed)
+  // Responsive column count for Pinterest Masonry
+  const colCount = useWindowColCount();
+
+  // Pagination state (default 6 items per page so it fills 6 columns across)
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(6);
 
@@ -181,6 +218,17 @@ export default function Media() {
     return filteredMedia.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredMedia, safeCurrentPage, itemsPerPage]);
 
+  // Distribute paginatedMedia into true Pinterest Masonry columns (eliminating vertical gaps)
+  const columnsData = useMemo(() => {
+    if (paginatedMedia.length === 0) return [];
+    const actualCols = Math.max(1, Math.min(colCount, paginatedMedia.length));
+    const cols = Array.from({ length: actualCols }, () => []);
+    paginatedMedia.forEach((item, index) => {
+      cols[index % actualCols].push(item);
+    });
+    return cols;
+  }, [paginatedMedia, colCount]);
+
   const startItemIndex = totalItems === 0 ? 0 : (safeCurrentPage - 1) * itemsPerPage + 1;
   const endItemIndex = Math.min(safeCurrentPage * itemsPerPage, totalItems);
 
@@ -249,7 +297,7 @@ export default function Media() {
         <div className="absolute top-0 right-0 w-96 h-96 bg-secondary/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
         <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-accent/10 rounded-full blur-2xl pointer-events-none"></div>
 
-        <div className="max-w-6xl mx-auto relative z-10 space-y-6">
+        <div className="max-w-[1720px] mx-auto relative z-10 space-y-6">
           
           {/* Breadcrumb / Top Badges */}
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -306,7 +354,7 @@ export default function Media() {
       </section>
 
       {/* ================= MAIN CONTENT CONTAINER ================= */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 space-y-16">
+      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 pt-10 space-y-16">
 
         {/* ================= SECTION 1: SALURAN MEDSOS RESMI ================= */}
         <section className="space-y-6">
@@ -329,7 +377,7 @@ export default function Media() {
               Belum ada akun media sosial yang didaftarkan oleh admin.
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
               {socialLinks.map((s) => {
                 const style = getPlatformCardStyle(s.platform);
                 return (
@@ -482,7 +530,7 @@ export default function Media() {
               {/* Items Per Page Selector */}
               <div className="flex items-center gap-1.5 pl-2 border-t sm:border-t-0 sm:border-l-2 border-gray-200 pt-2 sm:pt-0 w-full sm:w-auto justify-end">
                 <span className="text-[10px] font-black uppercase text-gray-500">Tampil:</span>
-                {[4, 6, 8, 12].map((num) => (
+                {[6, 12, 18, 24].map((num) => (
                   <button
                     key={num}
                     type="button"
@@ -517,134 +565,143 @@ export default function Media() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                {paginatedMedia.map((item) => {
-                  const embedUrl = formatEmbedUrl(item.url, item.platform, item.is_autoplay);
-                  const isInstagram = item.platform?.toLowerCase() === 'instagram' || item.url?.includes('instagram.com');
-                  const isTiktok = item.platform?.toLowerCase() === 'tiktok' || item.url?.includes('tiktok.com');
-                  const isYtShort = item.platform?.toLowerCase() === 'youtube' && item.url?.includes('/shorts/');
-                  const isVertical = isTiktok || isYtShort;
+              {/* Pinterest Masonry Grid: columns without vertical gaps */}
+              <div 
+                className="grid gap-5 sm:gap-6 items-start w-full"
+                style={{
+                  gridTemplateColumns: `repeat(${columnsData.length}, minmax(0, 1fr))`
+                }}
+              >
+                {columnsData.map((colItems, colIndex) => (
+                  <div key={colIndex} className="flex flex-col gap-5 sm:gap-6 min-w-0">
+                    {colItems.map((item) => {
+                      const embedUrl = formatEmbedUrl(item.url, item.platform, item.is_autoplay);
+                      const isInstagram = item.platform?.toLowerCase() === 'instagram' || item.url?.includes('instagram.com');
+                      const isTiktok = item.platform?.toLowerCase() === 'tiktok' || item.url?.includes('tiktok.com');
+                      const isYtShort = item.platform?.toLowerCase() === 'youtube' && item.url?.includes('/shorts/');
+                      const isVertical = isTiktok || isYtShort;
 
-                  let frameContainerHeight = 'aspect-video w-full';
-                  if (isVertical) {
-                    frameContainerHeight = 'aspect-[9/16] w-full max-w-[340px] mx-auto';
-                  } else if (isInstagram) {
-                    frameContainerHeight = 'h-[520px] w-full max-w-[420px] mx-auto';
-                  }
+                      let frameContainerHeight = 'aspect-video w-full';
+                      if (isVertical) {
+                        frameContainerHeight = 'aspect-[9/16] w-full';
+                      } else if (isInstagram) {
+                        frameContainerHeight = 'aspect-[4/5] min-h-[380px] w-full';
+                      }
 
-                  return (
-                    <div 
-                      key={item.id}
-                      className="bg-white border-4 border-primary-dark shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] flex flex-col justify-between relative overflow-hidden transition-all duration-300"
-                    >
-                      
-                      {/* Top Console Bar */}
-                      <div className="bg-primary-dark text-white p-3 sm:p-3.5 border-b-4 border-primary-dark flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 border border-primary-dark shadow-sm ${getPlatformCardStyle(item.platform).badge}`}>
-                            {item.platform}
-                          </span>
-                          {item.is_autoplay === 1 && (
-                            <span className="bg-gradient-yellow text-primary-dark text-[9px] font-black px-2 py-0.5 border border-primary-dark uppercase flex items-center gap-1 shadow-sm">
-                              <Sparkles size={10} /> Autoplay
-                            </span>
-                          )}
-                        </div>
+                      return (
+                        <div 
+                          key={item.id}
+                          className="bg-white border-3 sm:border-4 border-primary-dark shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 flex flex-col justify-between relative overflow-hidden transition-all duration-300 w-full"
+                        >
+                          {/* Top Console Bar */}
+                          <div className="bg-primary-dark text-white p-2.5 sm:p-3 border-b-3 sm:border-b-4 border-primary-dark flex flex-wrap items-center justify-between gap-1.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`text-[9px] sm:text-[10px] font-black uppercase px-2 py-0.5 border border-primary-dark shadow-sm ${getPlatformCardStyle(item.platform).badge}`}>
+                                {item.platform}
+                              </span>
+                              {item.is_autoplay === 1 && (
+                                <span className="bg-gradient-yellow text-primary-dark text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 border border-primary-dark uppercase flex items-center gap-0.5 shadow-sm">
+                                  <Sparkles size={9} /> Auto
+                                </span>
+                              )}
+                            </div>
 
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleCopyVideoUrl(item.url, item.id)}
-                            className="bg-white/10 hover:bg-white text-white hover:text-primary-dark text-[10px] font-bold uppercase px-2.5 py-1 border border-white/30 transition-all flex items-center gap-1"
-                            title="Salin Tautan Video"
-                          >
-                            {copiedId === item.id ? (
-                              <>
-                                <Check size={11} className="text-secondary" />
-                                <span className="text-secondary">Tersalin!</span>
-                              </>
-                            ) : (
-                              <>
-                                <Copy size={11} />
-                                <span>Bagikan</span>
-                              </>
-                            )}
-                          </button>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleCopyVideoUrl(item.url, item.id)}
+                                className="bg-white/10 hover:bg-white text-white hover:text-primary-dark text-[9px] sm:text-[10px] font-bold uppercase px-2 py-1 border border-white/30 transition-all flex items-center gap-1"
+                                title="Salin Tautan Video"
+                              >
+                                {copiedId === item.id ? (
+                                  <>
+                                    <Check size={10} className="text-secondary" />
+                                    <span className="text-secondary text-[9px]">Tersalin!</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy size={10} />
+                                    <span className="hidden xs:inline">Bagikan</span>
+                                  </>
+                                )}
+                              </button>
 
-                          <a
-                            href={item.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="bg-gradient-yellow text-primary-dark text-[10px] font-black uppercase px-2.5 py-1 border border-primary-dark shadow-sm hover:translate-y-0.5 transition-all flex items-center gap-1"
-                            title="Buka link asli di platform terkait"
-                          >
-                            <span>Sumber</span>
-                            <ExternalLink size={10} />
-                          </a>
-                        </div>
-                      </div>
+                              <a
+                                href={item.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-gradient-yellow text-primary-dark text-[9px] sm:text-[10px] font-black uppercase px-2 py-1 border border-primary-dark shadow-sm hover:translate-y-0.5 transition-all flex items-center gap-1"
+                                title="Buka link asli di platform terkait"
+                              >
+                                <span>Sumber</span>
+                                <ExternalLink size={9} />
+                              </a>
+                            </div>
+                          </div>
 
-                      {/* Media Player Screen Container */}
-                      <div className="bg-zinc-950 p-2 sm:p-4 flex items-center justify-center border-b-4 border-primary-dark">
-                        <div className={`bg-black border-2 border-zinc-800 shadow-md relative overflow-hidden ${frameContainerHeight}`}>
-                          {embedUrl ? (
-                            <iframe
-                              src={embedUrl}
-                              title={item.title}
-                              className="w-full h-full border-0"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                              allowFullScreen
-                              loading="lazy"
-                              scrolling={isInstagram ? 'no' : 'auto'}
-                            ></iframe>
-                          ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center text-white text-xs font-bold p-6 text-center space-y-2">
-                              <Tv size={28} className="text-gray-500" />
-                              <p>Format tautan video belum didukung untuk sematan langsung.</p>
+                          {/* Media Player Screen Container */}
+                          <div className="bg-zinc-950 p-2 sm:p-3 flex items-center justify-center border-b-3 sm:border-b-4 border-primary-dark">
+                            <div className={`bg-black border-2 border-zinc-800 shadow-md relative overflow-hidden ${frameContainerHeight}`}>
+                              {embedUrl ? (
+                                <iframe
+                                  src={embedUrl}
+                                  title={item.title}
+                                  className="w-full h-full border-0"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                  allowFullScreen
+                                  loading="lazy"
+                                  scrolling={isInstagram ? 'no' : 'auto'}
+                                ></iframe>
+                              ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center text-white text-xs font-bold p-4 text-center space-y-2">
+                                  <Tv size={24} className="text-gray-500" />
+                                  <p className="text-[11px]">Format tautan belum didukung sematan.</p>
+                                  <a 
+                                    href={item.url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="text-secondary underline text-[11px]"
+                                  >
+                                    Buka aplikasi
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Video Info: Title & Caption */}
+                          <div className="p-4 sm:p-5 space-y-2.5 flex-grow flex flex-col justify-between bg-white">
+                            <div className="space-y-1.5">
+                              <h3 className="text-sm sm:text-base font-black text-primary-dark uppercase tracking-tight leading-snug line-clamp-2" title={item.title}>
+                                {item.title}
+                              </h3>
+
+                              {item.caption && (
+                                <p className="text-[11px] sm:text-xs text-gray-700 font-medium leading-relaxed whitespace-pre-line border-l-2 border-secondary-dark pl-2.5 line-clamp-3">
+                                  {item.caption}
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="pt-2.5 border-t-2 border-gray-100 flex items-center justify-between text-[10px] text-gray-500 font-bold uppercase">
+                              <span>Posko 07</span>
                               <a 
                                 href={item.url} 
                                 target="_blank" 
                                 rel="noopener noreferrer" 
-                                className="text-secondary underline"
+                                className="text-primary-dark hover:text-secondary-dark flex items-center gap-1 transition-colors"
                               >
-                                Buka langsung di aplikasi
+                                <span>Tonton</span>
+                                <ArrowRight size={11} />
                               </a>
                             </div>
-                          )}
+                          </div>
+
                         </div>
-                      </div>
-
-                      {/* Video Info: Title & Caption */}
-                      <div className="p-6 space-y-3 flex-grow flex flex-col justify-between bg-white">
-                        <div className="space-y-2">
-                          <h3 className="text-lg sm:text-xl font-black text-primary-dark uppercase tracking-tight leading-snug">
-                            {item.title}
-                          </h3>
-
-                          {item.caption && (
-                            <p className="text-xs sm:text-sm text-gray-700 font-medium leading-relaxed whitespace-pre-line border-l-3 border-secondary-dark pl-3">
-                              {item.caption}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="pt-3 border-t-2 border-gray-100 flex items-center justify-between text-[11px] text-gray-500 font-bold uppercase">
-                          <span>Dokumentasi Posko KKN 07</span>
-                          <a 
-                            href={item.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-primary-dark hover:text-secondary-dark flex items-center gap-1 transition-colors"
-                          >
-                            <span>Tonton Penuh</span>
-                            <ArrowRight size={12} />
-                          </a>
-                        </div>
-                      </div>
-
-                    </div>
-                  );
-                })}
+                      );
+                    })}
+                  </div>
+                ))}
               </div>
 
               {/* Pagination Controls */}
