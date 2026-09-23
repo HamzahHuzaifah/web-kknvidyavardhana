@@ -406,8 +406,7 @@ export default function Media() {
         <div className="absolute top-0 right-0 w-96 h-96 bg-secondary/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
         <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-accent/10 rounded-full blur-2xl pointer-events-none"></div>
 
-        <div className="max-w-[1152
-        px] mx-auto relative z-10 space-y-6">
+        <div className="max-w-6xl mx-auto relative z-10 space-y-6">
           
           {/* Breadcrumb / Top Badges */}
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -464,7 +463,7 @@ export default function Media() {
       </section>
 
       {/* ================= MAIN CONTENT CONTAINER ================= */}
-      <div className="max-w-[1152px] mx-auto px-4 sm:px-6 lg:px-8 pt-10 space-y-16">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 space-y-16">
 
         {/* ================= SECTION 1: SALURAN MEDSOS RESMI ================= */}
         <section className="space-y-6">
