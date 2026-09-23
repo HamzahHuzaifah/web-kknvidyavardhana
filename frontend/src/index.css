@@ -133,41 +133,80 @@
 /* === Article Body Typography, Numbering (ol) & Bullets (ul) === */
 .article-body-content ol, 
 .prose ol {
+  list-style: decimal !important;
   list-style-type: decimal !important;
-  margin-top: 1rem !important;
-  margin-bottom: 1rem !important;
-  padding-left: 2rem !important;
+  list-style-position: outside !important;
+  margin-top: 1.25rem !important;
+  margin-bottom: 1.25rem !important;
+  padding-left: 2.25rem !important;
   margin-left: 0.5rem !important;
+}
+
+.article-body-content ol li,
+.article-body-content ol > li,
+.prose ol li,
+.prose ol > li {
+  list-style: decimal !important;
+  list-style-type: decimal !important;
+  display: list-item !important;
+  margin-bottom: 0.6rem !important;
+  line-height: 1.8 !important;
+  padding-left: 0.35rem !important;
 }
 
 .article-body-content ul, 
 .prose ul {
+  list-style: disc !important;
   list-style-type: disc !important;
-  margin-top: 1rem !important;
-  margin-bottom: 1rem !important;
-  padding-left: 2rem !important;
+  list-style-position: outside !important;
+  margin-top: 1.25rem !important;
+  margin-bottom: 1.25rem !important;
+  padding-left: 2.25rem !important;
   margin-left: 0.5rem !important;
+}
+
+.article-body-content ul li,
+.article-body-content ul > li,
+.prose ul li,
+.prose ul > li {
+  list-style: disc !important;
+  list-style-type: disc !important;
+  display: list-item !important;
+  margin-bottom: 0.6rem !important;
+  line-height: 1.8 !important;
+  padding-left: 0.35rem !important;
 }
 
 .article-body-content li, 
 .prose li {
   display: list-item !important;
-  margin-bottom: 0.5rem !important;
-  line-height: 1.75 !important;
-  padding-left: 0.25rem !important;
+  margin-bottom: 0.6rem !important;
+  line-height: 1.8 !important;
 }
 
 /* Quill Specific List Attributes (ol & ul) */
+.article-body-content li[data-list="ordered"],
+.prose li[data-list="ordered"],
 .article-body-content ol > li[data-list="ordered"],
 .prose ol > li[data-list="ordered"] {
+  list-style: decimal !important;
   list-style-type: decimal !important;
   display: list-item !important;
 }
 
+.article-body-content li[data-list="bullet"],
+.prose li[data-list="bullet"],
 .article-body-content ul > li[data-list="bullet"],
 .prose ul > li[data-list="bullet"] {
+  list-style: disc !important;
   list-style-type: disc !important;
   display: list-item !important;
+}
+
+/* Hide internal Quill UI markers if present to avoid duplicate numbers */
+.article-body-content li > .ql-ui,
+.prose li > .ql-ui {
+  display: none !important;
 }
 
 /* Blockquotes in Article */

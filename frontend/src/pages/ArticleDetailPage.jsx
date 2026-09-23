@@ -29,7 +29,6 @@ import {
 } from 'lucide-react';
 import CustomSelect from '../components/CustomSelect';
 import ScribdDocumentViewer from '../components/ScribdDocumentViewer';
-import 'react-quill-new/dist/quill.snow.css';
 
 export default function ArticleDetailPage() {
   const { slug } = useParams();
@@ -410,7 +409,7 @@ export default function ArticleDetailPage() {
               {/* POST CONTENT / BODY (Editorial News Prose) */}
               <div className="pt-2">
                 <div
-                  className="prose article-body-content ql-editor !p-0 !border-0 max-w-none text-gray-800 text-sm sm:text-base leading-relaxed font-normal space-y-4 [&>p]:leading-loose"
+                  className="prose article-body-content !p-0 !border-0 max-w-none text-gray-800 text-sm sm:text-base leading-relaxed font-normal space-y-4 [&>p]:leading-loose"
                   dangerouslySetInnerHTML={{ __html: sanitizedContent }}
                 />
               </div>

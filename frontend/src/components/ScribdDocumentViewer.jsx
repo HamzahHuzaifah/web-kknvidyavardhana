@@ -409,7 +409,7 @@ export default function ScribdDocumentViewer({
 
                   {/* Body Text */}
                   <div
-                    className="prose max-w-none text-gray-800 leading-relaxed font-serif space-y-4 [&>p]:leading-loose [&>blockquote]:border-l-4 [&>blockquote]:border-primary-dark [&>blockquote]:pl-4 [&>blockquote]:italic [&>h2]:font-sans [&>h2]:font-black [&>h3]:font-sans [&>h3]:font-bold"
+                    className="prose article-body-content max-w-none text-gray-800 leading-relaxed font-serif space-y-4 [&>p]:leading-loose [&>blockquote]:border-l-4 [&>blockquote]:border-primary-dark [&>blockquote]:pl-4 [&>blockquote]:italic [&>h2]:font-sans [&>h2]:font-black [&>h3]:font-sans [&>h3]:font-bold"
                     dangerouslySetInnerHTML={{ __html: sanitizedContent }}
                   />
 
