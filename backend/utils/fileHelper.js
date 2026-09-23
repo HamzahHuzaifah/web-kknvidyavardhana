@@ -20,7 +20,13 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB max file size
+    fieldSize: 50 * 1024 * 1024  // 50MB max field value size (supports embedded rich text images)
+  }
+});
 
 const uploadFields = upload.fields([
   { name: 'image', maxCount: 1 },

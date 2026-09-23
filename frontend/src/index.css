@@ -130,6 +130,94 @@
   hyphens: none !important;
 }
 
+/* === Article Body Typography, Numbering (ol) & Bullets (ul) === */
+.article-body-content ol, 
+.prose ol {
+  list-style-type: decimal !important;
+  margin-top: 1rem !important;
+  margin-bottom: 1rem !important;
+  padding-left: 2rem !important;
+  margin-left: 0.5rem !important;
+}
+
+.article-body-content ul, 
+.prose ul {
+  list-style-type: disc !important;
+  margin-top: 1rem !important;
+  margin-bottom: 1rem !important;
+  padding-left: 2rem !important;
+  margin-left: 0.5rem !important;
+}
+
+.article-body-content li, 
+.prose li {
+  display: list-item !important;
+  margin-bottom: 0.5rem !important;
+  line-height: 1.75 !important;
+  padding-left: 0.25rem !important;
+}
+
+/* Quill Specific List Attributes (ol & ul) */
+.article-body-content ol > li[data-list="ordered"],
+.prose ol > li[data-list="ordered"] {
+  list-style-type: decimal !important;
+  display: list-item !important;
+}
+
+.article-body-content ul > li[data-list="bullet"],
+.prose ul > li[data-list="bullet"] {
+  list-style-type: disc !important;
+  display: list-item !important;
+}
+
+/* Blockquotes in Article */
+.article-body-content blockquote,
+.prose blockquote {
+  border-left: 4px solid #1E3A8A !important;
+  background-color: #fefce8 !important;
+  padding: 0.85rem 1.25rem !important;
+  margin: 1.25rem 0 !important;
+  font-style: italic !important;
+  border-radius: 0 0.5rem 0.5rem 0 !important;
+}
+
+/* Headings in Article */
+.article-body-content h1, .prose h1 {
+  font-size: 1.5rem !important;
+  font-weight: 800 !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 0.75rem !important;
+  color: #172554 !important;
+}
+
+.article-body-content h2, .prose h2 {
+  font-size: 1.25rem !important;
+  font-weight: 800 !important;
+  margin-top: 1.25rem !important;
+  margin-bottom: 0.5rem !important;
+  color: #172554 !important;
+}
+
+.article-body-content h3, .prose h3 {
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  margin-top: 1rem !important;
+  margin-bottom: 0.5rem !important;
+  color: #172554 !important;
+}
+
+/* Images inside Article Body */
+.article-body-content img,
+.prose img {
+  max-width: 100% !important;
+  height: auto !important;
+  border-radius: 0.75rem !important;
+  margin: 1.5rem auto !important;
+  border: 2px solid #0f172a !important;
+  box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1) !important;
+  display: block !important;
+}
+
 /* === Utility: Hide scrollbars on mobile horizontal swipe === */
 .no-scrollbar::-webkit-scrollbar {
   display: none;

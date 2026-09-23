@@ -1,6 +1,8 @@
 import React, { useRef, useId, useMemo } from 'react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
+import axios from 'axios';
+import { convertHeicToJpgIfNeeded } from '../utils/heicHelper';
 import { 
   Bold, 
   Italic, 
@@ -50,6 +52,57 @@ export default function RichTextEditor({
             if (this.quill) {
               this.quill.history.redo();
             }
+          },
+          image: function () {
+            const quillInstance = this.quill;
+            const input = document.createElement('input');
+            input.setAttribute('type', 'file');
+            input.setAttribute('accept', 'image/*,image/heic,image/heif,image/heic-sequence,image/heif-sequence,.heic,.HEIC,.heif,.HEIF');
+            input.click();
+
+            input.onchange = async () => {
+              const file = input.files?.[0];
+              if (!file) return;
+
+              let processedFile = file;
+              try {
+                processedFile = await convertHeicToJpgIfNeeded(file);
+              } catch (e) {
+                console.warn('HEIC conversion skipped', e);
+              }
+
+              const formData = new FormData();
+              formData.append('files', processedFile);
+              formData.append('source', 'article_inline_image');
+
+              try {
+                const token = localStorage.getItem('token');
+                const res = await axios.post('/api/files/upload', formData, {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                  }
+                });
+
+                const uploadedUrl = res.data.files?.[0]?.file_url;
+                if (uploadedUrl && quillInstance) {
+                  const range = quillInstance.getSelection(true) || { index: quillInstance.getLength() };
+                  quillInstance.insertEmbed(range.index, 'image', uploadedUrl);
+                  quillInstance.setSelection(range.index + 1);
+                }
+              } catch (uploadErr) {
+                console.warn('Image upload to server failed, using base64 fallback', uploadErr);
+                const reader = new FileReader();
+                reader.onload = () => {
+                  if (quillInstance) {
+                    const range = quillInstance.getSelection(true) || { index: quillInstance.getLength() };
+                    quillInstance.insertEmbed(range.index, 'image', reader.result);
+                    quillInstance.setSelection(range.index + 1);
+                  }
+                };
+                reader.readAsDataURL(processedFile);
+              }
+            };
           }
         }
       },

@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import CustomSelect from '../components/CustomSelect';
 import ScribdDocumentViewer from '../components/ScribdDocumentViewer';
+import 'react-quill-new/dist/quill.snow.css';
 
 export default function ArticleDetailPage() {
   const { slug } = useParams();
@@ -40,13 +41,16 @@ export default function ArticleDetailPage() {
   const [citationCopied, setCitationCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
-  // Normalize non-breaking spaces (&nbsp; / \u00A0) into regular spaces so browser wraps lines at true word boundaries
+  // Normalize non-breaking spaces (&nbsp; / \u00A0) and sanitize HTML while preserving lists, images, and alignment
   const sanitizedContent = useMemo(() => {
     if (!article?.content) return '';
     const normalized = article.content
       .replace(/&nbsp;/gi, ' ')
       .replace(/\u00a0/g, ' ');
-    return DOMPurify.sanitize(normalized);
+    return DOMPurify.sanitize(normalized, {
+      ADD_TAGS: ['iframe'],
+      ADD_ATTR: ['target', 'data-list', 'class', 'style', 'src', 'alt', 'width', 'height']
+    });
   }, [article?.content]);
 
   useEffect(() => {
@@ -406,7 +410,7 @@ export default function ArticleDetailPage() {
               {/* POST CONTENT / BODY (Editorial News Prose) */}
               <div className="pt-2">
                 <div
-                  className="prose max-w-none text-gray-800 text-sm sm:text-base leading-relaxed font-normal space-y-4 [&>p]:leading-loose [&>blockquote]:border-l-4 [&>blockquote]:border-primary-dark [&>blockquote]:pl-4 [&>blockquote]:italic [&>blockquote]:bg-yellow-50/50 [&>blockquote]:py-2"
+                  className="prose article-body-content ql-editor !p-0 !border-0 max-w-none text-gray-800 text-sm sm:text-base leading-relaxed font-normal space-y-4 [&>p]:leading-loose"
                   dangerouslySetInnerHTML={{ __html: sanitizedContent }}
                 />
               </div>
