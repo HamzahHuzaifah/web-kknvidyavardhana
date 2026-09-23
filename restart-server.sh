@@ -2,6 +2,7 @@
 # =============================================================
 # SCRIPT DEPLOY OTOMATIS - KKN VIDYA VARDHANA
 # Cara pakai: bash restart-server.sh
+# Opsi paksa update library: bash restart-server.sh --install
 # =============================================================
 
 run_deploy() {
@@ -16,16 +17,31 @@ run_deploy() {
   echo ""
   echo "[1/4] ⬇️  Menarik kode terbaru dari GitHub..."
   git fetch origin
+
+  # Deteksi apakah dependensi backend mengalami perubahan sebelum git reset
+  NEEDS_NPM=false
+  if [ "$1" = "--install" ] || [ "$1" = "-f" ]; then
+    echo "⚡ Opsi paksa install (--install) aktif."
+    NEEDS_NPM=true
+  elif ! git diff --quiet HEAD origin/main -- backend/package.json backend/package-lock.json 2>/dev/null; then
+    NEEDS_NPM=true
+  fi
+
   git reset --hard origin/main
   echo "✅ Kode berhasil diperbarui dari GitHub."
 
-  # 2. Update dependencies Backend
+  # 2. Update dependencies Backend (Hanya jika ada library baru atau belum terinstall)
   echo ""
-  echo "[2/4] 📦 Menginstall/Update library Backend..."
-  cd backend
-  npm install --production
-  cd ..
-  echo "✅ Backend dependencies selesai."
+  echo "[2/4] 📦 Memeriksa library Backend..."
+  if [ "$NEEDS_NPM" = true ] || [ ! -d "backend/node_modules" ]; then
+    echo "⚡ Perubahan library terdeteksi atau node_modules belum ada. Menjalankan npm install..."
+    cd backend
+    npm install --production
+    cd ..
+    echo "✅ Backend dependencies selesai."
+  else
+    echo "⚡ Dependensi backend aman & tidak ada perubahan (melewati npm install untuk menghemat waktu)."
+  fi
 
   # 3. Deploy Frontend ke public_html (dari dist/ yang sudah di-build di repo)
   echo ""
