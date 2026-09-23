@@ -298,6 +298,7 @@ export default function UsersTab({
   const pendingCount = safeUsers.filter((u) => u.status === 'pending').length;
   const approvedCount = safeUsers.filter((u) => u.status === 'approved').length;
   const rejectedCount = safeUsers.filter((u) => u.status === 'rejected').length;
+  const totalAdmins = safeUsers.filter((u) => u.role === 'admin' && u.status === 'approved').length;
 
   return (
     <div className="space-y-6">
@@ -459,8 +460,8 @@ export default function UsersTab({
                 </tr>
               ) : (
                 filteredUsers.map((usr) => {
-                  const isMainAdmin = usr.username === 'admin';
                   const isSelf = usr.username === currentUsername;
+                  const isLastAdmin = usr.role === 'admin' && totalAdmins <= 1;
 
                   return (
                     <tr key={usr.id} className="hover:bg-gray-50 transition-colors">
@@ -481,9 +482,9 @@ export default function UsersTab({
                                   Anda
                                 </span>
                               )}
-                              {isMainAdmin && (
+                              {usr.role === 'admin' && (
                                 <span className="text-[10px] bg-yellow-200 text-yellow-900 px-1.5 py-0.2 border border-yellow-700 font-black">
-                                  Utama
+                                  {isSelf ? 'Utama' : 'Admin'}
                                 </span>
                               )}
                             </div>
@@ -570,7 +571,7 @@ export default function UsersTab({
                             </button>
                           )}
 
-                          {usr.status === 'approved' && !isSelf && !isMainAdmin && (
+                          {usr.status === 'approved' && !isSelf && !isLastAdmin && (
                             <button
                               onClick={() => handleUpdateUserStatus(usr.id, 'rejected')}
                               className="inline-flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-2 py-1 border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase text-[10px]"
@@ -581,7 +582,7 @@ export default function UsersTab({
                           )}
 
                           {/* EDIT PERMISSIONS BUTTON */}
-                          {usr.status === 'approved' && !isMainAdmin && (
+                          {usr.status === 'approved' && usr.role !== 'admin' && (
                             <button
                               onClick={() => handleOpenEditPermissions(usr)}
                               className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-900 font-black px-2 py-1 border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase text-[10px]"
@@ -592,7 +593,7 @@ export default function UsersTab({
                           )}
 
                           {/* ROLE TOGGLE */}
-                          {!isMainAdmin && usr.status === 'approved' && (
+                          {!isSelf && !isLastAdmin && usr.status === 'approved' && (
                             <>
                               {usr.role === 'user' ? (
                                 <button
@@ -614,21 +615,19 @@ export default function UsersTab({
                             </>
                           )}
 
-                          {/* EDIT ACCOUNT BUTTON */}
-                          {(!isMainAdmin || currentUsername === 'admin') && (
-                            <button
-                              onClick={() => setEditAccountModalUser({
-                                id: usr.id,
-                                username: usr.username,
-                                email: usr.email,
-                                isSelf: isSelf
-                              })}
-                              className="inline-flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-primary-dark font-bold px-2 py-1 border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase text-[10px]"
-                              title="Edit akun pengguna"
-                            >
-                              <Key size={11} /> Akun
-                            </button>
-                          )}
+                          {/* EDIT ACCOUNT BUTTON (Bisa edit kredensial akun apa pun oleh Admin) */}
+                          <button
+                            onClick={() => setEditAccountModalUser({
+                              id: usr.id,
+                              username: usr.username,
+                              email: usr.email,
+                              isSelf: isSelf
+                            })}
+                            className="inline-flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-primary-dark font-bold px-2 py-1 border border-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all uppercase text-[10px]"
+                            title="Edit username, email & ganti password"
+                          >
+                            <Key size={11} /> Akun
+                          </button>
 
                           {/* FORCE LOGOUT BUTTON */}
                           {usr.status === 'approved' && !isSelf && (
@@ -641,8 +640,8 @@ export default function UsersTab({
                             </button>
                           )}
 
-                          {/* DELETE USER BUTTON */}
-                          {!isMainAdmin && !isSelf && (
+                          {/* DELETE USER BUTTON (Bisa hapus jika bukan akun sendiri dan bukan admin terakhir) */}
+                          {!isSelf && !isLastAdmin && (
                             <button
                               onClick={() => handleDeleteUser(usr.id, usr.username)}
                               className="inline-flex items-center p-1 bg-red-100 hover:bg-red-200 text-red-700 border border-red-700 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all"
@@ -650,10 +649,6 @@ export default function UsersTab({
                             >
                               <Trash2 size={12} />
                             </button>
-                          )}
-
-                          {isMainAdmin && !isSelf && (
-                            <span className="text-[11px] text-gray-400 italic">Akun Sistem</span>
                           )}
                         </div>
                       </td>

@@ -65,10 +65,10 @@ const initDB = async (syncUploadsCallback) => {
         await pool.query("ALTER TABLE users ADD COLUMN can_edit_profile BOOLEAN DEFAULT FALSE");
       }
 
-      // Default Admin User
-      const [adminRows] = await pool.query('SELECT * FROM users WHERE username = ?', ['admin']);
-      const hashedPwd = await bcrypt.hash('admin123', 10);
-      if (adminRows.length === 0) {
+      // Default Admin User - Only seeded once if NO admin exists in database
+      const [adminCountRows] = await pool.query("SELECT COUNT(*) as count FROM users WHERE role = 'admin'");
+      if (adminCountRows[0].count === 0) {
+        const hashedPwd = await bcrypt.hash('admin123', 10);
         await pool.query('INSERT INTO users (username, password, role, status, can_upload_berita, can_upload_publikasi, can_upload_modul, can_edit_profile) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
           'admin',
           hashedPwd,
@@ -79,17 +79,7 @@ const initDB = async (syncUploadsCallback) => {
           true,
           true
         ]);
-      } else {
-        await pool.query('UPDATE users SET password = ?, role = ?, status = ?, can_upload_berita = ?, can_upload_publikasi = ?, can_upload_modul = ?, can_edit_profile = ? WHERE username = ?', [
-          hashedPwd,
-          'admin',
-          'approved',
-          true,
-          true,
-          true,
-          true,
-          'admin'
-        ]);
+        console.log('[DB] Seeding initial default admin account (admin / admin123).');
       }
     } catch (err) {
       console.error('Error initializing users table:', err);
