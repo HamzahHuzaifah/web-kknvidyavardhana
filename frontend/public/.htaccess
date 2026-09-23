@@ -15,7 +15,7 @@ DirectoryIndex index.html
   # 2. Dynamic Open Graph / WhatsApp / Facebook / Twitter / Telegram Link Previews
   RewriteCond %{HTTP_USER_AGENT} (facebookexternalhit|WhatsApp|Facebot|Twitterbot|TelegramBot|LinkedInBot|Discordbot|Slackbot|Pinterest|Googlebot|bingbot|Applebot) [NC,OR]
   RewriteCond %{QUERY_STRING} (crawler|share|bot) [NC]
-  RewriteRule ^(berita|publikasi|jurnal|modul|portofolio|portfolio|profil)/(.+)$ http://127.0.0.1:5000/share/$1/$2 [P,L]
+  RewriteRule ^(berita|publikasi|jurnal|modul|portofolio|portfolio|profil)/(.+)$ http://127.0.0.1:5000/share/$1/$2 [P,QSA,L]
 
   # 3. Jika file fisik benar-benar ada (file css, js, svg, gambar), langsung sajikan
   RewriteCond %{REQUEST_FILENAME} -f

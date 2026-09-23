@@ -442,6 +442,15 @@ const initDB = async (syncUploadsCallback) => {
       } catch (nbspErr) {
         console.warn('[DB] &nbsp; cleanup warning:', nbspErr.message);
       }
+
+      // Auto-update heavy PNG cover to optimized WhatsApp-compatible JPEG
+      try {
+        await pool.query(
+          "UPDATE articles SET image_url = '/uploads/1790168287702-339600242.jpg' WHERE image_url LIKE '%1790168287702-339600242.png%'"
+        );
+      } catch (imgErr) {
+        console.warn('[DB] Article image optimization migration warning:', imgErr.message);
+      }
     } catch (err) {
       console.error('Error initializing articles table:', err);
     }

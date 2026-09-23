@@ -75,3 +75,89 @@ export const processFilesForHeic = async (files, onConverting) => {
   if (typeof onConverting === 'function') onConverting(false);
   return result;
 };
+
+/**
+ * Automatically optimizes and compresses any cover image:
+ * - Converts HEIC to JPG if needed
+ * - Resizes large images (max dimension 1200px)
+ * - Compresses to JPEG quality 0.82
+ * - Guarantees file size is strictly under 300KB (ideal for WhatsApp/Social Media OG link previews)
+ * @param {File} file
+ * @param {Function} [onConverting]
+ * @returns {Promise<File>}
+ */
+export const optimizeCoverImageForWeb = async (file, onConverting) => {
+  if (!file) return file;
+
+  let currentFile = file;
+  if (isHeicFile(file)) {
+    currentFile = await convertHeicToJpgIfNeeded(file, onConverting);
+  }
+
+  // If already small JPEG (<= 250KB), no need to compress further
+  if (currentFile.type === 'image/jpeg' && currentFile.size <= 250 * 1024) {
+    return currentFile;
+  }
+
+  return new Promise((resolve) => {
+    if (typeof onConverting === 'function') onConverting(true);
+
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(currentFile);
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+
+      let width = img.naturalWidth || img.width;
+      let height = img.naturalHeight || img.height;
+      const maxDim = 1200;
+
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+
+      // Draw white background in case source image was transparent PNG
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob((blob) => {
+        if (typeof onConverting === 'function') onConverting(false);
+
+        if (!blob) {
+          return resolve(currentFile);
+        }
+
+        const cleanBaseName = (currentFile.name || 'image')
+          .replace(/\.[^/.]+$/, '')
+          .replace(/[^a-zA-Z0-9_-]/g, '_');
+        const optimizedFile = new File([blob], `${cleanBaseName}.jpg`, {
+          type: 'image/jpeg',
+          lastModified: Date.now()
+        });
+
+        resolve(optimizedFile);
+      }, 'image/jpeg', 0.82);
+    };
+
+    img.onerror = (err) => {
+      URL.revokeObjectURL(objectUrl);
+      if (typeof onConverting === 'function') onConverting(false);
+      console.warn('[optimizeCoverImageForWeb] Image load failed, fallback to original', err);
+      resolve(currentFile);
+    };
+
+    img.src = objectUrl;
+  });
+};

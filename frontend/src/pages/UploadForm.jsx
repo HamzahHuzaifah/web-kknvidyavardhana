@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import RichTextEditor from '../components/RichTextEditor';
 import CustomDatePicker from '../components/CustomDatePicker';
-import { convertHeicToJpgIfNeeded } from '../utils/heicHelper';
+import { convertHeicToJpgIfNeeded, optimizeCoverImageForWeb } from '../utils/heicHelper';
 
 export default function UploadForm() {
   const [formData, setFormData] = useState({
@@ -111,7 +111,7 @@ export default function UploadForm() {
   const handleFileChange = async (e) => {
     let file = e.target.files[0];
     if (!file) return;
-    file = await convertHeicToJpgIfNeeded(file, setIsConvertingImage);
+    file = await optimizeCoverImageForWeb(file, setIsConvertingImage);
     setFormData(prev => ({ ...prev, image: file }));
     const reader = new FileReader();
     reader.onloadend = () => setPreview(reader.result);

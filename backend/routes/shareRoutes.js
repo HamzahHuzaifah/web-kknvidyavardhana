@@ -109,7 +109,17 @@ async function handleShare(req, res) {
         description = excerpt ? (excerpt.length > 180 ? excerpt.slice(0, 177) + '...' : excerpt) : description;
 
         if (a.image_url) {
-          imageUrl = a.image_url.startsWith('http') ? a.image_url : `${baseUrl}${a.image_url.startsWith('/') ? '' : '/'}${a.image_url}`;
+          let rawImg = a.image_url.startsWith('http') ? a.image_url : `${baseUrl}${a.image_url.startsWith('/') ? '' : '/'}${a.image_url}`;
+          
+          // Smart check: If image is a PNG, check if an optimized .jpg version exists on disk
+          const rawBasename = path.basename((a.image_url || '').split('?')[0]);
+          const jpgBasename = rawBasename.replace(/\.png$/i, '.jpg');
+          const localJpg = path.join(__dirname, '../uploads', jpgBasename);
+          if (rawBasename.toLowerCase().endsWith('.png') && fs.existsSync(localJpg)) {
+            imageUrl = `${baseUrl}/uploads/${jpgBasename}`;
+          } else {
+            imageUrl = rawImg;
+          }
         }
         ogType = 'article';
       }
@@ -119,6 +129,13 @@ async function handleShare(req, res) {
     const safeDesc = escapeHtml(description);
     const safeImage = escapeHtml(imageUrl);
     const safeUrl = escapeHtml(pageUrl);
+
+    // Dynamic mime type detection for og:image:type
+    const ext = path.extname((imageUrl || '').split('?')[0]).toLowerCase();
+    let imageMime = 'image/jpeg';
+    if (ext === '.png') imageMime = 'image/png';
+    else if (ext === '.webp') imageMime = 'image/webp';
+    else if (ext === '.gif') imageMime = 'image/gif';
 
     // Replace Title tag
     html = html.replace(/<title>.*?<\/title>/i, `<title>${safeTitle} | KKN Vidya Vardhana</title>`);
@@ -138,7 +155,7 @@ async function handleShare(req, res) {
     <meta property="og:description" content="${safeDesc}" />
     <meta property="og:image" content="${safeImage}" />
     <meta property="og:image:secure_url" content="${safeImage}" />
-    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:type" content="${imageMime}" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="${safeTitle}" />
