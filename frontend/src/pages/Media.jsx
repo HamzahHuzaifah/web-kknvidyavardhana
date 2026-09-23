@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { 
@@ -66,6 +66,115 @@ function formatEmbedUrl(url, platform, isAutoplay) {
 
   // Fallback / direct embed
   return trimmed;
+}
+
+// Responsive video player that dynamically scales TikTok, Shorts, and Instagram embeds
+// to prevent zoomed-in / cropped video issues and internal scrollbars in narrow cards
+function ResponsiveVideoEmbed({ item }) {
+  const containerRef = useRef(null);
+  const [scale, setScale] = useState(1);
+  const [containerHeight, setContainerHeight] = useState(0);
+
+  const embedUrl = formatEmbedUrl(item.url, item.platform, item.is_autoplay);
+  const isInstagram = item.platform?.toLowerCase() === 'instagram' || item.url?.includes('instagram.com');
+  const isTiktok = item.platform?.toLowerCase() === 'tiktok' || item.url?.includes('tiktok.com');
+  const isYtShort = item.platform?.toLowerCase() === 'youtube' && item.url?.includes('/shorts/');
+  const isVertical = isTiktok || isYtShort;
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const updateSize = () => {
+      if (!containerRef.current) return;
+      const width = containerRef.current.clientWidth;
+      if (width <= 0) return;
+
+      if (isVertical) {
+        // Base width for vertical embed (TikTok/Shorts) is 320px
+        const baseW = 320;
+        const baseH = 568; // 9:16 ratio of 320
+        const currentScale = width / baseW;
+        setScale(currentScale);
+        setContainerHeight(Math.round(baseH * currentScale));
+      } else if (isInstagram) {
+        // Base width for Instagram embed is 328px
+        const baseW = 328;
+        const baseH = 440;
+        const currentScale = width / baseW;
+        setScale(currentScale);
+        setContainerHeight(Math.round(baseH * currentScale));
+      } else {
+        // Standard 16:9 YouTube
+        setScale(1);
+        setContainerHeight(Math.round((width * 9) / 16));
+      }
+    };
+
+    updateSize();
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [isVertical, isInstagram]);
+
+  if (!embedUrl) {
+    return (
+      <div className="w-full aspect-video flex flex-col items-center justify-center bg-zinc-900 text-white p-4 text-center space-y-1">
+        <Tv size={20} className="text-gray-400" />
+        <p className="text-[10px] font-bold">Format tidak didukung langsung</p>
+        <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-secondary text-[10px] underline">
+          Buka aplikasi
+        </a>
+      </div>
+    );
+  }
+
+  // Horizontal video (YouTube standard)
+  if (!isVertical && !isInstagram) {
+    return (
+      <div ref={containerRef} className="w-full bg-black aspect-video relative overflow-hidden">
+        <iframe
+          src={embedUrl}
+          title={item.title}
+          className="w-full h-full border-0 absolute inset-0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          loading="lazy"
+        ></iframe>
+      </div>
+    );
+  }
+
+  // Vertical (TikTok / Shorts) or Instagram with proportional scale down
+  const baseWidth = isInstagram ? 328 : 320;
+  const baseHeight = isInstagram ? 440 : 568;
+
+  return (
+    <div
+      ref={containerRef}
+      className="w-full bg-black relative overflow-hidden"
+      style={{ height: containerHeight ? `${containerHeight}px` : isVertical ? '350px' : '400px' }}
+    >
+      <div
+        className="absolute top-0 left-0"
+        style={{
+          width: `${baseWidth}px`,
+          height: `${baseHeight}px`,
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left'
+        }}
+      >
+        <iframe
+          src={embedUrl}
+          title={item.title}
+          style={{ width: `${baseWidth}px`, height: `${baseHeight}px` }}
+          className="border-0 block"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          loading="lazy"
+          scrolling="no"
+        ></iframe>
+      </div>
+    </div>
+  );
 }
 
 // Custom hook to detect responsive column count for Pinterest Masonry layout
@@ -567,139 +676,99 @@ export default function Media() {
             <>
               {/* Pinterest Masonry Grid: columns without vertical gaps */}
               <div 
-                className="grid gap-5 sm:gap-6 items-start w-full"
+                className="grid gap-3 sm:gap-4 items-start w-full"
                 style={{
                   gridTemplateColumns: `repeat(${columnsData.length}, minmax(0, 1fr))`
                 }}
               >
                 {columnsData.map((colItems, colIndex) => (
-                  <div key={colIndex} className="flex flex-col gap-5 sm:gap-6 min-w-0">
-                    {colItems.map((item) => {
-                      const embedUrl = formatEmbedUrl(item.url, item.platform, item.is_autoplay);
-                      const isInstagram = item.platform?.toLowerCase() === 'instagram' || item.url?.includes('instagram.com');
-                      const isTiktok = item.platform?.toLowerCase() === 'tiktok' || item.url?.includes('tiktok.com');
-                      const isYtShort = item.platform?.toLowerCase() === 'youtube' && item.url?.includes('/shorts/');
-                      const isVertical = isTiktok || isYtShort;
-
-                      let frameContainerHeight = 'aspect-video w-full';
-                      if (isVertical) {
-                        frameContainerHeight = 'aspect-[9/16] w-full';
-                      } else if (isInstagram) {
-                        frameContainerHeight = 'aspect-[4/5] min-h-[380px] w-full';
-                      }
-
-                      return (
-                        <div 
-                          key={item.id}
-                          className="bg-white border-3 sm:border-4 border-primary-dark shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 flex flex-col justify-between relative overflow-hidden transition-all duration-300 w-full"
-                        >
-                          {/* Top Console Bar */}
-                          <div className="bg-primary-dark text-white p-2.5 sm:p-3 border-b-3 sm:border-b-4 border-primary-dark flex flex-wrap items-center justify-between gap-1.5">
-                            <div className="flex items-center gap-1.5">
-                              <span className={`text-[9px] sm:text-[10px] font-black uppercase px-2 py-0.5 border border-primary-dark shadow-sm ${getPlatformCardStyle(item.platform).badge}`}>
-                                {item.platform}
+                  <div key={colIndex} className="flex flex-col gap-3 sm:gap-4 min-w-0">
+                    {colItems.map((item) => (
+                      <div 
+                        key={item.id}
+                        className="bg-white border-2 border-primary-dark shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 flex flex-col justify-between relative overflow-hidden transition-all duration-200 w-full"
+                      >
+                        {/* Top Console Bar */}
+                        <div className="bg-primary-dark text-white px-2.5 py-1.5 border-b-2 border-primary-dark flex items-center justify-between gap-1">
+                          <div className="flex items-center gap-1 min-w-0">
+                            <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 border border-primary-dark shadow-xs truncate ${getPlatformCardStyle(item.platform).badge}`}>
+                              {item.platform}
+                            </span>
+                            {item.is_autoplay === 1 && (
+                              <span className="bg-gradient-yellow text-primary-dark text-[7px] font-black px-1 py-0.5 border border-primary-dark uppercase flex items-center gap-0.5">
+                                <Sparkles size={8} /> Auto
                               </span>
-                              {item.is_autoplay === 1 && (
-                                <span className="bg-gradient-yellow text-primary-dark text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 border border-primary-dark uppercase flex items-center gap-0.5 shadow-sm">
-                                  <Sparkles size={9} /> Auto
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="flex items-center gap-1.5">
-                              <button
-                                type="button"
-                                onClick={() => handleCopyVideoUrl(item.url, item.id)}
-                                className="bg-white/10 hover:bg-white text-white hover:text-primary-dark text-[9px] sm:text-[10px] font-bold uppercase px-2 py-1 border border-white/30 transition-all flex items-center gap-1"
-                                title="Salin Tautan Video"
-                              >
-                                {copiedId === item.id ? (
-                                  <>
-                                    <Check size={10} className="text-secondary" />
-                                    <span className="text-secondary text-[9px]">Tersalin!</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Copy size={10} />
-                                    <span className="hidden xs:inline">Bagikan</span>
-                                  </>
-                                )}
-                              </button>
-
-                              <a
-                                href={item.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="bg-gradient-yellow text-primary-dark text-[9px] sm:text-[10px] font-black uppercase px-2 py-1 border border-primary-dark shadow-sm hover:translate-y-0.5 transition-all flex items-center gap-1"
-                                title="Buka link asli di platform terkait"
-                              >
-                                <span>Sumber</span>
-                                <ExternalLink size={9} />
-                              </a>
-                            </div>
+                            )}
                           </div>
 
-                          {/* Media Player Screen Container */}
-                          <div className="bg-zinc-950 p-2 sm:p-3 flex items-center justify-center border-b-3 sm:border-b-4 border-primary-dark">
-                            <div className={`bg-black border-2 border-zinc-800 shadow-md relative overflow-hidden ${frameContainerHeight}`}>
-                              {embedUrl ? (
-                                <iframe
-                                  src={embedUrl}
-                                  title={item.title}
-                                  className="w-full h-full border-0"
-                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                  allowFullScreen
-                                  loading="lazy"
-                                  scrolling={isInstagram ? 'no' : 'auto'}
-                                ></iframe>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleCopyVideoUrl(item.url, item.id)}
+                              className="bg-white/10 hover:bg-white text-white hover:text-primary-dark text-[8px] font-bold uppercase px-1.5 py-0.5 border border-white/30 transition-all flex items-center gap-0.5"
+                              title="Salin Tautan Video"
+                            >
+                              {copiedId === item.id ? (
+                                <>
+                                  <Check size={9} className="text-secondary" />
+                                  <span className="text-secondary">Tersalin</span>
+                                </>
                               ) : (
-                                <div className="w-full h-full flex flex-col items-center justify-center text-white text-xs font-bold p-4 text-center space-y-2">
-                                  <Tv size={24} className="text-gray-500" />
-                                  <p className="text-[11px]">Format tautan belum didukung sematan.</p>
-                                  <a 
-                                    href={item.url} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer" 
-                                    className="text-secondary underline text-[11px]"
-                                  >
-                                    Buka aplikasi
-                                  </a>
-                                </div>
+                                <>
+                                  <Copy size={9} />
+                                  <span>Bagikan</span>
+                                </>
                               )}
-                            </div>
+                            </button>
+
+                            <a
+                              href={item.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="bg-gradient-yellow text-primary-dark text-[8px] font-black uppercase px-1.5 py-0.5 border border-primary-dark shadow-xs hover:translate-y-0.5 transition-all flex items-center gap-0.5"
+                              title="Buka link asli di platform terkait"
+                            >
+                              <span>Sumber</span>
+                              <ExternalLink size={8} />
+                            </a>
                           </div>
-
-                          {/* Video Info: Title & Caption */}
-                          <div className="p-4 sm:p-5 space-y-2.5 flex-grow flex flex-col justify-between bg-white">
-                            <div className="space-y-1.5">
-                              <h3 className="text-sm sm:text-base font-black text-primary-dark uppercase tracking-tight leading-snug line-clamp-2" title={item.title}>
-                                {item.title}
-                              </h3>
-
-                              {item.caption && (
-                                <p className="text-[11px] sm:text-xs text-gray-700 font-medium leading-relaxed whitespace-pre-line border-l-2 border-secondary-dark pl-2.5 line-clamp-3">
-                                  {item.caption}
-                                </p>
-                              )}
-                            </div>
-
-                            <div className="pt-2.5 border-t-2 border-gray-100 flex items-center justify-between text-[10px] text-gray-500 font-bold uppercase">
-                              <span>Posko 07</span>
-                              <a 
-                                href={item.url} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="text-primary-dark hover:text-secondary-dark flex items-center gap-1 transition-colors"
-                              >
-                                <span>Tonton</span>
-                                <ArrowRight size={11} />
-                              </a>
-                            </div>
-                          </div>
-
                         </div>
-                      );
-                    })}
+
+                        {/* Media Player Screen Container */}
+                        <div className="bg-black border-b-2 border-primary-dark w-full">
+                          <ResponsiveVideoEmbed item={item} />
+                        </div>
+
+                        {/* Video Info: Title & Caption */}
+                        <div className="p-2.5 sm:p-3 space-y-1.5 flex-grow flex flex-col justify-between bg-white">
+                          <div className="space-y-1">
+                            <h3 className="text-[11px] sm:text-xs font-black text-primary-dark uppercase tracking-tight leading-snug line-clamp-2" title={item.title}>
+                              {item.title}
+                            </h3>
+
+                            {item.caption && (
+                              <p className="text-[9px] sm:text-[10px] text-gray-600 font-medium leading-relaxed whitespace-pre-line border-l-2 border-secondary-dark pl-2 line-clamp-2" title={item.caption}>
+                                {item.caption}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="pt-1.5 border-t border-gray-100 flex items-center justify-between text-[8px] sm:text-[9px] text-gray-500 font-bold uppercase">
+                            <span>Posko 07</span>
+                            <a 
+                              href={item.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="text-primary-dark hover:text-secondary-dark flex items-center gap-0.5 transition-colors font-black"
+                            >
+                              <span>Tonton</span>
+                              <ArrowRight size={10} />
+                            </a>
+                          </div>
+                        </div>
+
+                      </div>
+                    ))}
                   </div>
                 ))}
               </div>
