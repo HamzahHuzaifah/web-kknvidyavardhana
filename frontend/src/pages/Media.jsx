@@ -18,7 +18,9 @@ import {
   Film,
   Tv,
   MessageCircle,
-  ArrowRight
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 // Helper to convert social video URLs into working embed URLs with autoplay
@@ -76,6 +78,10 @@ export default function Media() {
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedId, setCopiedId] = useState(null);
 
+  // Pagination state (default 6 items per page for optimal rendering speed)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(6);
+
   const role = localStorage.getItem('role');
   const isAdmin = role === 'admin';
 
@@ -97,6 +103,11 @@ export default function Media() {
 
     fetchData();
   }, []);
+
+  // Reset pagination to page 1 whenever filter, search query, or itemsPerPage changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedPlatform, searchQuery, itemsPerPage]);
 
   const getPlatformIcon = (platform) => {
     switch (platform?.toLowerCase()) {
@@ -159,6 +170,53 @@ export default function Media() {
       return matchPlatform && matchSearch;
     });
   }, [mediaList, selectedPlatform, searchQuery]);
+
+  // Pagination computations
+  const totalItems = filteredMedia.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+
+  const paginatedMedia = useMemo(() => {
+    const startIndex = (safeCurrentPage - 1) * itemsPerPage;
+    return filteredMedia.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredMedia, safeCurrentPage, itemsPerPage]);
+
+  const startItemIndex = totalItems === 0 ? 0 : (safeCurrentPage - 1) * itemsPerPage + 1;
+  const endItemIndex = Math.min(safeCurrentPage * itemsPerPage, totalItems);
+
+  const handlePageChange = (newPage) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    setCurrentPage(newPage);
+    const section = document.getElementById('media-gallery-section');
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const getPaginationNumbers = () => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    const pages = [];
+    if (safeCurrentPage <= 4) {
+      for (let i = 1; i <= 5; i++) pages.push(i);
+      pages.push('...');
+      pages.push(totalPages);
+    } else if (safeCurrentPage >= totalPages - 3) {
+      pages.push(1);
+      pages.push('...');
+      for (let i = totalPages - 4; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      pages.push('...');
+      pages.push(safeCurrentPage - 1);
+      pages.push(safeCurrentPage);
+      pages.push(safeCurrentPage + 1);
+      pages.push('...');
+      pages.push(totalPages);
+    }
+    return pages;
+  };
 
   const handleCopyVideoUrl = (url, id) => {
     if (!url) return;
@@ -317,7 +375,7 @@ export default function Media() {
         </section>
 
         {/* ================= SECTION 2: VIDEO DOKUMENTER & KONTEN TERSEMAT ================= */}
-        <section className="space-y-8">
+        <section id="media-gallery-section" className="space-y-8">
           
           {/* Section Header */}
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b-4 border-primary-dark pb-3">
@@ -330,10 +388,15 @@ export default function Media() {
               </h2>
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="bg-primary-dark text-white text-xs font-black px-3 py-1.5 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] uppercase">
-                {mediaList.length} Video Tersemat
+                {totalItems} Video {totalItems !== mediaList.length ? '(Difilter)' : ''}
               </span>
+              {totalPages > 1 && (
+                <span className="bg-gradient-yellow text-primary-dark text-xs font-black px-3 py-1.5 border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] uppercase">
+                  Halaman {safeCurrentPage} / {totalPages}
+                </span>
+              )}
             </div>
           </div>
 
@@ -352,61 +415,90 @@ export default function Media() {
               />
             </div>
 
-            {/* Platform Filter Tabs */}
-            <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto no-scrollbar py-1">
-              <span className="text-[11px] font-black uppercase text-gray-500 mr-1 flex items-center gap-1 shrink-0">
-                <Filter size={12} /> Kategori:
-              </span>
+            {/* Platform Filter Tabs & Items Per Page Controls */}
+            <div className="flex flex-wrap items-center gap-3 justify-between md:justify-end w-full md:w-auto">
               
-              <button
-                onClick={() => setSelectedPlatform('ALL')}
-                className={`px-3 py-1.5 text-[10px] font-black uppercase border-2 border-primary-dark shrink-0 transition-all ${
-                  selectedPlatform === 'ALL'
-                    ? 'bg-primary-dark text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5'
-                    : 'bg-white text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                Semua ({platformCounts.ALL || 0})
-              </button>
-
-              {platformCounts.youtube > 0 && (
+              {/* Platform Filter Tabs */}
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+                <span className="text-[11px] font-black uppercase text-gray-500 mr-1 flex items-center gap-1 shrink-0">
+                  <Filter size={12} /> Kategori:
+                </span>
+                
                 <button
-                  onClick={() => setSelectedPlatform('youtube')}
+                  type="button"
+                  onClick={() => setSelectedPlatform('ALL')}
                   className={`px-3 py-1.5 text-[10px] font-black uppercase border-2 border-primary-dark shrink-0 transition-all ${
-                    selectedPlatform === 'youtube'
-                      ? 'bg-red-600 text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5'
+                    selectedPlatform === 'ALL'
+                      ? 'bg-primary-dark text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5'
                       : 'bg-white text-gray-700 hover:bg-gray-100'
                   }`}
                 >
-                  YouTube ({platformCounts.youtube})
+                  Semua ({platformCounts.ALL || 0})
                 </button>
-              )}
 
-              {platformCounts.instagram > 0 && (
-                <button
-                  onClick={() => setSelectedPlatform('instagram')}
-                  className={`px-3 py-1.5 text-[10px] font-black uppercase border-2 border-primary-dark shrink-0 transition-all ${
-                    selectedPlatform === 'instagram'
-                      ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5'
-                      : 'bg-white text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  Instagram ({platformCounts.instagram})
-                </button>
-              )}
+                {platformCounts.youtube > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPlatform('youtube')}
+                    className={`px-3 py-1.5 text-[10px] font-black uppercase border-2 border-primary-dark shrink-0 transition-all ${
+                      selectedPlatform === 'youtube'
+                        ? 'bg-red-600 text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5'
+                        : 'bg-white text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    YouTube ({platformCounts.youtube})
+                  </button>
+                )}
 
-              {platformCounts.tiktok > 0 && (
-                <button
-                  onClick={() => setSelectedPlatform('tiktok')}
-                  className={`px-3 py-1.5 text-[10px] font-black uppercase border-2 border-primary-dark shrink-0 transition-all ${
-                    selectedPlatform === 'tiktok'
-                      ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5'
-                      : 'bg-white text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  TikTok ({platformCounts.tiktok})
-                </button>
-              )}
+                {platformCounts.instagram > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPlatform('instagram')}
+                    className={`px-3 py-1.5 text-[10px] font-black uppercase border-2 border-primary-dark shrink-0 transition-all ${
+                      selectedPlatform === 'instagram'
+                        ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5'
+                        : 'bg-white text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    Instagram ({platformCounts.instagram})
+                  </button>
+                )}
+
+                {platformCounts.tiktok > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPlatform('tiktok')}
+                    className={`px-3 py-1.5 text-[10px] font-black uppercase border-2 border-primary-dark shrink-0 transition-all ${
+                      selectedPlatform === 'tiktok'
+                        ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5'
+                        : 'bg-white text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    TikTok ({platformCounts.tiktok})
+                  </button>
+                )}
+              </div>
+
+              {/* Items Per Page Selector */}
+              <div className="flex items-center gap-1.5 pl-2 border-t sm:border-t-0 sm:border-l-2 border-gray-200 pt-2 sm:pt-0 w-full sm:w-auto justify-end">
+                <span className="text-[10px] font-black uppercase text-gray-500">Tampil:</span>
+                {[4, 6, 8, 12].map((num) => (
+                  <button
+                    key={num}
+                    type="button"
+                    onClick={() => setItemsPerPage(num)}
+                    className={`px-2 py-1 text-[10px] font-black border-2 border-primary-dark transition-all ${
+                      itemsPerPage === num
+                        ? 'bg-primary-dark text-white shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]'
+                        : 'bg-white text-gray-700 hover:bg-gray-100'
+                    }`}
+                    title={`Tampilkan ${num} video per halaman`}
+                  >
+                    {num}
+                  </button>
+                ))}
+              </div>
+
             </div>
 
           </div>
@@ -416,6 +508,7 @@ export default function Media() {
             <div className="bg-white border-4 border-primary-dark shadow-hard p-12 text-center space-y-3">
               <p className="text-gray-500 font-bold uppercase text-sm">Tidak ada video atau konten media yang cocok.</p>
               <button
+                type="button"
                 onClick={() => { setSearchQuery(''); setSelectedPlatform('ALL'); }}
                 className="bg-primary-dark text-white font-black text-xs uppercase px-4 py-2 border-2 border-primary-dark shadow-sm"
               >
@@ -423,134 +516,203 @@ export default function Media() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-              {filteredMedia.map((item) => {
-                const embedUrl = formatEmbedUrl(item.url, item.platform, item.is_autoplay);
-                const isInstagram = item.platform?.toLowerCase() === 'instagram' || item.url?.includes('instagram.com');
-                const isTiktok = item.platform?.toLowerCase() === 'tiktok' || item.url?.includes('tiktok.com');
-                const isYtShort = item.platform?.toLowerCase() === 'youtube' && item.url?.includes('/shorts/');
-                const isVertical = isTiktok || isYtShort;
+            <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                {paginatedMedia.map((item) => {
+                  const embedUrl = formatEmbedUrl(item.url, item.platform, item.is_autoplay);
+                  const isInstagram = item.platform?.toLowerCase() === 'instagram' || item.url?.includes('instagram.com');
+                  const isTiktok = item.platform?.toLowerCase() === 'tiktok' || item.url?.includes('tiktok.com');
+                  const isYtShort = item.platform?.toLowerCase() === 'youtube' && item.url?.includes('/shorts/');
+                  const isVertical = isTiktok || isYtShort;
 
-                let frameContainerHeight = 'aspect-video w-full';
-                if (isVertical) {
-                  frameContainerHeight = 'aspect-[9/16] w-full max-w-[340px] mx-auto';
-                } else if (isInstagram) {
-                  frameContainerHeight = 'h-[520px] w-full max-w-[420px] mx-auto';
-                }
+                  let frameContainerHeight = 'aspect-video w-full';
+                  if (isVertical) {
+                    frameContainerHeight = 'aspect-[9/16] w-full max-w-[340px] mx-auto';
+                  } else if (isInstagram) {
+                    frameContainerHeight = 'h-[520px] w-full max-w-[420px] mx-auto';
+                  }
 
-                return (
-                  <div 
-                    key={item.id}
-                    className="bg-white border-4 border-primary-dark shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] flex flex-col justify-between relative overflow-hidden transition-all duration-300"
-                  >
-                    
-                    {/* Top Console Bar */}
-                    <div className="bg-primary-dark text-white p-3 sm:p-3.5 border-b-4 border-primary-dark flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 border border-primary-dark shadow-sm ${getPlatformCardStyle(item.platform).badge}`}>
-                          {item.platform}
-                        </span>
-                        {item.is_autoplay === 1 && (
-                          <span className="bg-gradient-yellow text-primary-dark text-[9px] font-black px-2 py-0.5 border border-primary-dark uppercase flex items-center gap-1 shadow-sm">
-                            <Sparkles size={10} /> Autoplay
+                  return (
+                    <div 
+                      key={item.id}
+                      className="bg-white border-4 border-primary-dark shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] flex flex-col justify-between relative overflow-hidden transition-all duration-300"
+                    >
+                      
+                      {/* Top Console Bar */}
+                      <div className="bg-primary-dark text-white p-3 sm:p-3.5 border-b-4 border-primary-dark flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 border border-primary-dark shadow-sm ${getPlatformCardStyle(item.platform).badge}`}>
+                            {item.platform}
                           </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleCopyVideoUrl(item.url, item.id)}
-                          className="bg-white/10 hover:bg-white text-white hover:text-primary-dark text-[10px] font-bold uppercase px-2.5 py-1 border border-white/30 transition-all flex items-center gap-1"
-                          title="Salin Tautan Video"
-                        >
-                          {copiedId === item.id ? (
-                            <>
-                              <Check size={11} className="text-secondary" />
-                              <span className="text-secondary">Tersalin!</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy size={11} />
-                              <span>Bagikan</span>
-                            </>
+                          {item.is_autoplay === 1 && (
+                            <span className="bg-gradient-yellow text-primary-dark text-[9px] font-black px-2 py-0.5 border border-primary-dark uppercase flex items-center gap-1 shadow-sm">
+                              <Sparkles size={10} /> Autoplay
+                            </span>
                           )}
-                        </button>
+                        </div>
 
-                        <a
-                          href={item.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="bg-gradient-yellow text-primary-dark text-[10px] font-black uppercase px-2.5 py-1 border border-primary-dark shadow-sm hover:translate-y-0.5 transition-all flex items-center gap-1"
-                          title="Buka link asli di platform terkait"
-                        >
-                          <span>Sumber</span>
-                          <ExternalLink size={10} />
-                        </a>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleCopyVideoUrl(item.url, item.id)}
+                            className="bg-white/10 hover:bg-white text-white hover:text-primary-dark text-[10px] font-bold uppercase px-2.5 py-1 border border-white/30 transition-all flex items-center gap-1"
+                            title="Salin Tautan Video"
+                          >
+                            {copiedId === item.id ? (
+                              <>
+                                <Check size={11} className="text-secondary" />
+                                <span className="text-secondary">Tersalin!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy size={11} />
+                                <span>Bagikan</span>
+                              </>
+                            )}
+                          </button>
+
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-gradient-yellow text-primary-dark text-[10px] font-black uppercase px-2.5 py-1 border border-primary-dark shadow-sm hover:translate-y-0.5 transition-all flex items-center gap-1"
+                            title="Buka link asli di platform terkait"
+                          >
+                            <span>Sumber</span>
+                            <ExternalLink size={10} />
+                          </a>
+                        </div>
                       </div>
+
+                      {/* Media Player Screen Container */}
+                      <div className="bg-zinc-950 p-2 sm:p-4 flex items-center justify-center border-b-4 border-primary-dark">
+                        <div className={`bg-black border-2 border-zinc-800 shadow-md relative overflow-hidden ${frameContainerHeight}`}>
+                          {embedUrl ? (
+                            <iframe
+                              src={embedUrl}
+                              title={item.title}
+                              className="w-full h-full border-0"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                              allowFullScreen
+                              loading="lazy"
+                              scrolling={isInstagram ? 'no' : 'auto'}
+                            ></iframe>
+                          ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center text-white text-xs font-bold p-6 text-center space-y-2">
+                              <Tv size={28} className="text-gray-500" />
+                              <p>Format tautan video belum didukung untuk sematan langsung.</p>
+                              <a 
+                                href={item.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="text-secondary underline"
+                              >
+                                Buka langsung di aplikasi
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Video Info: Title & Caption */}
+                      <div className="p-6 space-y-3 flex-grow flex flex-col justify-between bg-white">
+                        <div className="space-y-2">
+                          <h3 className="text-lg sm:text-xl font-black text-primary-dark uppercase tracking-tight leading-snug">
+                            {item.title}
+                          </h3>
+
+                          {item.caption && (
+                            <p className="text-xs sm:text-sm text-gray-700 font-medium leading-relaxed whitespace-pre-line border-l-3 border-secondary-dark pl-3">
+                              {item.caption}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="pt-3 border-t-2 border-gray-100 flex items-center justify-between text-[11px] text-gray-500 font-bold uppercase">
+                          <span>Dokumentasi Posko KKN 07</span>
+                          <a 
+                            href={item.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-primary-dark hover:text-secondary-dark flex items-center gap-1 transition-colors"
+                          >
+                            <span>Tonton Penuh</span>
+                            <ArrowRight size={12} />
+                          </a>
+                        </div>
+                      </div>
+
                     </div>
+                  );
+                })}
+              </div>
 
-                    {/* Media Player Screen Container */}
-                    <div className="bg-zinc-950 p-2 sm:p-4 flex items-center justify-center border-b-4 border-primary-dark">
-                      <div className={`bg-black border-2 border-zinc-800 shadow-md relative overflow-hidden ${frameContainerHeight}`}>
-                        {embedUrl ? (
-                          <iframe
-                            src={embedUrl}
-                            title={item.title}
-                            className="w-full h-full border-0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                            allowFullScreen
-                            scrolling={isInstagram ? 'no' : 'auto'}
-                          ></iframe>
-                        ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center text-white text-xs font-bold p-6 text-center space-y-2">
-                            <Tv size={28} className="text-gray-500" />
-                            <p>Format tautan video belum didukung untuk sematan langsung.</p>
-                            <a 
-                              href={item.url} 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
-                              className="text-secondary underline"
-                            >
-                              Buka langsung di aplikasi
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Video Info: Title & Caption */}
-                    <div className="p-6 space-y-3 flex-grow flex flex-col justify-between bg-white">
-                      <div className="space-y-2">
-                        <h3 className="text-lg sm:text-xl font-black text-primary-dark uppercase tracking-tight leading-snug">
-                          {item.title}
-                        </h3>
-
-                        {item.caption && (
-                          <p className="text-xs sm:text-sm text-gray-700 font-medium leading-relaxed whitespace-pre-line border-l-3 border-secondary-dark pl-3">
-                            {item.caption}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="pt-3 border-t-2 border-gray-100 flex items-center justify-between text-[11px] text-gray-500 font-bold uppercase">
-                        <span>Dokumentasi Posko KKN 07</span>
-                        <a 
-                          href={item.url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-primary-dark hover:text-secondary-dark flex items-center gap-1 transition-colors"
-                        >
-                          <span>Tonton Penuh</span>
-                          <ArrowRight size={12} />
-                        </a>
-                      </div>
-                    </div>
-
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="mt-8 bg-white border-4 border-primary-dark shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div className="text-xs font-bold text-gray-700 uppercase flex flex-wrap items-center gap-2 text-center sm:text-left">
+                    <span>Menampilkan</span>
+                    <span className="bg-yellow-100 border-2 border-primary-dark px-2 py-0.5 font-black text-primary-dark shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]">
+                      {startItemIndex} - {endItemIndex}
+                    </span>
+                    <span>dari</span>
+                    <strong className="text-primary-dark font-black">{totalItems}</strong>
+                    <span>video</span>
+                    <span className="text-gray-300 hidden sm:inline">•</span>
+                    <span className="text-gray-500">Halaman <strong className="text-primary-dark font-black">{safeCurrentPage}</strong> dari <strong className="text-primary-dark font-black">{totalPages}</strong></span>
                   </div>
-                );
-              })}
-            </div>
+
+                  <div className="flex flex-wrap items-center justify-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handlePageChange(safeCurrentPage - 1)}
+                      disabled={safeCurrentPage === 1}
+                      className="px-3 py-1.5 text-xs font-black uppercase border-2 border-primary-dark bg-white hover:bg-yellow-50 disabled:opacity-30 disabled:cursor-not-allowed shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all flex items-center gap-1"
+                      title="Halaman Sebelumnya"
+                    >
+                      <ChevronLeft size={16} />
+                      <span className="hidden sm:inline">Sebelumnya</span>
+                    </button>
+
+                    {getPaginationNumbers().map((pageNum, idx) => {
+                      if (pageNum === '...') {
+                        return (
+                          <span key={`ellipsis-${idx}`} className="w-8 h-8 flex items-center justify-center font-black text-gray-400">
+                            ...
+                          </span>
+                        );
+                      }
+                      const isActive = safeCurrentPage === pageNum;
+                      return (
+                        <button
+                          key={pageNum}
+                          type="button"
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`w-9 h-9 font-black text-xs border-2 border-primary-dark shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all ${
+                            isActive
+                              ? 'bg-gradient-yellow text-primary-dark translate-y-0.5 shadow-none'
+                              : 'bg-white text-primary-dark hover:bg-gray-100'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+
+                    <button
+                      type="button"
+                      onClick={() => handlePageChange(safeCurrentPage + 1)}
+                      disabled={safeCurrentPage === totalPages}
+                      className="px-3 py-1.5 text-xs font-black uppercase border-2 border-primary-dark bg-white hover:bg-yellow-50 disabled:opacity-30 disabled:cursor-not-allowed shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all flex items-center gap-1"
+                      title="Halaman Berikutnya"
+                    >
+                      <span className="hidden sm:inline">Berikutnya</span>
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
         </section>
