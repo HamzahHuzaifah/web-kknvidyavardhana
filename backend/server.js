@@ -13,6 +13,7 @@ const jumbotronRoutes = require('./routes/jumbotronRoutes');
 const footerRoutes = require('./routes/footerRoutes');
 const welcomeAudioRoutes = require('./routes/welcomeAudioRoutes');
 const sitemapRoutes = require('./routes/sitemapRoutes');
+const shareRoutes = require('./routes/shareRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -44,6 +45,9 @@ app.use('/api', (req, res) => {
 
 // Register Sitemap Route
 app.use('/', sitemapRoutes);
+
+// Register Dynamic Open Graph / Social Media Preview Routes (WhatsApp, Facebook, Twitter, Telegram)
+app.use('/', shareRoutes);
 
 // Serve Frontend static files
 const frontendDistPath = path.join(__dirname, '../frontend/dist');

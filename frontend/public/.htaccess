@@ -12,11 +12,16 @@ DirectoryIndex index.html
   RewriteRule ^api/?(.*)$ http://127.0.0.1:5000/api/$1 [P,L]
   RewriteRule ^uploads/?(.*)$ http://127.0.0.1:5000/uploads/$1 [P,L]
 
-  # 2. Jika file fisik benar-benar ada (file css, js, svg, gambar), langsung sajikan
+  # 2. Dynamic Open Graph / WhatsApp / Facebook / Twitter / Telegram Link Previews
+  RewriteCond %{HTTP_USER_AGENT} (facebookexternalhit|WhatsApp|Facebot|Twitterbot|TelegramBot|LinkedInBot|Discordbot|Slackbot|Pinterest|Googlebot|bingbot|Applebot) [NC,OR]
+  RewriteCond %{QUERY_STRING} (crawler|share|bot) [NC]
+  RewriteRule ^(berita|publikasi|jurnal|modul|portofolio|portfolio|profil)/(.+)$ http://127.0.0.1:5000/share/$1/$2 [P,L]
+
+  # 3. Jika file fisik benar-benar ada (file css, js, svg, gambar), langsung sajikan
   RewriteCond %{REQUEST_FILENAME} -f
   RewriteRule ^ - [L]
 
-  # 3. SPA Fallback: semua rute halaman React diarahkan ke index.html
+  # 4. SPA Fallback: semua rute halaman React diarahkan ke index.html
   RewriteRule ^ index.html [L]
 </IfModule>
 
