@@ -7,12 +7,12 @@ router.get('/sitemap.xml', async (req, res) => {
     const baseUrl = 'https://vidyavardhana.my.id';
     
     // Static Routes
+    const today = new Date().toISOString().split('T')[0];
     const staticRoutes = [
-      '',
-      '/profile',
-      '/media',
-      '/berita',
-      '/login'
+      { path: '/', priority: '1.0', changefreq: 'daily' },
+      { path: '/profile', priority: '0.8', changefreq: 'weekly' },
+      { path: '/media', priority: '0.8', changefreq: 'weekly' },
+      { path: '/berita', priority: '0.8', changefreq: 'daily' }
     ];
 
     // Fetch dynamic article routes
@@ -26,9 +26,10 @@ router.get('/sitemap.xml', async (req, res) => {
     staticRoutes.forEach((route) => {
       sitemap += `
   <url>
-    <loc>${baseUrl}${route}</loc>
-    <changefreq>weekly</changefreq>
-    <priority>${route === '' ? '1.0' : '0.8'}</priority>
+    <loc>${baseUrl}${route.path}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>${route.changefreq}</changefreq>
+    <priority>${route.priority}</priority>
   </url>`;
     });
 
