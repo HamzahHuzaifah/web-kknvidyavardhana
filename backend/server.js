@@ -23,8 +23,11 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Expose static uploads folder
-app.use('/uploads', express.static(uploadDir));
+// Expose static uploads folder with efficient browser caching
+app.use('/uploads', express.static(uploadDir, {
+  maxAge: '30d',
+  immutable: true
+}));
 
 // Initialize Database & sync media files
 initDB(syncExistingUploads);

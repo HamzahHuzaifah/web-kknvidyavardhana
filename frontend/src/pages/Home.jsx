@@ -401,6 +401,8 @@ export default function Home() {
                             <img 
                               src={`${member.image_url}`} 
                               alt={member.name}
+                              loading="lazy"
+                              decoding="async"
                               className="w-full h-full object-cover"
                             />
                           ) : (
@@ -665,6 +667,7 @@ export default function Home() {
                               <iframe
                                 src={embedUrl}
                                 title={item.title}
+                                loading="lazy"
                                 className="w-full h-full border-0"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                 allowFullScreen

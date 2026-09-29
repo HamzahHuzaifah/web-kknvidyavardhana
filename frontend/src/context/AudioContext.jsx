@@ -41,46 +41,43 @@ export function AudioProvider({ children }) {
     fetchSettings();
   }, []);
 
-  // Initialize YouTube Iframe API if source is youtube
+  // Initialize YouTube Iframe API if source is youtube (deferred to idle time to protect page speed)
   useEffect(() => {
-    if (!settings || settings.source_type !== 'youtube') return;
+    if (!settings || settings.source_type !== 'youtube' || (!settings.is_enabled && settings.is_enabled !== 1)) return;
     const videoId = getYouTubeVideoId(settings.audio_url);
     if (!videoId) return;
 
-    // Load YT API script if not present
-    if (!window.YT) {
-      const tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
-      const firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-    }
+    let isCancelled = false;
 
     const initYT = () => {
+      if (isCancelled) return;
       if (window.YT && window.YT.Player) {
         try {
-          ytPlayerRef.current = new window.YT.Player('kkn-hidden-youtube-player', {
-            height: '0',
-            width: '0',
-            videoId: videoId,
-            playerVars: {
-              autoplay: 0,
-              controls: 0,
-              loop: 1,
-              playlist: videoId
-            },
-            events: {
-              onReady: () => {
-                ytReadyRef.current = true;
+          if (!ytPlayerRef.current) {
+            ytPlayerRef.current = new window.YT.Player('kkn-hidden-youtube-player', {
+              height: '0',
+              width: '0',
+              videoId: videoId,
+              playerVars: {
+                autoplay: 0,
+                controls: 0,
+                loop: 1,
+                playlist: videoId
               },
-              onStateChange: (event) => {
-                if (event.data === window.YT.PlayerState.PLAYING) {
-                  setIsPlaying(true);
-                } else if (event.data === window.YT.PlayerState.PAUSED || event.data === window.YT.PlayerState.ENDED) {
-                  setIsPlaying(false);
+              events: {
+                onReady: () => {
+                  ytReadyRef.current = true;
+                },
+                onStateChange: (event) => {
+                  if (event.data === window.YT.PlayerState.PLAYING) {
+                    setIsPlaying(true);
+                  } else if (event.data === window.YT.PlayerState.PAUSED || event.data === window.YT.PlayerState.ENDED) {
+                    setIsPlaying(false);
+                  }
                 }
               }
-            }
-          });
+            });
+          }
         } catch (e) {
           console.warn('YT Player init error:', e);
         }
@@ -89,14 +86,43 @@ export function AudioProvider({ children }) {
       }
     };
 
-    initYT();
-
-    return () => {
-      if (ytPlayerRef.current && typeof ytPlayerRef.current.destroy === 'function') {
-        try { ytPlayerRef.current.destroy(); } catch (e) {}
+    const loadYT = () => {
+      if (isCancelled) return;
+      if (!window.YT) {
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        tag.async = true;
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        if (firstScriptTag && firstScriptTag.parentNode) {
+          firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        } else {
+          document.head.appendChild(tag);
+        }
       }
+      initYT();
     };
-  }, [settings?.source_type, settings?.audio_url]);
+
+    // Defer to idle time so browser paints the UI first
+    if ('requestIdleCallback' in window) {
+      const idleId = window.requestIdleCallback(loadYT, { timeout: 3500 });
+      return () => {
+        isCancelled = true;
+        window.cancelIdleCallback(idleId);
+        if (ytPlayerRef.current && typeof ytPlayerRef.current.destroy === 'function') {
+          try { ytPlayerRef.current.destroy(); } catch (e) {}
+        }
+      };
+    } else {
+      const timerId = setTimeout(loadYT, 2500);
+      return () => {
+        isCancelled = true;
+        clearTimeout(timerId);
+        if (ytPlayerRef.current && typeof ytPlayerRef.current.destroy === 'function') {
+          try { ytPlayerRef.current.destroy(); } catch (e) {}
+        }
+      };
+    }
+  }, [settings?.source_type, settings?.audio_url, settings?.is_enabled]);
 
   // Manage HTML5 Audio element
   useEffect(() => {

@@ -92,13 +92,16 @@ export default function Hero({ location, slides, animationType = 'fade' }) {
           {/* Background Image / Solid Fallback */}
           {currentSlide.image_url ? (
             <>
-              <div 
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: `url(${currentSlide.image_url})` }}
-              ></div>
+              <img 
+                src={currentSlide.image_url}
+                alt={currentSlide.title || "Banner KKN Vidya Vardhana"}
+                fetchpriority="high"
+                decoding="async"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
               {/* Overlay agar teks tetap terbaca */}
-              <div className="absolute inset-0 bg-primary/80 mix-blend-multiply"></div>
-              <div className="absolute inset-0 bg-gradient-to-r from-primary-dark/90 to-transparent"></div>
+              <div className="absolute inset-0 bg-primary/80 mix-blend-multiply pointer-events-none"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-primary-dark/90 to-transparent pointer-events-none"></div>
             </>
           ) : (
             <div className="absolute inset-0 bg-primary">
