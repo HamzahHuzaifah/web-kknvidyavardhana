@@ -43,6 +43,12 @@ function AnimatedRoutes() {
     else if (path.startsWith('/dashboard')) title = 'Dashboard Admin | KKN Vidya Vardhana';
     
     document.title = title;
+
+    // Dynamically update canonical link per route
+    const canonicalTag = document.getElementById('canonical-url');
+    if (canonicalTag) {
+      canonicalTag.setAttribute('href', `https://vidyavardhana.my.id${path}`);
+    }
   }, [location]);
 
   return (

@@ -58,44 +58,101 @@ export default function ArticleDetailPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [slug]);
 
-  // Inject Google Scholar & Dublin Core Meta Tags
+  // Inject Dynamic SEO, Open Graph, Google Scholar & NewsArticle Schema
   useEffect(() => {
     if (!article) return;
 
     const metaTags = [];
-    const addMeta = (name, content) => {
+    const addMeta = (attributeName, attributeValue, content) => {
       if (!content) return;
       const el = document.createElement('meta');
-      el.setAttribute('name', name);
+      el.setAttribute(attributeName, attributeValue);
       el.setAttribute('content', content);
       document.head.appendChild(el);
       metaTags.push(el);
     };
 
-    addMeta('citation_title', article.title);
+    // Google Scholar
+    addMeta('name', 'citation_title', article.title);
     
     const authorsStr = article.authors_meta || article.author_name || 'Tim KKN Vidya Vardhana';
     const authorsList = authorsStr.split(',').map(a => a.trim().split(' (')[0]);
     authorsList.forEach(author => {
-      addMeta('citation_author', author);
+      addMeta('name', 'citation_author', author);
     });
 
-    addMeta('citation_publication_date', article.published_date 
+    const pubDate = article.published_date 
       ? new Date(article.published_date).toISOString().split('T')[0] 
-      : new Date(article.created_at).toISOString().split('T')[0]
-    );
-    addMeta('citation_journal_title', 'Publikasi KKN Vidya Vardhana');
-    if (article.volume) addMeta('citation_volume', article.volume.toString());
-    if (article.issue) addMeta('citation_issue', article.issue.toString());
+      : (article.created_at ? new Date(article.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
+    addMeta('name', 'citation_publication_date', pubDate);
+    addMeta('name', 'citation_journal_title', 'Publikasi KKN Vidya Vardhana');
+    if (article.volume) addMeta('name', 'citation_volume', article.volume.toString());
+    if (article.issue) addMeta('name', 'citation_issue', article.issue.toString());
     
-    addMeta('citation_publisher', article.publisher || 'KKN Vidya Vardhana');
-    addMeta('citation_abstract_html_url', window.location.href);
+    addMeta('name', 'citation_publisher', article.publisher || 'KKN Vidya Vardhana');
+    addMeta('name', 'citation_abstract_html_url', window.location.href);
     if (article.file_url && article.file_url.toLowerCase().endsWith('.pdf')) {
-      addMeta('citation_pdf_url', `${window.location.origin}${article.file_url}`);
+      addMeta('name', 'citation_pdf_url', `${window.location.origin}${article.file_url}`);
     }
     if (article.keywords) {
-      addMeta('citation_keywords', article.keywords);
+      addMeta('name', 'citation_keywords', article.keywords);
     }
+
+    // Dynamic SEO & Open Graph for Google Search
+    const rawExcerpt = article.excerpt || article.content?.replace(/<[^>]*>?/gm, '').slice(0, 160) || 'Berita dan publikasi program kerja KKN Vidya Vardhana';
+    const cleanExcerpt = rawExcerpt.replace(/\s+/g, ' ').trim();
+    const articleUrl = `https://vidyavardhana.my.id/berita/${article.slug || slug}`;
+    const articleImg = article.image_url 
+      ? (article.image_url.startsWith('http') ? article.image_url : `https://vidyavardhana.my.id${article.image_url}`)
+      : 'https://vidyavardhana.my.id/og-image.jpg';
+
+    addMeta('name', 'description', cleanExcerpt);
+    addMeta('property', 'og:type', 'article');
+    addMeta('property', 'og:title', `${article.title} - KKN Vidya Vardhana`);
+    addMeta('property', 'og:description', cleanExcerpt);
+    addMeta('property', 'og:image', articleImg);
+    addMeta('property', 'og:url', articleUrl);
+    addMeta('property', 'article:published_time', pubDate);
+    addMeta('name', 'twitter:title', `${article.title} - KKN Vidya Vardhana`);
+    addMeta('name', 'twitter:description', cleanExcerpt);
+    addMeta('name', 'twitter:image', articleImg);
+
+    // Update canonical link to the specific article URL
+    const canonicalTag = document.getElementById('canonical-url');
+    if (canonicalTag) {
+      canonicalTag.setAttribute('href', articleUrl);
+    }
+
+    // Inject NewsArticle JSON-LD for Google Rich Results & Cards
+    const scriptLd = document.createElement('script');
+    scriptLd.type = 'application/ld+json';
+    scriptLd.id = 'article-jsonld-schema';
+    scriptLd.textContent = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "NewsArticle",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": articleUrl
+      },
+      "headline": article.title,
+      "description": cleanExcerpt,
+      "image": [articleImg],
+      "datePublished": pubDate,
+      "dateModified": article.updated_at ? new Date(article.updated_at).toISOString().split('T')[0] : pubDate,
+      "author": {
+        "@type": "Person",
+        "name": authorsStr
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "KKN Vidya Vardhana",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://vidyavardhana.my.id/og-image.jpg"
+        }
+      }
+    });
+    document.head.appendChild(scriptLd);
 
     document.title = `${article.title} - KKN Vidya Vardhana UNUSIA`;
 
@@ -103,8 +160,13 @@ export default function ArticleDetailPage() {
       metaTags.forEach((el) => {
         if (el.parentNode) el.parentNode.removeChild(el);
       });
+      const ldEl = document.getElementById('article-jsonld-schema');
+      if (ldEl && ldEl.parentNode) ldEl.parentNode.removeChild(ldEl);
+      if (canonicalTag) {
+        canonicalTag.setAttribute('href', `https://vidyavardhana.my.id${window.location.pathname}`);
+      }
     };
-  }, [article]);
+  }, [article, slug]);
 
   const fetchArticle = async () => {
     setLoading(true);
