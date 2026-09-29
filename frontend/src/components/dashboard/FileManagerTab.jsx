@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import CustomSelect from '../CustomSelect';
 import PreviewMediaModal from './modals/PreviewMediaModal';
-import { processFilesForHeic, convertHeicToJpgIfNeeded } from '../../utils/heicHelper';
+import { processFilesForHeic, convertHeicToJpgIfNeeded, optimizeCoverImageForWeb } from '../../utils/heicHelper';
 
 export default function FileManagerTab({
   isAdmin,
@@ -91,7 +91,11 @@ export default function FileManagerTab({
 
     const formData = new FormData();
     for (let i = 0; i < files.length; i++) {
-      formData.append('files', files[i]);
+      let file = files[i];
+      if (file.type && file.type.startsWith('image/')) {
+        file = await optimizeCoverImageForWeb(file, setConvertingHeic);
+      }
+      formData.append('files', file);
     }
     formData.append('source', 'direct_upload');
 
@@ -248,7 +252,7 @@ export default function FileManagerTab({
                     onChange={async (e) => {
                       if (e.target.files && e.target.files[0]) {
                         let f = e.target.files[0];
-                        f = await convertHeicToJpgIfNeeded(f);
+                        f = await optimizeCoverImageForWeb(f);
                         const fd = new FormData();
                         fd.append('logo', f);
                         try {

@@ -134,6 +134,7 @@ export default function Navbar() {
           <div className="flex items-center lg:hidden">
             <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label={isMobileMenuOpen ? "Tutup menu navigasi" : "Buka menu navigasi"}
               className="p-2 border-2 border-transparent focus:border-secondary-light outline-none"
             >
               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}

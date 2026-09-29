@@ -12,7 +12,7 @@ import {
   X,
   MapPin
 } from 'lucide-react';
-import { convertHeicToJpgIfNeeded } from '../../utils/heicHelper';
+import { convertHeicToJpgIfNeeded, optimizeCoverImageForWeb } from '../../utils/heicHelper';
 
 export default function ProfileTab({ token, setConfirmModal, closeConfirmModal }) {
   // ── Profile Form State ──────────────────────────────────
@@ -139,7 +139,7 @@ export default function ProfileTab({ token, setConfirmModal, closeConfirmModal }
 
   const handleMemberImageChange = async (e) => {
     if (e.target.files && e.target.files[0]) {
-      const file = await convertHeicToJpgIfNeeded(e.target.files[0], setConvertingMemberImage);
+      const file = await optimizeCoverImageForWeb(e.target.files[0], setConvertingMemberImage);
       setMemberImage(file);
     }
   };

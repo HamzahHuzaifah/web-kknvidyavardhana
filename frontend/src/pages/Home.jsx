@@ -461,21 +461,21 @@ export default function Home() {
                 <div className="space-y-4">
                   <div className="bg-white border-2 border-primary-dark shadow-hard p-5 relative overflow-hidden">
                     <Users size={26} className="text-primary-dark mb-2" />
-                    <h5 className="text-sm font-bold text-primary-dark uppercase">Populasi Penduduk</h5>
+                    <h4 className="text-sm font-bold text-primary-dark uppercase">Populasi Penduduk</h4>
                     <p className="text-2xl font-black text-secondary-dark">{profile?.village_population || '-'}</p>
                     <p className="text-[11px] text-gray-500 font-medium">Jiwa Terdata</p>
                   </div>
 
                   <div className="bg-white border-2 border-primary-dark shadow-hard p-5 relative overflow-hidden">
                     <HomeIcon size={26} className="text-primary-dark mb-2" />
-                    <h5 className="text-sm font-bold text-primary-dark uppercase">Wilayah RT / RW</h5>
+                    <h4 className="text-sm font-bold text-primary-dark uppercase">Wilayah RT / RW</h4>
                     <p className="text-2xl font-black text-accent-dark">{profile?.village_rtrw || '-'}</p>
                     <p className="text-[11px] text-gray-500 font-medium">Struktur Wilayah</p>
                   </div>
 
                   <div className="bg-white border-2 border-primary-dark shadow-hard p-5 relative overflow-hidden">
                     <Map size={26} className="text-primary-dark mb-2" />
-                    <h5 className="text-sm font-bold text-primary-dark uppercase">Luas Wilayah</h5>
+                    <h4 className="text-sm font-bold text-primary-dark uppercase">Luas Wilayah</h4>
                     <p className="text-2xl font-black text-primary-light">{profile?.village_area || '-'}</p>
                     <p className="text-[11px] text-gray-500 font-medium">Cakupan Wilayah Desa</p>
                   </div>

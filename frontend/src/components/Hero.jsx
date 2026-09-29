@@ -143,6 +143,7 @@ export default function Hero({ location, slides, animationType = 'fade' }) {
               setDirection(-1);
               handlePrev();
             }}
+            aria-label="Slide sebelumnya"
             className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white text-primary-dark border-2 border-primary-dark opacity-0 group-hover:opacity-100 transition-opacity z-20 hover:bg-gray-100 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none"
           >
             <ChevronLeft size={24} />
@@ -153,6 +154,7 @@ export default function Hero({ location, slides, animationType = 'fade' }) {
               setDirection(1);
               handleNext();
             }}
+            aria-label="Slide berikutnya"
             className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white text-primary-dark border-2 border-primary-dark opacity-0 group-hover:opacity-100 transition-opacity z-20 hover:bg-gray-100 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none"
           >
             <ChevronRight size={24} />
@@ -164,6 +166,7 @@ export default function Hero({ location, slides, animationType = 'fade' }) {
               <button
                 key={idx}
                 onClick={() => changeSlide(idx)}
+                aria-label={`Lihat slide banner ${idx + 1}`}
                 className={`w-3 h-3 rounded-full border-2 border-white transition-all ${
                   idx === currentIndex ? 'bg-yellow-400 scale-125' : 'bg-transparent hover:bg-white/50'
                 }`}

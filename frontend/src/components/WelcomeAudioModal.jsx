@@ -107,9 +107,9 @@ export default function WelcomeAudioModal() {
                 <Newspaper size={16} />
               </div>
               <div className="min-w-0">
-                <h4 className="text-xs font-black uppercase text-primary-dark">
+                <h3 className="text-xs font-black uppercase text-primary-dark">
                   Kabar & Berita Posko
-                </h4>
+                </h3>
                 <p className="text-[11px] text-gray-600 font-medium leading-snug mt-0.5">
                   Liputan pengobatan gratis LAZNAS, renovasi fasilitas, dan kegiatan sosial warga desa.
                 </p>
@@ -122,9 +122,9 @@ export default function WelcomeAudioModal() {
                 <FileText size={16} />
               </div>
               <div className="min-w-0">
-                <h4 className="text-xs font-black uppercase text-primary-dark">
+                <h3 className="text-xs font-black uppercase text-primary-dark">
                   Publikasi Riset & Pengabdian
-                </h4>
+                </h3>
                 <p className="text-[11px] text-gray-600 font-medium leading-snug mt-0.5">
                   Karya ilmiah terindeks Google Scholar yang dapat diunduh dan disitasi secara terbuka.
                 </p>
@@ -137,9 +137,9 @@ export default function WelcomeAudioModal() {
                 <BookOpen size={16} />
               </div>
               <div className="min-w-0">
-                <h4 className="text-xs font-black uppercase text-primary-dark">
+                <h3 className="text-xs font-black uppercase text-primary-dark">
                   Modul Ajar & Buku Saku
-                </h4>
+                </h3>
                 <p className="text-[11px] text-gray-600 font-medium leading-snug mt-0.5">
                   Buku saku dan modul Kurikulum Merdeka bebas unduh dengan pembaca dokumen interaktif.
                 </p>
