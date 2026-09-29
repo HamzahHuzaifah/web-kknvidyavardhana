@@ -8,9 +8,10 @@ DirectoryIndex index.html
   # Teruskan Authorization Header ke Node.js (mencegah Apache/LiteSpeed men-strip header token)
   RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-  # 1. Reverse Proxy: teruskan semua request /api dan /uploads ke Node.js port 5000
+  # 1. Reverse Proxy: teruskan semua request /api, /uploads, dan /sitemap.xml ke Node.js port 5000
   RewriteRule ^api/?(.*)$ http://127.0.0.1:5000/api/$1 [P,L]
   RewriteRule ^uploads/?(.*)$ http://127.0.0.1:5000/uploads/$1 [P,L]
+  RewriteRule ^sitemap\.xml$ http://127.0.0.1:5000/sitemap.xml [P,L]
 
   # 2. Dynamic Open Graph / WhatsApp / Facebook / Twitter / Telegram Link Previews
   RewriteCond %{HTTP_USER_AGENT} (facebookexternalhit|WhatsApp|Facebot|Twitterbot|TelegramBot|LinkedInBot|Discordbot|Slackbot|Pinterest|Googlebot|bingbot|Applebot) [NC,OR]
